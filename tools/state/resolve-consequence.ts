@@ -1,9 +1,11 @@
 import { assertConsequenceInput, resolveConsequence, type RawConsequenceInput } from "../../engine/core/consequence";
+import { persistCurrentState } from "../../engine/core/state-persistence";
 import { writeStateToDetails } from "../../engine/core/state";
 import { textResult, type ToolResult } from "../runtime/tool-result";
 
-export function resolveConsequenceTool(params: RawConsequenceInput): ToolResult {
+export function resolveConsequenceTool(params: RawConsequenceInput, sessionManager: unknown): ToolResult {
   const result = resolveConsequence(assertConsequenceInput(params));
+  persistCurrentState(sessionManager);
   const text = [
     "后果已结算：",
     ...result.effects.map((effect) => `- ${effect.reason}: ${formatValueChange(effect.before, effect.after, effect.delta)}`),

@@ -1,3 +1,4 @@
+import { persistCurrentState } from "../../engine/core/state-persistence";
 import { getState, patchState, writeStateToDetails, cloneState, type PatchOp } from "../../engine/core/state";
 import { textResult, type ToolResult } from "../runtime/tool-result";
 
@@ -5,9 +6,10 @@ export interface PatchStateParams {
   ops: ReadonlyArray<PatchOp>;
 }
 
-export function patchStateTool(params: PatchStateParams): ToolResult {
+export function patchStateTool(params: PatchStateParams, sessionManager: unknown): ToolResult {
   const before = cloneState();
   patchState(params.ops);
+  persistCurrentState(sessionManager);
   const after = getState();
 
   const opsDesc = params.ops.map((op) => `${op.op} ${op.path}`).join(", ");

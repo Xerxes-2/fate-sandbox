@@ -1,9 +1,11 @@
 import { assertCheckInput, resolveCheck, type RawCheckInput } from "../../engine/core/check";
+import { persistCurrentState } from "../../engine/core/state-persistence";
 import { writeStateToDetails } from "../../engine/core/state";
 import { textResult, type ToolResult } from "../runtime/tool-result";
 
-export function resolveCheckTool(params: RawCheckInput): ToolResult {
+export function resolveCheckTool(params: RawCheckInput, sessionManager: unknown): ToolResult {
   const result = resolveCheck(assertCheckInput(params));
+  persistCurrentState(sessionManager);
   const text = [
     "判定已结算：",
     `🎲 ${formatRolls(result.roll.rolls)}，保留 ${result.roll.kept}；修正 ${formatSigned(result.roll.modifier)}；总计 ${result.roll.total} vs DC ${result.roll.dc}`,
