@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 import { Type } from "typebox";
 
+import { exportStateTool } from "./debug/export-state";
 import { getStateSchemaTool } from "./debug/get-state-schema";
 import { switchToolsetTool } from "./debug/switch-toolset";
 import { lookupTool } from "./lookup/lookup";
@@ -223,5 +224,14 @@ export function registerAllTools(pi: ExtensionAPI): void {
     description: "【调试工具】查看当前状态 schema 版本与字段定义。",
     parameters: Type.Object({}),
     execute: async () => getStateSchemaTool(),
+  });
+
+  pi.registerTool({
+    label,
+    name: "export_state",
+    description:
+      "【调试工具】将当前内存状态导出到 state/state.json。只用于开发排查，严禁把导出的裸数值直接写进叙事。",
+    parameters: Type.Object({}),
+    execute: async () => exportStateTool(),
   });
 }

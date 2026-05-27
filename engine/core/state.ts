@@ -5,6 +5,9 @@
  * state transitions, but the mutable store never crosses this seam.
  */
 
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
 // --- Types ---
 
 export interface State {
@@ -52,6 +55,7 @@ export interface PatchOp {
 export const CURRENT_STATE_SCHEMA_VERSION = 2;
 
 const SESSION_KEY = "fsn-state";
+const DEBUG_STATE_PATH = join("state", "state.json");
 const INITIAL_MONEY = 50000;
 const INITIAL_LOCATION = "冬木市·深山镇·穗群原学园";
 const INITIAL_BODY_STATUS = 100;
@@ -135,6 +139,11 @@ export function allowedPatchPaths(): readonly StatePatchPath[] {
   return ALLOWED_PATCH_PATHS;
 }
 
+export function writeDebugStateFile(): string {
+  writeStateDebugSnapshot(getStore());
+  return DEBUG_STATE_PATH;
+}
+
 // --- Store ---
 
 function getStore(): State {
@@ -146,6 +155,12 @@ function getStore(): State {
 
 function setStore(state: State): void {
   globalThis.__fsn_state_store__ = structuredClone(state);
+  writeStateDebugSnapshot(state);
+}
+
+function writeStateDebugSnapshot(state: State): void {
+  mkdirSync("state", { recursive: true });
+  writeFileSync(DEBUG_STATE_PATH, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
 }
 
 function createInitialState(): State {
