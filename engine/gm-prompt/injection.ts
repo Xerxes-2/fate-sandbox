@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { formatHumanTime } from "../core/date-time";
 import { cloneState, type State } from "../core/state";
 
 export interface TextMessage {
@@ -99,10 +100,11 @@ function buildRulesMessage(): TextMessage {
 
 function buildStatePressureMessage(): TextMessage {
   const state = cloneState();
+  const currentTime = formatHumanTime(state.时间.当前时间);
   const text = [
     "[当前机械状态快照 — 只读参考，工具返回值优先]",
     "",
-    `时间：${state.时间.当前时间}`,
+    `时间：${currentTime.display}`,
     `今日低压分钟：${state.时间.当天低压分钟}`,
     `今日高压分钟：${state.时间.当天高压分钟}`,
     `今日休息分钟：${state.时间.当天休息分钟}`,

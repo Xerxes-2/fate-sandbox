@@ -10,7 +10,7 @@ import type { TimeState } from "./time";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { normalizeIsoInstant, nowIso } from "./date-time";
+import { formatHumanTime, normalizeIsoInstant, nowIso } from "./date-time";
 
 // --- Types ---
 
@@ -29,6 +29,17 @@ export interface StateMetadata {
   schemaVersion: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TimeExportState extends TimeState {
+  显示时间: string;
+  日期: string;
+  星期: string;
+  时刻: string;
+}
+
+export interface StateExport extends Omit<State, "时间"> {
+  时间: TimeExportState;
 }
 
 export type StatePatchPath =
@@ -95,6 +106,10 @@ export function cloneState(): State {
   return structuredClone(getStore());
 }
 
+export function exportState(): StateExport {
+  return toStateExport(getStore());
+}
+
 export function patchState(ops: ReadonlyArray<PatchOp>): State {
   if (ops.length === 0) {
     return cloneState();
@@ -158,7 +173,22 @@ function setStore(state: State): void {
 
 function writeStateDebugSnapshot(state: State): void {
   mkdirSync("state", { recursive: true });
-  writeFileSync(DEBUG_STATE_PATH, `${JSON.stringify(state, null, 2)}\n`, "utf-8");
+  writeFileSync(DEBUG_STATE_PATH, `${JSON.stringify(toStateExport(state), null, 2)}\n`, "utf-8");
+}
+
+function toStateExport(state: State): StateExport {
+  const snapshot = structuredClone(state);
+  const humanTime = formatHumanTime(snapshot.时间.当前时间);
+  return {
+    ...snapshot,
+    时间: {
+      ...snapshot.时间,
+      显示时间: humanTime.display,
+      日期: humanTime.date,
+      星期: humanTime.weekday,
+      时刻: humanTime.time,
+    },
+  };
 }
 
 function createInitialState(): State {
