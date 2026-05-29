@@ -2,8 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { formatHumanTime } from "../core/date-time";
-import { cloneState, type State } from "../core/state";
+import { exportState, type StateExport } from "../core/state";
 
 export interface TextMessage {
   role: "user";
@@ -99,21 +98,11 @@ function buildRulesMessage(): TextMessage {
 }
 
 function buildStatePressureMessage(): TextMessage {
-  const state = cloneState();
-  const currentTime = formatHumanTime(state.时间.当前时间);
+  const state = exportState();
   const text = [
-    "[当前机械状态快照 — 只读参考，工具返回值优先]",
+    "[当前机械状态快照 — 与 export_state / state/state.json 同源，只读参考，工具返回值优先]",
     "",
-    `时间：${currentTime.display}`,
-    `今日低压分钟：${state.时间.当天低压分钟}`,
-    `今日高压分钟：${state.时间.当天高压分钟}`,
-    `今日休息分钟：${state.时间.当天休息分钟}`,
-    `位置：${state.当前位置}`,
-    `身体：${state.身体状态}%`,
-    `金钱：${state.金钱.toLocaleString()} 円`,
-    `疲劳：${state.疲劳}%`,
-    `魔力负担：${state.魔力负担}%`,
-    `危险度：${state.危险度}/5`,
+    JSON.stringify(state, null, 2),
     "",
     "叙事压力：",
     ...buildPressureNotes(state).map((note) => `- ${note}`),
@@ -127,7 +116,7 @@ function buildStatePressureMessage(): TextMessage {
   };
 }
 
-function buildPressureNotes(state: State): string[] {
+function buildPressureNotes(state: StateExport): string[] {
   const notes = ["玩家行动不会自动获得最佳结果；成功也必须留下合理代价。"];
   if (state.危险度 >= 3) {
     notes.push("危险度 ≥ 3：禁止写成完全安全，必须保留即时威胁或环境压力。");
