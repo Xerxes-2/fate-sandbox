@@ -1,26 +1,52 @@
-import { assertConsequenceInput, resolveConsequence, type RawConsequenceInput } from "../../engine/core/consequence";
+import type { ConsequenceAction, ConsequenceRisk, RawConsequenceInput } from "../../engine/core/consequence";
+
+import { assertConsequenceInput, resolveConsequence } from "../../engine/core/consequence";
 import { persistCurrentState } from "../../engine/core/state-persistence";
 import { writeStateToDetails } from "../../engine/core/state";
 import { formatPressureSummary, noNumberNarrativeHint } from "../runtime/narrative-hints";
 import { textResult, type ToolResult } from "../runtime/tool-result";
 
+export interface ConsequenceToolDetails {
+  actionType: ConsequenceAction;
+  riskLevel: ConsequenceRisk;
+  pressureSummary: string;
+}
+
 export function resolveConsequenceTool(params: RawConsequenceInput, sessionManager: unknown): ToolResult {
-  const result = resolveConsequence(assertConsequenceInput(params));
+  const validated = assertConsequenceInput(params);
+  const result = resolveConsequence(validated);
   persistCurrentState(sessionManager);
+
+  const pressureSummary = formatPressureSummary(result.after);
+
   const text = [
-    "后果已结算：",
-    ...result.effects.map((effect) => `- ${effect.reason}: ${formatValueChange(effect.before, effect.after, effect.delta)}`),
+    `# ${validated.actionType} · ${validated.riskLevel} · ${validated.durationMinutes}min`,
     "",
-    `当前压力：${formatPressureSummary(result.after)}`,
+    ...result.effects.map(
+      (effect) =>
+        `- **${effect.reason}**：${formatValueChange(effect.before, effect.after, effect.delta)}`,
+    ),
     "",
-    "叙事约束：",
+    `## 当前压力：${pressureSummary}`,
+    "",
+    "## 叙事约束",
     ...uniqueHints(
       result.effects.map((effect) => effect.narrativeHint),
       [...result.narrativeConstraints, noNumberNarrativeHint()],
     ).map((hint) => `- ${hint}`),
   ].join("\n");
 
-  const details: Record<string, unknown> = {};
+  const details: Record<string, unknown> = {
+    actionType: validated.actionType,
+    riskLevel: validated.riskLevel,
+    pressureSummary,
+    effects: result.effects.map((e) => ({
+      reason: e.reason,
+      before: e.before,
+      after: e.after,
+      delta: e.delta,
+    })),
+  };
   writeStateToDetails(details);
   return textResult(text, details);
 }

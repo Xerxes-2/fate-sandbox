@@ -1,5 +1,6 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
 
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 import { exportStateTool } from "./debug/export-state";
@@ -9,13 +10,29 @@ import { lookupTool } from "./lookup/lookup";
 import { getStatusTool } from "./state/get-status";
 import { patchStateTool } from "./state/patch-state";
 import { resolveCheckTool } from "./state/resolve-check";
-import { resolveConsequenceTool } from "./state/resolve-consequence";
+import { resolveConsequenceTool, type ConsequenceToolDetails } from "./state/resolve-consequence";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isConsequenceToolDetails(value: unknown): value is ConsequenceToolDetails {
+  if (typeof value !== "object" || value === null) return false;
+  return (
+    "actionType" in value &&
+    "riskLevel" in value &&
+    "pressureSummary" in value &&
+    typeof value["actionType"] === "string" &&
+    typeof value["riskLevel"] === "string" &&
+    typeof value["pressureSummary"] === "string"
+  );
+}
 
 export function registerAllTools(pi: ExtensionAPI): void {
-  const label = "FSN 沙盒";
+  const toolLabel = "FSN 沙盒";
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "get_status",
     description:
       "查看玩家角色的当前状态（金钱、位置、身体、时间、疲劳、魔力负担、危险度）。\n\n" +
@@ -31,7 +48,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "patch_state",
     description:
       "修改玩家状态。用于确定性状态变化；风险/耗时/疲劳/魔力负担优先用 resolve_consequence 结算。\n\n" +
@@ -67,7 +84,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "resolve_consequence",
     description:
       "结算玩家行动造成的时间推进、疲劳、魔力负担和危险度。职责是防止高风险行动被写成免费、无代价。\n\n" +
@@ -119,10 +136,49 @@ export function registerAllTools(pi: ExtensionAPI): void {
     }),
     execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
       resolveConsequenceTool(params, ctx.sessionManager),
+
+    renderCall(args: unknown, theme: Theme): Text {
+      const record = isRecord(args) ? args : {};
+      const actionType = typeof record["actionType"] === "string" ? record["actionType"] : "?";
+      const riskLevel = typeof record["riskLevel"] === "string" ? record["riskLevel"] : "?";
+      const minutes =
+        typeof record["durationMinutes"] === "string" ||
+        typeof record["durationMinutes"] === "number"
+          ? String(record["durationMinutes"])
+          : "?";
+      const text =
+        theme.fg("toolTitle", theme.bold("结算 ")) +
+        theme.fg("accent", actionType) +
+        theme.fg("muted", " · ") +
+        theme.fg("warning", riskLevel) +
+        theme.fg("muted", " · ") +
+        theme.fg("dim", `${minutes}min`);
+      return new Text(text, 0, 0);
+    },
+
+    renderResult(result, { expanded }, theme, _context) {
+      const details = isConsequenceToolDetails(result.details) ? result.details : undefined;
+      const pressureSummary = details?.pressureSummary ?? "?";
+      const actionType = details?.actionType ?? "?";
+      const riskLevel = details?.riskLevel ?? "?";
+
+      if (!expanded) {
+        const compact =
+          theme.fg("accent", actionType) +
+          theme.fg("muted", " · ") +
+          theme.fg("warning", riskLevel) +
+          theme.fg("muted", "  ") +
+          theme.fg("dim", pressureSummary);
+        return new Text(compact, 0, 0);
+      }
+
+      const text = result.content[0];
+      return new Text(text?.type === "text" ? text.text : "", 0, 0);
+    },
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "resolve_check",
     description:
       "用 d20 结算不确定行动，并把失败/代价接入压力数值系统。骰子不能覆盖型月硬规则；不成立的行动直接判不成立，不掷骰。\n\n" +
@@ -183,7 +239,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "lookup",
     description:
       "查询型月世界的权威设定——角色、从者、地点、概念、时间线的唯一数据入口。\n\n" +
@@ -207,7 +263,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "switch_toolset",
     description:
       "切换可用工具组。一般不需要使用——默认 always 工具组包含所有常用工具。\n" +
@@ -219,7 +275,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "get_state_schema",
     description: "【调试工具】查看当前状态 schema 版本与字段定义。",
     parameters: Type.Object({}),
@@ -227,7 +283,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
   });
 
   pi.registerTool({
-    label,
+    label: toolLabel,
     name: "export_state",
     description:
       "【调试工具】将当前内存状态导出到 state/state.json。只用于开发排查，严禁把导出的裸数值直接写进叙事。",

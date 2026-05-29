@@ -11,6 +11,9 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: '*'
         version: 0.75.5(ws@8.21.0)(zod@4.4.3)
+      '@earendil-works/pi-tui':
+        specifier: ^0.77.0
+        version: 0.77.0
       rfc6902:
         specifier: ^5.2.0
         version: 5.2.0
@@ -169,6 +172,10 @@ packages:
 
   '@earendil-works/pi-tui@0.75.5':
     resolution: {integrity: sha512-LkXUM1/49pvzzeI39Y5wjBMlgafcCf67HCLhB9Z7yuXHy4XgT+VqxWcZVW5hBdhQsHZd0znjJotfGH1BzxMfiA==}
+    engines: {node: '>=22.19.0'}
+
+  '@earendil-works/pi-tui@0.77.0':
+    resolution: {integrity: sha512-QV/eYtcT3hM9pJjLCkjUFOUmgAm4GPzJ0K4kofVq9+BGU7wNJVzflTO4VY2tYpaI4VSo6A5Hsuw00wY/CDmY/Q==}
     engines: {node: '>=22.19.0'}
 
   '@google/genai@1.52.0':
@@ -1229,6 +1236,11 @@ snapshots:
       - zod
 
   '@earendil-works/pi-tui@0.75.5':
+    dependencies:
+      get-east-asian-width: 1.6.0
+      marked: 15.0.12
+
+  '@earendil-works/pi-tui@0.77.0':
     dependencies:
       get-east-asian-width: 1.6.0
       marked: 15.0.12
