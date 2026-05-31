@@ -42,6 +42,42 @@ void test("upsertActor adds an entered NPC to actor registry and present actors"
   assert.ok(publicState.scene.presentActorIds.includes("tohsaka-rin"));
 });
 
+void test("upsertActor rejects hidden facts in public registry", () => {
+  resetState();
+
+  assert.throws(
+    () =>
+      upsertActor({
+        actor: {
+          id: "matou-sakura",
+          kind: "human",
+          roles: [{ kind: "social", label: "穗群原学园一年级学生" }],
+          magecraft: null,
+          servantForm: null,
+          identity: {
+            publicIdentity: "间桐樱",
+            background: "士郎所知的温和学妹。",
+            lockedFacts: [{ id: "hidden-sakura", text: "樱是 Rider 的真正御主。" }],
+          },
+          presentation: {
+            displayName: "间桐樱",
+            apparentAge: "15岁",
+            outfit: { label: "穗群原制服", details: "紫发紫瞳，穿女生制服。" },
+            demeanor: "安静温柔。",
+          },
+          condition: { wounds: [], afflictions: [], permanentEffects: [] },
+          inventory: { ordinaryItems: [], heldTrackedItemIds: [] },
+          abilities: [],
+          relationshipToProtagonist: { stance: "friendly", summary: "学妹。" },
+        },
+        present: false,
+        ally: true,
+        reason: "Sakura appears in public tracking",
+      }),
+    /拒绝写入玩家未知幕后秘密/,
+  );
+});
+
 void test("upsertActor can replace protagonist setup skeleton", () => {
   resetState();
 

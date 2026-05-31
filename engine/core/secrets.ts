@@ -1,12 +1,14 @@
 import { recordMemory } from "./memory";
+import { recordOffscreenEvent } from "./offscreen-event";
 import {
   assertNonEmptyString,
-  createId,
-  updateState,
+  getState,
   type ActorId,
   type ActorSecretSlots,
   type NoblePhantasm,
+  type OffscreenEvent,
   type SecretSlot,
+  updateState,
 } from "./state";
 
 export type RevealSecretEvent =
@@ -149,6 +151,10 @@ export function privateResolve(event: PrivateResolveEvent): PrivateResolveResult
   return event.kind === "hidden-reaction" ? hiddenReaction(event) : secretCompatibility(event);
 }
 
+export function getOffscreenEventsForDebug(): readonly OffscreenEvent[] {
+  return getState().secrets.offscreenEventLog;
+}
+
 function hiddenReaction(
   event: Extract<PrivateResolveEvent, { kind: "hidden-reaction" }>,
 ): PrivateResolveResult {
@@ -163,11 +169,15 @@ function hiddenReaction(
     hasRelevantSecret =
       slots !== undefined && secretText(slots).includes(event.stimulus.toLowerCase());
     if (hasRelevantSecret) {
-      draft.secrets.secretEventLog.push({
-        id: createId("secret-event"),
-        time: draft.public.clock.currentAt,
+      recordOffscreenEvent({
+        lineId: "private-resolve",
+        actorIds: [event.actorId],
+        timeRange: { start: draft.public.clock.currentAt, end: draft.public.clock.currentAt },
+        visibility: "secret",
         summary: `隐藏反应触发：${event.publicContext}`,
-        relatedActorIds: [event.actorId],
+        consequences: [],
+        futureHooks: [],
+        createdFrom: "gm",
       });
     }
   });

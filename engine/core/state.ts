@@ -1,7 +1,19 @@
+import type { OffscreenEvent } from "./parallel-line";
+
 import { Temporal } from "@js-temporal/polyfill";
 import { mkdirSync, writeFileSync } from "node:fs";
 
 import { formatHumanTime, normalizeIsoInstant, nowIso } from "./date-time";
+
+export type {
+  OffscreenEvent,
+  OffscreenEventSource,
+  OffscreenEventVisibility,
+  ParallelLineInput,
+  ParallelLineOutput,
+  ParallelLineOutcome,
+  ParallelLineTimeWindow,
+} from "./parallel-line";
 
 export type ActorId = string;
 export type ItemId = string;
@@ -88,6 +100,7 @@ export interface SecretGameState {
   actorSecrets: Record<ActorId, ActorSecretSlots>;
   campaignSecrets: SecretCampaignFact[];
   secretEventLog: SecretEventMemory[];
+  offscreenEventLog: OffscreenEvent[];
 }
 
 export interface CampaignState {
@@ -729,6 +742,7 @@ function createInitialState(): State {
       actorSecrets: {},
       campaignSecrets: [],
       secretEventLog: [],
+      offscreenEventLog: [],
     },
   };
 }
@@ -1514,6 +1528,12 @@ function assertSecretGameState(raw: unknown): SecretGameState {
     secretEventLog: assertArray(raw["secretEventLog"], "secrets.secretEventLog").map(
       assertSecretEventMemory,
     ),
+    offscreenEventLog:
+      raw["offscreenEventLog"] === undefined
+        ? []
+        : assertArray(raw["offscreenEventLog"], "secrets.offscreenEventLog").map(
+            assertOffscreenEvent,
+          ),
   };
 }
 
@@ -1596,6 +1616,42 @@ function assertSecretEventMemory(raw: unknown): SecretEventMemory {
     time: assertIsoDateString(raw["time"], "secretEvent.time"),
     summary: assertNonEmptyString(raw["summary"], "secretEvent.summary"),
     relatedActorIds: assertStringArray(raw["relatedActorIds"], "secretEvent.relatedActorIds"),
+  };
+}
+
+function assertOffscreenEvent(raw: unknown): OffscreenEvent {
+  if (!isRecord(raw)) {
+    throw new Error(`非法 offscreen event: ${formatUnknown(raw)}。`);
+  }
+  const timeRange = assertOffscreenEventTimeRange(raw["timeRange"]);
+  return {
+    id: assertNonEmptyString(raw["id"], "offscreenEvent.id"),
+    lineId: assertNonEmptyString(raw["lineId"], "offscreenEvent.lineId"),
+    actorIds: assertStringArray(raw["actorIds"], "offscreenEvent.actorIds"),
+    timeRange,
+    visibility: assertOneOf(
+      raw["visibility"],
+      OFFSCREEN_EVENT_VISIBILITIES,
+      "offscreenEvent.visibility",
+    ),
+    summary: assertNonEmptyString(raw["summary"], "offscreenEvent.summary"),
+    consequences: assertStringArray(raw["consequences"], "offscreenEvent.consequences"),
+    futureHooks: assertStringArray(raw["futureHooks"], "offscreenEvent.futureHooks"),
+    createdFrom: assertOneOf(
+      raw["createdFrom"],
+      OFFSCREEN_EVENT_SOURCES,
+      "offscreenEvent.createdFrom",
+    ),
+  };
+}
+
+function assertOffscreenEventTimeRange(raw: unknown): OffscreenEvent["timeRange"] {
+  if (!isRecord(raw)) {
+    throw new Error(`非法 offscreenEvent.timeRange: ${formatUnknown(raw)}。`);
+  }
+  return {
+    start: assertIsoDateString(raw["start"], "offscreenEvent.timeRange.start"),
+    end: assertIsoDateString(raw["end"], "offscreenEvent.timeRange.end"),
   };
 }
 
@@ -1781,3 +1837,5 @@ const FATE_PARAM_KEYS = [
 const PURSE_ACCESSES = ["held", "shared", "requires-permission"] as const;
 const MEMORY_SCOPES = ["protagonist", "npc", "faction", "world"] as const;
 const SECRET_REVEAL_STATES = ["hidden", "foreshadowed", "revealed"] as const;
+const OFFSCREEN_EVENT_VISIBILITIES = ["secret", "foreshadowed", "player-known"] as const;
+const OFFSCREEN_EVENT_SOURCES = ["parallel-line-subagent", "gm", "debug"] as const;

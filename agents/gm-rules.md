@@ -24,11 +24,13 @@
 
 ## 工具纪律
 
-- 时间必须推进：10 分钟以上过渡、移动、等待、上课、通勤、休息都必须调用 `update_scene`。
-- 状态变化必须调用对应领域工具：scene / actor condition / servant form / economy / memory / reveal / private resolve。
+- 时间必须推进：10 分钟以上过渡、移动、等待、上课、通勤、休息都必须调用 `update_scene`；一轮内发生多段过渡时，每段都要写入，不能只叙事推进。
+- 状态变化必须调用对应领域工具：scene / actor condition / servant form / economy / memory / reveal / private resolve；工具成功前禁止在叙事中声称“已推进时间”“已记录”“已更新”。
 - 长期事实、重大事件、半天以上时间跳过必须调用 `record_memory`。
 - 玩家提出真名、宝具、隐藏身份判断时，必须调用 `reveal_secret`；证据不足时不得泄露正确答案。
 - 隐藏事实只可通过 `private_resolve` 产生玩家安全约束，不得把 secret 内容写进叙事。
+- 平行线 subagent 只提交幕后候选；必须经 GM 审核后用 `record_offscreen_event` 落地，且不得写成 player-known。
+- 幕后事件不能原样展示；只有痕迹、传闻、梦境、异常行动、事后结果或 reveal 成功后的公开事实能进入玩家叙事。
 - 已发生剧情、承诺、发现、伤势、物品去向、关系变化不得靠模糊记忆补完；当前上下文不足时必须先查历史。
 - NPC 只能使用其实际经历、被告知或可合理推断的信息；GM 视角事实不能直接变成 NPC 台词或知识。
 

@@ -12,6 +12,7 @@ import { getStatusTool } from "./state/get-status";
 import { patchStateTool } from "./state/patch-state";
 import { privateResolveTool } from "./state/private-resolve";
 import { recordMemoryTool } from "./state/record-memory";
+import { recordOffscreenEventTool } from "./state/record-offscreen-event";
 import { revealSecretTool } from "./state/reveal-secret";
 import { updateActorConditionTool } from "./state/update-actor-condition";
 import { updateEconomyTool } from "./state/update-economy";
@@ -62,7 +63,9 @@ export function registerAllTools(pi: ExtensionAPI): void {
       location: Type.Optional(locationSchema()),
       elapsedMinutes: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
       situation: Type.Optional(situationSchema()),
-      summary: Type.Optional(Type.String()),
+      summary: Type.Optional(
+        Type.String({ description: "add-objective/add-threat 必填：目标或威胁的玩家可见摘要" }),
+      ),
       objectiveId: Type.Optional(Type.String()),
       threatId: Type.Optional(Type.String()),
       severity: Type.Optional(threatSeveritySchema()),
@@ -109,6 +112,37 @@ export function registerAllTools(pi: ExtensionAPI): void {
     }),
     execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
       recordMemoryTool(params, ctx.sessionManager),
+  });
+
+  pi.registerTool({
+    label: toolLabel,
+    name: "record_offscreen_event",
+    description:
+      "写入玩家不可见或仅预示的幕后事件；用于平行线 subagent 候选结果落地。\n\n" +
+      "【必须调用的场景】\n" +
+      "- 平行线 subagent 返回 offscreen/secret 事件，需要成为 canonical secret state\n" +
+      "- NPC 阵营在玩家视野外完成侦察、准备、转移、结界调整或命令传达\n" +
+      "- 需要保存 future hooks，但暂不写入 public memory\n\n" +
+      "【严禁的行为】\n" +
+      "- 写入 player-known；公开事实必须用 record_memory 或对应 update 工具\n" +
+      "- 把 privateSummary 原样展示给玩家\n" +
+      "- 越过当前剧情窗口或违反 forbiddenEscalations",
+    parameters: Type.Object({
+      lineId: Type.String(),
+      actorIds: Type.Array(Type.String()),
+      timeRange: Type.Object({ start: Type.String(), end: Type.String() }),
+      visibility: Type.Union([Type.Literal("secret"), Type.Literal("foreshadowed")]),
+      summary: Type.String(),
+      consequences: Type.Array(Type.String()),
+      futureHooks: Type.Array(Type.String()),
+      createdFrom: Type.Union([
+        Type.Literal("parallel-line-subagent"),
+        Type.Literal("gm"),
+        Type.Literal("debug"),
+      ]),
+    }),
+    execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
+      recordOffscreenEventTool(params, ctx.sessionManager),
   });
 
   pi.registerTool({
@@ -170,7 +204,8 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 玩家与 NPC 建立同盟、敌对、契约、伤势、死亡、真名揭示等可追踪关系\n\n" +
       "【严禁的行为】\n" +
       "- 把世界角色数据库全量塞进 state；只写本局需要追踪的 actor\n" +
-      "- 写入玩家未知幕后真相；隐藏事实必须放 secrets/debug 路径",
+      "- 写入玩家未知幕后真相；隐藏事实必须放 secrets/debug 路径\n" +
+      "- 在 public actor 的 lockedFacts/background 中写玩家未知秘密，如真名、隐藏身份、幕后御主权或私密动机；这些不是公开状态",
     parameters: Type.Object({
       actor: publicActorSchema(),
       present: Type.Boolean({ description: "是否加入当前 scene.presentActorIds" }),
