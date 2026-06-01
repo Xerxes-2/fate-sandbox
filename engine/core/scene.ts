@@ -49,9 +49,10 @@ export interface SceneBeatThreatInput {
 
 export interface SceneBeatTransitionInput {
   completedBeatId: StoryBeatId;
-  resolvedObjectiveIds: SceneObjectiveId[];
+  resolvedObjectiveIds?: SceneObjectiveId[];
   resolvedObjectiveSummaries?: string[];
-  nextBeat: SceneBeatInput | null;
+  resolveAllObjectives?: boolean;
+  nextBeat?: SceneBeatInput | null;
   memoryPrompt?: string;
   reason: string;
 }
@@ -164,6 +165,7 @@ export function transitionSceneBeat(input: SceneBeatTransitionInput): SceneBeatT
   assertNonEmptyString(input.reason, "reason");
   const memoryPrompt = normalizeOptionalString(input.memoryPrompt);
   let nextBeat: SceneBeatResult | null = null;
+  let resolvedObjectiveIds: SceneObjectiveId[] = [];
   updateState((draft) => {
     const currentWindow = draft.public.scene.storyWindow;
     if (currentWindow === null) {
@@ -174,11 +176,13 @@ export function transitionSceneBeat(input: SceneBeatTransitionInput): SceneBeatT
         `无法 transition beat：当前 beat 是 ${currentWindow.currentBeatId}，不是 ${input.completedBeatId}。`,
       );
     }
-    for (const objectiveId of resolveObjectiveIds(
+    resolvedObjectiveIds = resolveObjectiveIds(
       draft.public.scene.objectives,
-      input.resolvedObjectiveIds,
+      input.resolvedObjectiveIds ?? [],
       input.resolvedObjectiveSummaries ?? [],
-    )) {
+      input.resolveAllObjectives === true,
+    );
+    for (const objectiveId of resolvedObjectiveIds) {
       const objective = draft.public.scene.objectives.find((entry) => entry.id === objectiveId);
       if (objective === undefined) {
         throw new Error(`目标不存在: ${objectiveId}`);
@@ -189,18 +193,16 @@ export function transitionSceneBeat(input: SceneBeatTransitionInput): SceneBeatT
       (objective) => objective.status !== "resolved",
     );
     if (activeObjectives.length > 0) {
-      throw new Error(
-        `无法 transition beat：仍有未解决目标 ${activeObjectives.map((objective) => objective.id).join(", ")}。`,
-      );
+      throw new Error(formatUnresolvedObjectivesError(activeObjectives));
     }
     draft.public.scene.storyWindow = null;
   });
-  if (input.nextBeat !== null) {
+  if (input.nextBeat !== undefined && input.nextBeat !== null) {
     nextBeat = beginSceneBeat(input.nextBeat);
   }
   return {
     message: nextBeat === null ? "Scene Beat 已完成。" : `Scene Beat 已切换：${nextBeat.message}`,
-    resolvedObjectiveIds: input.resolvedObjectiveIds,
+    resolvedObjectiveIds,
     nextBeat,
     memoryPrompt,
   };
@@ -320,20 +322,58 @@ function resolveObjectiveIds(
   objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
   ids: readonly SceneObjectiveId[],
   summaries: readonly string[],
+  resolveAllObjectives: boolean,
 ): SceneObjectiveId[] {
+  if (resolveAllObjectives) {
+    return objectives.map((objective) => objective.id);
+  }
   const resolved = new Set<SceneObjectiveId>();
   for (const id of ids) {
     resolved.add(assertNonEmptyString(id, "resolvedObjectiveIds[]"));
   }
   for (const summary of summaries) {
     const normalizedSummary = assertNonEmptyString(summary, "resolvedObjectiveSummaries[]");
-    const objective = objectives.find((entry) => entry.summary === normalizedSummary);
+    const objective = findObjectiveBySummary(objectives, normalizedSummary);
     if (objective === undefined) {
-      throw new Error(`目标摘要不存在: ${normalizedSummary}`);
+      throw new Error(formatObjectiveSummaryNotFoundError(normalizedSummary, objectives));
     }
     resolved.add(objective.id);
   }
   return [...resolved];
+}
+
+function findObjectiveBySummary(
+  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
+  summary: string,
+): { id: SceneObjectiveId; summary: string } | undefined {
+  const exact = objectives.find((entry) => entry.summary === summary);
+  if (exact !== undefined) {
+    return exact;
+  }
+  return objectives.find(
+    (entry) => entry.summary.includes(summary) || summary.includes(entry.summary),
+  );
+}
+
+function formatUnresolvedObjectivesError(
+  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
+): string {
+  return [
+    "无法 transition beat：仍有未解决目标。",
+    "可用 resolvedObjectiveSummaries 或 resolveAllObjectives=true。",
+    ...objectives.map((objective) => `- ${objective.id}: ${objective.summary}`),
+  ].join("\n");
+}
+
+function formatObjectiveSummaryNotFoundError(
+  summary: string,
+  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
+): string {
+  return [
+    `目标摘要不存在: ${summary}`,
+    "可用目标摘要：",
+    ...objectives.map((objective) => `- ${objective.summary}`),
+  ].join("\n");
 }
 
 function assertBeatObjectives(objectives: readonly string[]): void {

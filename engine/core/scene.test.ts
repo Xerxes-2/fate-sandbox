@@ -177,6 +177,59 @@ void test("transitionSceneBeat refuses unresolved objectives", () => {
   );
 });
 
+void test("transitionSceneBeat can resolve all objectives", () => {
+  resetState();
+  beginSceneBeat({
+    storyWindow: {
+      currentArcId: "B2",
+      currentBeatId: "wrapup",
+      title: "收尾",
+      allowedActions: ["撤退"],
+      forbiddenEscalations: ["不得开战"],
+      completionCriteria: ["安全离开"],
+      nextBeatHints: [],
+    },
+    objectives: ["撤退", "确认无人追踪"],
+    reason: "设置 beat",
+  });
+
+  const result = transitionSceneBeat({
+    completedBeatId: "wrapup",
+    resolveAllObjectives: true,
+    reason: "已完成全部目标",
+  });
+
+  const state = getState();
+  assert.equal(state.public.scene.storyWindow, null);
+  assert.equal(result.resolvedObjectiveIds.length, 2);
+});
+
+void test("transitionSceneBeat accepts partial objective summaries", () => {
+  resetState();
+  beginSceneBeat({
+    storyWindow: {
+      currentArcId: "B2",
+      currentBeatId: "trace",
+      title: "痕迹调查",
+      allowedActions: ["检查排水沟"],
+      forbiddenEscalations: ["不得深入核心"],
+      completionCriteria: ["确认痕迹性质"],
+      nextBeatHints: [],
+    },
+    objectives: ["沿魔力波动外围用構造把握检查地面、墙角和排水沟"],
+    reason: "设置 beat",
+  });
+
+  const result = transitionSceneBeat({
+    completedBeatId: "trace",
+    resolvedObjectiveSummaries: ["检查地面、墙角和排水沟"],
+    reason: "痕迹检查完成",
+  });
+
+  assert.equal(getState().public.scene.storyWindow, null);
+  assert.equal(result.resolvedObjectiveIds.length, 1);
+});
+
 void test("transitionSceneBeat clears completed window and can open next beat", () => {
   resetState();
   const beat = beginSceneBeat({

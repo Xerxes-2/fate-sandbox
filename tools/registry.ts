@@ -116,7 +116,14 @@ export function registerAllTools(pi: ExtensionAPI): void {
       elapsedMinutes: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
       completedBeatId: Type.Optional(Type.String()),
       resolvedObjectiveIds: Type.Optional(Type.Array(Type.String())),
-      resolvedObjectiveSummaries: Type.Optional(Type.Array(Type.String())),
+      resolvedObjectiveSummaries: Type.Optional(
+        Type.Array(Type.String({ description: "可用目标原文或片段；不必记 objective id" })),
+      ),
+      resolveAllObjectives: Type.Optional(
+        Type.Boolean({
+          description: "当前 beat 的 completionCriteria 已全部满足时设为 true，一次解决所有目标",
+        }),
+      ),
       nextBeat: Type.Optional(Type.Union([Type.Unknown(), Type.Null()])),
       memoryPrompt: Type.Optional(Type.String()),
       reason: Type.String(),
