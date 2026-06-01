@@ -48,8 +48,6 @@ void test("updateActorCondition updates non-servant magecraft circuits", () => {
       abilities: [],
       relationshipToProtagonist: { stance: "neutral", summary: "测试" },
     },
-    present: true,
-    ally: false,
     reason: "测试",
   });
 
@@ -166,8 +164,6 @@ void test("add-tracked-item creates item in trackedItems map", () => {
       abilities: [],
       relationshipToProtagonist: { stance: "self", summary: "测试" },
     },
-    present: true,
-    ally: true,
     reason: "测试 setup",
   });
 

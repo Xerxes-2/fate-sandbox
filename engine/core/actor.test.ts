@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { upsertActor } from "./actor";
+import { setScenePresence, upsertActor } from "./actor";
 import { buildGmBrief } from "./gm-brief";
 import {
   configureActorSecrets,
@@ -28,8 +28,6 @@ void test("upsertActor adds an entered NPC from safe public projection", () => {
       relationshipToProtagonist: { stance: "friendly", summary: "同校学生。" },
       ordinaryItems: [],
     },
-    present: true,
-    ally: false,
     reason: "NPC enters scene during smoke test",
   });
 
@@ -40,7 +38,7 @@ void test("upsertActor adds an entered NPC from safe public projection", () => {
   assert.equal(actor?.magecraft, null);
   assert.deepEqual(actor?.abilities, []);
   assert.deepEqual(actor?.identity.lockedFacts, []);
-  assert.ok(publicState.scene.presentActorIds.includes("tohsaka-rin"));
+  assert.equal(publicState.scene.presentActorIds.includes("tohsaka-rin"), false);
 });
 
 void test("upsertActor rejects non-protagonist setup", () => {
@@ -68,8 +66,6 @@ void test("upsertActor rejects non-protagonist setup", () => {
           abilities: [],
           relationshipToProtagonist: { stance: "neutral", summary: "测试" },
         },
-        present: true,
-        ally: false,
         reason: "测试",
       }),
     /setup-protagonist 只能写入 actor.id=protagonist/,
@@ -113,8 +109,6 @@ void test("upsertActor can replace protagonist setup skeleton", () => {
       ],
       relationshipToProtagonist: { stance: "self", summary: "玩家本人。" },
     },
-    present: true,
-    ally: false,
     reason: "setup confirmed protagonist identity",
   });
 
@@ -236,8 +230,6 @@ function upsertTestCaster(): void {
       manaSupply: "sufficient",
       currentOrder: "守卫柳洞寺山门",
     },
-    present: false,
-    ally: false,
     reason: "测试从者入场",
   });
 }
@@ -285,8 +277,6 @@ void test("upsert-servant writes servant form with full parameter block", () => 
       manaSupply: "sufficient",
       currentOrder: "守卫柳洞寺山门",
     },
-    present: false,
-    ally: false,
     reason: "测试从者入场",
   });
 
@@ -307,47 +297,34 @@ void test("upsert-servant writes servant form with full parameter block", () => 
   assert.equal(caster?.magecraft, null);
 });
 
-void test("upsertActor removes non-present actors from current scene", () => {
+void test("setScenePresence updates current scene independently from actor registry", () => {
   resetState();
   upsertTestCaster();
-  upsertActor({
-    kind: "upsert-servant",
-    servant: {
-      id: "assassin",
-      displayName: "Assassin",
-      publicIdentity: "柳洞寺山门守卫",
-      apparentAge: "青年",
-      outfit: { label: "淡紫色和服", details: "腰间佩有超长日本刀。" },
-      demeanor: "从容、古风",
-      className: "Assassin",
-      trueNameDisplay: "Assassin",
-      trueNameStatus: "hidden",
-      parameters: {
-        strength: "C-",
-        endurance: "E",
-        agility: "A+",
-        mana: "E",
-        luck: "A",
-        noblePhantasm: "E",
-      },
-      classSkills: [],
-      personalSkills: [],
-      noblePhantasms: [],
-      spiritualCore: 100,
-      mana: 70,
-      spiritualCondition: "稳定",
-      masterActorId: null,
-      masterName: "Caster",
-      contractStatus: "stable",
-      manaSupply: "sufficient",
-      currentOrder: "守卫柳洞寺山门",
-    },
-    present: false,
-    ally: false,
-    reason: "测试非当前场景从者不应残留 presentActorIds",
+
+  const result = setScenePresence({
+    presentActorIds: ["protagonist", "caster"],
+    allyActorIds: ["caster"],
+    reason: "Caster enters the scene as temporary ally",
   });
 
-  assert.deepEqual(getState().public.scene.presentActorIds, ["protagonist"]);
+  const publicState = getPublicState();
+  assert.equal(result.message, "场景在场 actor 已更新。");
+  assert.deepEqual(publicState.scene.presentActorIds, ["protagonist", "caster"]);
+  assert.deepEqual(publicState.allyActorIds, ["caster"]);
+});
+
+void test("setScenePresence rejects unknown actors", () => {
+  resetState();
+
+  assert.throws(
+    () =>
+      setScenePresence({
+        presentActorIds: ["protagonist", "caster"],
+        allyActorIds: [],
+        reason: "unknown actor should fail",
+      }),
+    /presentActorIds 包含不存在的 actor: caster/,
+  );
 });
 
 void test("configureActorSecrets enables hidden reactions for non-servant NPCs", () => {
@@ -366,8 +343,6 @@ void test("configureActorSecrets enables hidden reactions for non-servant NPCs",
       relationshipToProtagonist: { stance: "friendly", summary: "常来卫宫宅帮忙的后辈。" },
       ordinaryItems: ["卫宫宅备用钥匙"],
     },
-    present: true,
-    ally: false,
     reason: "测试非从者 NPC hidden reaction",
   });
 
@@ -455,8 +430,6 @@ void test("configureServantSecrets accepts non-noble-phantasm sword techniques",
       manaSupply: "sufficient",
       currentOrder: "守卫柳洞寺山门",
     },
-    present: false,
-    ally: false,
     reason: "测试非宝具剑技隐藏槽位",
   });
 

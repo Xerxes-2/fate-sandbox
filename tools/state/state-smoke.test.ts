@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import { hydrateStateFromSessionEntries } from "../../engine/core/session-hydration";
 import { cloneState, resetState, sessionKey, toSessionEntry } from "../../engine/core/state";
 import { upsertActorTool } from "./upsert-actor";
+import { setScenePresenceTool } from "./set-scene-presence";
 import { updateActorConditionTool } from "./update-actor-condition";
 import { updateEconomyTool } from "./update-economy";
 import { updateSceneTool } from "./update-scene";
@@ -105,16 +106,21 @@ describe("Fate state tool-level smoke flow", () => {
           manaSupply: "sufficient",
           currentOrder: "守卫柳洞寺山门",
         },
-        present: false,
-        ally: false,
         reason: "tool smoke test servant setup",
       },
       sessionManager,
     );
 
     assert.match(textOf(result), /从者已写入：caster/);
-    assert.equal(cloneState().public.actors["caster"]?.servantForm?.identity.className, "Caster");
-    assert.equal(sessionManager.entries.length, 1);
+    const presenceResult = setScenePresenceTool(
+      { presentActorIds: ["protagonist", "caster"], allyActorIds: [], reason: "Caster enters scene" },
+      sessionManager,
+    );
+    assert.match(textOf(presenceResult), /场景在场 actor 已更新/);
+    const state = cloneState();
+    assert.equal(state.public.actors["caster"]?.servantForm?.identity.className, "Caster");
+    assert.deepEqual(state.public.scene.presentActorIds, ["protagonist", "caster"]);
+    assert.equal(sessionManager.entries.length, 2);
   });
 
   it("ignores old incompatible session entries until a valid Fate state appears", () => {

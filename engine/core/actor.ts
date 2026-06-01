@@ -14,8 +14,6 @@ import { assertNonEmptyString, updateState } from "./state";
 
 export interface UpsertActorInput {
   actor: PublicActorState;
-  present: boolean;
-  ally: boolean;
   reason: string;
 }
 
@@ -63,26 +61,41 @@ export type ActorRegistryInput =
   | {
       kind: "setup-protagonist";
       actor: PublicActorState;
-      present: boolean;
-      ally: boolean;
       reason: string;
     }
   | {
       kind: "upsert-public-npc";
       npc: PublicNpcInput;
-      present: boolean;
-      ally: boolean;
       reason: string;
     }
   | {
       kind: "upsert-servant";
       servant: ServantInput;
-      present: boolean;
-      ally: boolean;
       reason: string;
     };
 
 export interface UpsertActorResult {
+  message: string;
+}
+
+export function setScenePresence(input: ScenePresenceInput): ScenePresenceResult {
+  assertNonEmptyString(input.reason, "reason");
+  updateState((draft) => {
+    assertKnownActors(draft.public.actors, input.presentActorIds, "presentActorIds");
+    assertKnownActors(draft.public.actors, input.allyActorIds, "allyActorIds");
+    draft.public.scene.presentActorIds = uniqueActorIds(input.presentActorIds);
+    draft.public.allyActorIds = uniqueActorIds(input.allyActorIds);
+  });
+  return { message: "场景在场 actor 已更新。" };
+}
+
+export interface ScenePresenceInput {
+  presentActorIds: ActorId[];
+  allyActorIds: ActorId[];
+  reason: string;
+}
+
+export interface ScenePresenceResult {
   message: string;
 }
 
@@ -106,7 +119,7 @@ function upsertProtagonist(
   if (input.actor.id !== "protagonist") {
     throw new Error("setup-protagonist 只能写入 actor.id=protagonist。");
   }
-  writeActor(input.actor, input.present, input.ally);
+  writeActor(input.actor);
   return { message: `actor 已写入：${input.actor.id}。` };
 }
 
@@ -115,7 +128,7 @@ function upsertPublicNpc(
 ): UpsertActorResult {
   assertNonEmptyString(input.reason, "reason");
   const actor = toSafePublicActor(input.npc);
-  writeActor(actor, input.present, input.ally);
+  writeActor(actor);
   return { message: `public npc 已写入：${actor.id}。` };
 }
 
@@ -187,30 +200,13 @@ function upsertServant(
     },
   };
 
-  writeActor(actor, input.present, input.ally);
+  writeActor(actor);
   return { message: `从者已写入：${sv.id} (${sv.className})。` };
 }
 
-function writeActor(actor: PublicActorState, present: boolean, ally: boolean): void {
+function writeActor(actor: PublicActorState): void {
   updateState((draft) => {
     draft.public.actors[actor.id] = actor;
-    if (present) {
-      draft.public.scene.presentActorIds = appendUniqueActorId(
-        draft.public.scene.presentActorIds,
-        actor.id,
-      );
-    } else {
-      draft.public.scene.presentActorIds = draft.public.scene.presentActorIds.filter(
-        (presentActorId) => presentActorId !== actor.id,
-      );
-    }
-    if (ally) {
-      draft.public.allyActorIds = appendUniqueActorId(draft.public.allyActorIds, actor.id);
-    } else {
-      draft.public.allyActorIds = draft.public.allyActorIds.filter(
-        (allyActorId) => allyActorId !== actor.id,
-      );
-    }
   });
 }
 
@@ -257,6 +253,18 @@ function toSafePublicActor(npc: PublicNpcInput): PublicActorState {
   }
 }
 
-function appendUniqueActorId(ids: ActorId[], actorId: ActorId): ActorId[] {
-  return ids.includes(actorId) ? ids : [...ids, actorId];
+function assertKnownActors(
+  actors: Readonly<Record<ActorId, unknown>>,
+  actorIds: readonly ActorId[],
+  fieldName: string,
+): void {
+  for (const actorId of actorIds) {
+    if (actors[actorId] === undefined) {
+      throw new Error(`${fieldName} 包含不存在的 actor: ${actorId}`);
+    }
+  }
+}
+
+function uniqueActorIds(actorIds: readonly ActorId[]): ActorId[] {
+  return [...new Set(actorIds.map((actorId) => assertNonEmptyString(actorId, "actorId")))];
 }

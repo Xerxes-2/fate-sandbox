@@ -1,5 +1,4 @@
 import type { ActorRegistryInput, PublicNpcInput, ServantInput } from "../../engine/core/actor";
-import type { PublicActorState } from "../../engine/core/state";
 
 import { upsertActor } from "../../engine/core/actor";
 import { persistCurrentState } from "../../engine/core/state-persistence";
@@ -23,25 +22,19 @@ function assertActorRegistryInput(params: unknown): ActorRegistryInput {
     case "setup-protagonist":
       return {
         kind,
-        actor: assertRecord(params["actor"], "actor") as unknown as PublicActorState,
-        present: params["present"] === true,
-        ally: params["ally"] === true,
+        actor: assertRecord(params["actor"], "actor"),
         reason: assertString(params["reason"], "reason"),
-      };
+      } as unknown as ActorRegistryInput; // safe: actor engine validates protagonist id and state schema before persistence.
     case "upsert-public-npc":
       return {
         kind,
         npc: assertRecord(params["npc"], "npc") as unknown as PublicNpcInput,
-        present: params["present"] === true,
-        ally: params["ally"] === true,
         reason: assertString(params["reason"], "reason"),
       };
     case "upsert-servant":
       return {
         kind,
         servant: assertRecord(params["servant"], "servant") as unknown as ServantInput,
-        present: params["present"] === true,
-        ally: params["ally"] === true,
         reason: assertString(params["reason"], "reason"),
       };
     default:

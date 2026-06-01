@@ -16,6 +16,7 @@ import { recordMemoryTool } from "./state/record-memory";
 import { recordOffscreenEventTool } from "./state/record-offscreen-event";
 import { revealSecretTool } from "./state/reveal-secret";
 import { sceneBeatTool } from "./state/scene-beat";
+import { setScenePresenceTool } from "./state/set-scene-presence";
 import { updateActorConditionTool } from "./state/update-actor-condition";
 import { updateEconomyTool } from "./state/update-economy";
 import { updateSceneTool } from "./state/update-scene";
@@ -332,6 +333,28 @@ export function registerAllTools(pi: ExtensionAPI): void {
 
   pi.registerTool({
     label: toolLabel,
+    name: "set_scene_presence",
+    description:
+      "更新当前场景在场 actor 与同行者；actor materialization 与 physical presence 分离，避免 upsert_actor 兼做入场/离场。\n\n" +
+      "【必须调用的场景】\n" +
+      "- 已存在 actor 入场、离场、同行者变化\n" +
+      "- 使用 upsert_actor materialize 新 actor 后，需要声明其是否在当前 scene\n" +
+      "- 场景切换但不需要完整 scene_beat 时\n\n" +
+      "【严禁的行为】\n" +
+      "- 写入不存在的 actorId；先用 upsert_actor materialize Player-Safe Skeleton\n" +
+      "- 用 upsert_actor 的 actor registry 语义暗示在场变化\n" +
+      "- 把秘密角色或 Hidden Fact 暴露到 Public Actor Registry",
+    parameters: Type.Object({
+      presentActorIds: Type.Array(Type.String()),
+      allyActorIds: Type.Array(Type.String()),
+      reason: Type.String(),
+    }),
+    execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
+      setScenePresenceTool(params, ctx.sessionManager),
+  });
+
+  pi.registerTool({
+    label: toolLabel,
     name: "upsert_actor",
     description:
       "将 protagonist setup、玩家可见 NPC 摘要、或从者完整数据写入 public actor registry。\n\n" +
@@ -352,8 +375,6 @@ export function registerAllTools(pi: ExtensionAPI): void {
       actor: Type.Optional(publicActorSchema()),
       npc: Type.Optional(publicNpcSchema()),
       servant: Type.Optional(servantSchema()),
-      present: Type.Boolean({ description: "是否加入当前 scene.presentActorIds" }),
-      ally: Type.Boolean({ description: "是否加入 allyActorIds" }),
       reason: Type.String(),
     }),
     execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
