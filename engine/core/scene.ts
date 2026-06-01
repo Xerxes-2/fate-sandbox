@@ -5,6 +5,7 @@ import type {
   SceneThreatId,
   SceneThreatSeverity,
   SituationKind,
+  State,
   StoryBeatId,
   StoryWindowState,
 } from "./state";
@@ -28,7 +29,8 @@ export type SceneEvent =
 
 export type SceneBeatTurnEvent =
   | { kind: "begin-beat"; input: SceneBeatInput }
-  | { kind: "transition-beat"; input: SceneBeatTransitionInput };
+  | { kind: "transition-beat"; input: SceneBeatTransitionInput }
+  | { kind: "move-location"; input: SceneBeatMoveInput };
 
 export interface SceneBeatInput {
   storyWindow: StoryWindowState;
@@ -54,6 +56,18 @@ export interface SceneBeatTransitionInput {
   reason: string;
 }
 
+export interface SceneBeatMoveInput {
+  storyWindow: StoryWindowState;
+  objectives: string[];
+  threats?: SceneBeatThreatInput[];
+  presentActorIds?: ActorId[];
+  allyActorIds?: ActorId[];
+  situation?: SituationKind;
+  location: LocationState;
+  elapsedMinutes: number;
+  reason: string;
+}
+
 export interface SceneEventResult {
   message: string;
 }
@@ -74,41 +88,76 @@ export interface SceneBeatTransitionResult {
 export function beginSceneBeat(input: SceneBeatInput): SceneBeatResult {
   assertNonEmptyString(input.reason, "reason");
   assertBeatObjectives(input.objectives);
+  return beginSceneBeatUnchecked(input);
+}
+
+export function moveToSceneBeat(input: SceneBeatMoveInput): SceneBeatResult {
+  const elapsedMinutes = assertNonNegativeInteger(input.elapsedMinutes, "elapsedMinutes");
+  assertNonEmptyString(input.reason, "reason");
+  assertBeatObjectives(input.objectives);
   const objectiveIds: SceneObjectiveId[] = [];
   const threatIds: SceneThreatId[] = [];
   updateState((draft) => {
-    draft.public.scene.storyWindow = input.storyWindow;
-    if (input.situation !== undefined) {
-      draft.public.scene.situation = input.situation;
-    }
-    if (input.presentActorIds !== undefined) {
-      assertActorsExist(draft.public.actors, input.presentActorIds, "presentActorIds");
-      draft.public.scene.presentActorIds = uniqueActorIds(input.presentActorIds);
-    }
-    if (input.allyActorIds !== undefined) {
-      assertActorsExist(draft.public.actors, input.allyActorIds, "allyActorIds");
-      draft.public.allyActorIds = uniqueActorIds(input.allyActorIds);
-    }
-    draft.public.scene.objectives = input.objectives.map((summary) => {
-      const id = createId("objective");
-      objectiveIds.push(id);
-      return { id, summary: assertNonEmptyString(summary, "objectives[]"), status: "active" };
-    });
-    draft.public.scene.threats = (input.threats ?? []).map((threat) => {
-      const id = createId("threat");
-      threatIds.push(id);
-      return {
-        id,
-        summary: assertNonEmptyString(threat.summary, "threat.summary"),
-        severity: threat.severity,
-      };
-    });
+    const nextTime = Temporal.Instant.from(draft.public.clock.currentAt)
+      .add({ minutes: elapsedMinutes })
+      .toString();
+    draft.public.clock.currentAt = nextTime;
+    draft.public.scene.lastResolvedAt = nextTime;
+    draft.public.scene.location = input.location;
+    beginSceneBeatOnDraft(draft, input, objectiveIds, threatIds);
+  });
+  return {
+    message: `已移动并开始 Scene Beat：${input.storyWindow.title}；经过 ${elapsedMinutes} 分钟；目标 ${objectiveIds.length} 个。`,
+    objectiveIds,
+    threatIds,
+  };
+}
+
+function beginSceneBeatUnchecked(input: SceneBeatInput): SceneBeatResult {
+  const objectiveIds: SceneObjectiveId[] = [];
+  const threatIds: SceneThreatId[] = [];
+  updateState((draft) => {
+    beginSceneBeatOnDraft(draft, input, objectiveIds, threatIds);
   });
   return {
     message: `Scene Beat 已开始：${input.storyWindow.title}；目标 ${objectiveIds.length} 个。`,
     objectiveIds,
     threatIds,
   };
+}
+
+function beginSceneBeatOnDraft(
+  draft: State,
+  input: SceneBeatInput,
+  objectiveIds: SceneObjectiveId[],
+  threatIds: SceneThreatId[],
+): void {
+  draft.public.scene.storyWindow = input.storyWindow;
+  if (input.situation !== undefined) {
+    draft.public.scene.situation = input.situation;
+  }
+  if (input.presentActorIds !== undefined) {
+    assertActorsExist(draft.public.actors, input.presentActorIds, "presentActorIds");
+    draft.public.scene.presentActorIds = uniqueActorIds(input.presentActorIds);
+  }
+  if (input.allyActorIds !== undefined) {
+    assertActorsExist(draft.public.actors, input.allyActorIds, "allyActorIds");
+    draft.public.allyActorIds = uniqueActorIds(input.allyActorIds);
+  }
+  draft.public.scene.objectives = input.objectives.map((summary) => {
+    const id = createId("objective");
+    objectiveIds.push(id);
+    return { id, summary: assertNonEmptyString(summary, "objectives[]"), status: "active" };
+  });
+  draft.public.scene.threats = (input.threats ?? []).map((threat) => {
+    const id = createId("threat");
+    threatIds.push(id);
+    return {
+      id,
+      summary: assertNonEmptyString(threat.summary, "threat.summary"),
+      severity: threat.severity,
+    };
+  });
 }
 
 export function transitionSceneBeat(input: SceneBeatTransitionInput): SceneBeatTransitionResult {

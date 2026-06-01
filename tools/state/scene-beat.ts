@@ -1,16 +1,17 @@
-import type { SceneBeatInput, SceneBeatTransitionInput } from "../../engine/core/scene";
+import type {
+  SceneBeatInput,
+  SceneBeatMoveInput,
+  SceneBeatTransitionInput,
+} from "../../engine/core/scene";
 
-import { beginSceneBeat, transitionSceneBeat } from "../../engine/core/scene";
+import { beginSceneBeat, moveToSceneBeat, transitionSceneBeat } from "../../engine/core/scene";
 import { persistCurrentState } from "../../engine/core/state-persistence";
 import { writeStateToDetails } from "../../engine/core/state";
 import { textResult, type ToolResult } from "../runtime/tool-result";
 
 export function sceneBeatTool(params: unknown, sessionManager: unknown): ToolResult {
   const event = assertSceneBeatToolInput(params);
-  const result =
-    event.kind === "begin-beat"
-      ? beginSceneBeat(event.input)
-      : transitionSceneBeat(event.input);
+  const result = applySceneBeatToolInput(event);
   persistCurrentState(sessionManager);
   const details: Record<string, unknown> = { result };
   writeStateToDetails(details);
@@ -19,7 +20,21 @@ export function sceneBeatTool(params: unknown, sessionManager: unknown): ToolRes
 
 type SceneBeatToolInput =
   | { kind: "begin-beat"; input: SceneBeatInput }
-  | { kind: "transition-beat"; input: SceneBeatTransitionInput };
+  | { kind: "transition-beat"; input: SceneBeatTransitionInput }
+  | { kind: "move-location"; input: SceneBeatMoveInput };
+
+function applySceneBeatToolInput(
+  event: SceneBeatToolInput,
+): ReturnType<typeof beginSceneBeat> | ReturnType<typeof transitionSceneBeat> {
+  switch (event.kind) {
+    case "begin-beat":
+      return beginSceneBeat(event.input);
+    case "transition-beat":
+      return transitionSceneBeat(event.input);
+    case "move-location":
+      return moveToSceneBeat(event.input);
+  }
+}
 
 function assertSceneBeatToolInput(params: unknown): SceneBeatToolInput {
   if (!isRecord(params)) {
@@ -31,6 +46,8 @@ function assertSceneBeatToolInput(params: unknown): SceneBeatToolInput {
       return { kind, input: params as unknown as SceneBeatInput };
     case "transition-beat":
       return { kind, input: params as unknown as SceneBeatTransitionInput };
+    case "move-location":
+      return { kind, input: params as unknown as SceneBeatMoveInput };
     default:
       throw new Error(`非法 scene_beat.kind: ${String(kind)}。`);
   }

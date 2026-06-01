@@ -80,6 +80,49 @@ void test("commitTurn warns when a story window has no active objectives", () =>
   assert.match(result.warnings[0] ?? "", /没有未解决的 Scene Objective/);
 });
 
+void test("commitTurn can move into a scene beat", () => {
+  resetState();
+
+  const result = commitTurn({
+    summary: "前往柳洞寺外围并开启侦察。",
+    events: [
+      {
+        kind: "scene-beat",
+        event: {
+          kind: "move-location",
+          input: {
+            storyWindow: {
+              currentArcId: "B1",
+              currentBeatId: "scout",
+              title: "柳洞寺外围侦察",
+              allowedActions: ["观察", "撤退"],
+              forbiddenEscalations: ["不得交战"],
+              completionCriteria: ["观察完成", "安全撤回"],
+              nextBeatHints: [],
+            },
+            objectives: ["观察结界", "安全撤回"],
+            location: {
+              region: "冬木市",
+              site: "円藏山",
+              detail: "柳洞寺外围·山道",
+              boundary: "normal",
+            },
+            elapsedMinutes: 25,
+            situation: "investigation",
+            reason: "从穗群原学园前往柳洞寺外围侦察",
+          },
+        },
+      },
+    ],
+  });
+
+  const state = getState();
+  assert.equal(state.public.clock.currentAt, "2004-01-30T07:25:00.000Z");
+  assert.equal(state.public.scene.location.detail, "柳洞寺外围·山道");
+  assert.equal(state.public.scene.storyWindow?.currentBeatId, "scout");
+  assert.equal(result.results.length, 1);
+});
+
 void test("commitTurn can transition scene beat by objective summaries", () => {
   resetState();
 

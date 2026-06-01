@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { beginSceneBeat, transitionSceneBeat, updateScene } from "./scene";
+import { beginSceneBeat, moveToSceneBeat, transitionSceneBeat, updateScene } from "./scene";
 import { getState, resetState } from "./state";
 
 void test("updateScene moves location and advances clock", () => {
@@ -89,6 +89,42 @@ void test("beginSceneBeat creates window objectives threats and presence togethe
   assert.match(result.objectiveIds[0] ?? "", /^objective-\d+$/);
   assert.equal(result.threatIds.length, 1);
   assert.match(result.threatIds[0] ?? "", /^threat-\d+$/);
+});
+
+void test("moveToSceneBeat moves location advances clock and opens beat atomically", () => {
+  resetState();
+
+  const result = moveToSceneBeat({
+    storyWindow: {
+      currentArcId: "B1",
+      currentBeatId: "ryudou-scouting-approach",
+      title: "柳洞寺外围侦察",
+      allowedActions: ["观察山门", "安全撤回"],
+      forbiddenEscalations: ["不得触发佐佐木小次郎正面战"],
+      completionCriteria: ["确认结界", "安全撤回"],
+      nextBeatHints: [],
+    },
+    objectives: ["确认结界", "安全撤回"],
+    threats: [{ summary: "山门守卫", severity: "high" }],
+    presentActorIds: ["protagonist"],
+    situation: "investigation",
+    location: {
+      region: "冬木市",
+      site: "円藏山",
+      detail: "柳洞寺外围·山道",
+      boundary: "normal",
+    },
+    elapsedMinutes: 25,
+    reason: "从穗群原学园前往柳洞寺外围侦察",
+  });
+
+  const state = getState();
+  assert.equal(state.public.clock.currentAt, "2004-01-30T07:25:00.000Z");
+  assert.equal(state.public.scene.location.detail, "柳洞寺外围·山道");
+  assert.equal(state.public.scene.storyWindow?.currentBeatId, "ryudou-scouting-approach");
+  assert.equal(state.public.scene.objectives.length, 2);
+  assert.equal(result.objectiveIds.length, 2);
+  assert.equal(result.threatIds.length, 1);
 });
 
 void test("beginSceneBeat rejects beats without objectives", () => {

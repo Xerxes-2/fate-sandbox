@@ -13,7 +13,7 @@ import type { ServantFormEvent, ServantFormEventResult } from "./servant";
 import { updateActorCondition } from "./actor-condition";
 import { updateEconomy } from "./economy";
 import { recordMemory } from "./memory";
-import { beginSceneBeat, transitionSceneBeat, updateScene } from "./scene";
+import { beginSceneBeat, moveToSceneBeat, transitionSceneBeat, updateScene } from "./scene";
 import { updateServantForm } from "./servant";
 import { assertNonEmptyString, getState } from "./state";
 
@@ -66,10 +66,7 @@ function applyTurnEvent(event: TurnCommitEvent): TurnCommitEventResult {
     case "scene-beat":
       return {
         kind: event.kind,
-        result:
-          event.event.kind === "begin-beat"
-            ? beginSceneBeat(event.event.input)
-            : transitionSceneBeat(event.event.input),
+        result: applySceneBeatEvent(event.event),
       };
     case "actor-condition":
       return { kind: event.kind, result: updateActorCondition(event.event) };
@@ -81,6 +78,21 @@ function applyTurnEvent(event: TurnCommitEvent): TurnCommitEventResult {
       return { kind: event.kind, result: recordMemory(event.event) };
     default:
       throw new Error("unreachable turn commit event kind");
+  }
+}
+
+function applySceneBeatEvent(
+  event: SceneBeatTurnEvent,
+): SceneBeatResult | SceneBeatTransitionResult {
+  switch (event.kind) {
+    case "begin-beat":
+      return beginSceneBeat(event.input);
+    case "transition-beat":
+      return transitionSceneBeat(event.input);
+    case "move-location":
+      return moveToSceneBeat(event.input);
+    default:
+      throw new Error("unreachable scene beat event kind");
   }
 }
 

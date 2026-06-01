@@ -81,9 +81,10 @@ export function registerAllTools(pi: ExtensionAPI): void {
     label: toolLabel,
     name: "scene_beat",
     description:
-      "以剧情 beat 为单位管理 storyWindow、Scene Objective、即时威胁和在场 actor；避免用多个 update_scene 调用手动拼工作流。\n\n" +
+      "以剧情 beat 为单位管理 storyWindow、Scene Objective、即时威胁和在场 actor；可选同步移动和推进时间，避免用多个 update_scene 调用手动拼工作流。\n\n" +
       "【必须调用的场景】\n" +
       "- 复杂场景进入新 beat，需要同时建立剧情窗口和 1-5 个 Scene Objective\n" +
+      "- 进入复杂 beat 的同时发生地点移动或时间推进：使用 kind=move-location\n" +
       "- beat 完成，需要验证所有 Scene Objective 已解决后切换或清除窗口\n" +
       "- 场景切换伴随在场 actor / 同行者变化\n\n" +
       "【严禁的行为】\n" +
@@ -91,7 +92,11 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 未解决当前目标就 transition-beat\n" +
       "- 写入不存在的 actorId 或隐藏真相",
     parameters: Type.Object({
-      kind: Type.Union([Type.Literal("begin-beat"), Type.Literal("transition-beat")]),
+      kind: Type.Union([
+        Type.Literal("begin-beat"),
+        Type.Literal("transition-beat"),
+        Type.Literal("move-location"),
+      ]),
       storyWindow: Type.Optional(storyWindowSchema()),
       objectives: Type.Optional(
         Type.Array(Type.String({ description: "begin-beat 必填，1-5 个" })),
@@ -107,8 +112,11 @@ export function registerAllTools(pi: ExtensionAPI): void {
       presentActorIds: Type.Optional(Type.Array(Type.String())),
       allyActorIds: Type.Optional(Type.Array(Type.String())),
       situation: Type.Optional(situationSchema()),
+      location: Type.Optional(locationSchema()),
+      elapsedMinutes: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
       completedBeatId: Type.Optional(Type.String()),
       resolvedObjectiveIds: Type.Optional(Type.Array(Type.String())),
+      resolvedObjectiveSummaries: Type.Optional(Type.Array(Type.String())),
       nextBeat: Type.Optional(Type.Union([Type.Unknown(), Type.Null()])),
       memoryPrompt: Type.Optional(Type.String()),
       reason: Type.String(),
@@ -123,12 +131,13 @@ export function registerAllTools(pi: ExtensionAPI): void {
     description:
       "按领域事件更新时间、地点、场景态势、剧情窗口、目标、威胁。\n\n" +
       "【必须调用的场景】\n" +
-      "- 玩家移动地点或时间推进\n" +
+      "- 玩家移动地点或时间推进，且本轮没有其他状态变化\n" +
       "- 场景态势切换为日常、调查、社交、战斗、仪式、逃跑、整备\n" +
-      "- 复杂场景进入新 beat，需要锁定 allowedActions、forbiddenEscalations、completionCriteria\n" +
-      "- 新增/解决当前场景目标，或新增/清除即时威胁\n\n" +
+      "- 单个当前目标/威胁变化；复杂 beat 用 scene_beat，多事件收口用 commit_turn\n\n" +
       "【严禁的行为】\n" +
       "- 用叙事直接跳过时间或改变地点但不调用工具\n" +
+      "- 在复杂 beat 中手动拼 set-story-window/add-objective；改用 scene_beat\n" +
+      "- 一轮内同时移动、完成目标、记录 memory，却绕过 commit_turn\n" +
       "- 越过当前 storyWindow.forbiddenEscalations 或未满足 completionCriteria 就提前进入下一战斗\n" +
       "- 在场 NPC 尚未写入 actor registry 时调用 private_resolve 或把 actorId 编出来\n" +
       "- 把长期目标塞进 scene；场景结束后应写入 memory",
