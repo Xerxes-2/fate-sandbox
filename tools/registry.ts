@@ -880,9 +880,14 @@ function servantSchema(): ReturnType<typeof Type.Object> {
     spiritualCore: Type.Integer({ description: "0-100 灵核完整度" }),
     mana: Type.Integer({ description: "0-100 从者魔力余量" }),
     spiritualCondition: Type.String({ description: "灵核状态描述，如 完好" }),
-    masterActorId: Type.String({ description: "当前御主 actor id；不能留空，不能写 null" }),
-    masterName: Type.String({ description: "当前御主玩家可见姓名；不能留空" }),
-    contractStatus: Type.Union([Type.Literal("stable"), Type.Literal("weak")]),
+    masterActorId: Type.Union([Type.String(), Type.Null()]),
+    masterName: Type.Union([Type.String(), Type.Null()]),
+    contractStatus: Type.Union([
+      Type.Literal("stable"),
+      Type.Literal("weak"),
+      Type.Literal("cut"),
+      Type.Literal("masterless"),
+    ]),
     manaSupply: Type.Union([
       Type.Literal("sufficient"),
       Type.Literal("strained"),
@@ -1068,9 +1073,14 @@ function servantFormSchema(): ReturnType<typeof Type.Object> {
 
 function servantContractSchema(): ReturnType<typeof Type.Object> {
   return Type.Object({
-    masterActorId: Type.String({ description: "当前御主 actor id；不能留空，不能写 null" }),
-    masterName: Type.String({ description: "当前御主玩家可见姓名；不能留空" }),
-    status: Type.Union([Type.Literal("stable"), Type.Literal("weak")]),
+    masterActorId: Type.Union([Type.String(), Type.Null()]),
+    masterName: Type.Union([Type.String(), Type.Null()]),
+    status: Type.Union([
+      Type.Literal("stable"),
+      Type.Literal("weak"),
+      Type.Literal("cut"),
+      Type.Literal("masterless"),
+    ]),
     manaSupply: Type.Union([
       Type.Literal("sufficient"),
       Type.Literal("strained"),

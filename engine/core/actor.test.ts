@@ -284,9 +284,9 @@ function upsertTestCaster(): void {
       spiritualCore: 100,
       mana: 90,
       spiritualCondition: "完好",
-      masterActorId: "kuzuki-souichirou",
+      masterActorId: null,
       masterName: "葛木宗一郎",
-      contractStatus: "stable",
+      contractStatus: "masterless",
       manaSupply: "sufficient",
       currentOrder: "守卫柳洞寺山门",
     },
@@ -331,9 +331,9 @@ void test("upsert-servant writes servant form with full parameter block", () => 
       spiritualCore: 100,
       mana: 90,
       spiritualCondition: "完好",
-      masterActorId: "kuzuki-souichirou",
+      masterActorId: null,
       masterName: "葛木宗一郎",
-      contractStatus: "stable",
+      contractStatus: "masterless",
       manaSupply: "sufficient",
       currentOrder: "守卫柳洞寺山门",
     },
@@ -352,8 +352,7 @@ void test("upsert-servant writes servant form with full parameter block", () => 
   assert.equal(caster?.servantForm?.skills.classSkills[0]?.name, "阵地作成");
   assert.equal(caster?.servantForm?.noblePhantasms[0]?.name, "Rule Breaker");
   assert.equal(caster?.servantForm?.noblePhantasms[0]?.status, "hidden");
-  assert.equal(caster?.servantForm?.contract.status, "stable");
-  assert.equal(caster?.servantForm?.contract.masterActorId, "kuzuki-souichirou");
+  assert.equal(caster?.servantForm?.contract.status, "masterless");
   assert.equal(caster?.servantForm?.contract.masterName, "葛木宗一郎");
   assert.equal(caster?.magecraft, null);
 });
@@ -485,7 +484,7 @@ void test("configureServantSecrets accepts non-noble-phantasm sword techniques",
       spiritualCore: 100,
       mana: 70,
       spiritualCondition: "受山门束缚但灵基稳定",
-      masterActorId: "caster",
+      masterActorId: null,
       masterName: "Caster",
       contractStatus: "stable",
       manaSupply: "sufficient",

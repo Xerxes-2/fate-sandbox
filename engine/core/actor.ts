@@ -61,9 +61,9 @@ export interface ServantInput {
   spiritualCore: number;
   mana: number;
   spiritualCondition: string;
-  masterActorId: ActorId;
-  masterName: string;
-  contractStatus: "stable" | "weak";
+  masterActorId: ActorId | null;
+  masterName: string | null;
+  contractStatus: "stable" | "weak" | "cut" | "masterless";
   manaSupply: "sufficient" | "strained" | "starved";
   currentOrder: string;
   publicRoles?: ActorRole[];
@@ -179,9 +179,6 @@ function upsertServant(
   assertNonEmptyString(sv.id, "servant.id");
   assertNonEmptyString(sv.displayName, "servant.displayName");
   assertNonEmptyString(sv.publicIdentity, "servant.publicIdentity");
-
-  assertNonEmptyString(sv.masterActorId, "servant.masterActorId");
-  assertNonEmptyString(sv.masterName, "servant.masterName");
 
   const actor: PublicActorState = {
     id: sv.id,
