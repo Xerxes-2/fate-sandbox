@@ -15,6 +15,15 @@ void test("render prompt avoids priming the denied negation pattern", () => {
   }
 });
 
+void test("output contract blocks assistant delivery wrappers", () => {
+  const outputContract = readFileSync("agents/gm-output-contract.md", "utf-8");
+
+  assert.match(outputContract, /状态已经/u);
+  assert.match(outputContract, /现在为你写/u);
+  assert.match(outputContract, /Markdown 分割线/u);
+  assert.match(outputContract, /第一行必须是场景内/u);
+});
+
 void test("render prompt emphasizes relationship and body rendering", () => {
   const renderPrompt = readFileSync("agents/gm-render.md", "utf-8");
 
