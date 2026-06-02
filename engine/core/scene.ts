@@ -24,7 +24,12 @@ export type SceneEvent =
   | { kind: "set-story-window"; storyWindow: StoryWindowState; reason: string }
   | { kind: "clear-story-window"; reason: string }
   | { kind: "add-objective"; summary: string; reason: string }
-  | { kind: "resolve-objective"; objectiveId: SceneObjectiveId; reason: string }
+  | {
+      kind: "resolve-objective";
+      objectiveId?: SceneObjectiveId;
+      objectiveSummary?: string;
+      reason: string;
+    }
   | { kind: "add-threat"; summary: string; severity: SceneThreatSeverity; reason: string }
   | { kind: "clear-threat"; threatId: SceneThreatId; reason: string };
 
@@ -187,11 +192,12 @@ export function transitionSceneBeat(input: SceneBeatTransitionInput): SceneBeatT
         `无法 transition beat：当前 beat 是 ${currentWindow.currentBeatId}，不是 ${input.completedBeatId}。`,
       );
     }
+    const shouldResolveAll = shouldResolveAllObjectives(input);
     resolvedObjectiveIds = resolveObjectiveIds(
       draft.public.scene.objectives,
       input.resolvedObjectiveIds ?? [],
       input.resolvedObjectiveSummaries ?? [],
-      input.resolveAllObjectives === true,
+      shouldResolveAll,
     );
     for (const objectiveId of resolvedObjectiveIds) {
       const objective = draft.public.scene.objectives.find((entry) => entry.id === objectiveId);
@@ -300,17 +306,54 @@ function addObjective(event: Extract<SceneEvent, { kind: "add-objective" }>): Sc
   return { message: `目标已加入：${id}。` };
 }
 
+function shouldResolveAllObjectives(input: SceneBeatTransitionInput): boolean {
+  if (input.resolveAllObjectives === true) {
+    return true;
+  }
+  return (
+    input.resolveAllObjectives !== false &&
+    (input.resolvedObjectiveIds?.length ?? 0) === 0 &&
+    (input.resolvedObjectiveSummaries?.length ?? 0) === 0
+  );
+}
+
 function resolveObjective(
   event: Extract<SceneEvent, { kind: "resolve-objective" }>,
 ): SceneEventResult {
+  let resolvedObjectiveId: SceneObjectiveId;
   updateState((draft) => {
-    const objective = draft.public.scene.objectives.find((entry) => entry.id === event.objectiveId);
+    const objectiveId = resolveSingleObjectiveId(
+      draft.public.scene.objectives,
+      event.objectiveId,
+      event.objectiveSummary,
+    );
+    const objective = draft.public.scene.objectives.find((entry) => entry.id === objectiveId);
     if (objective === undefined) {
-      throw new Error(`目标不存在: ${event.objectiveId}`);
+      throw new Error(formatObjectiveIdNotFoundError(objectiveId, draft.public.scene.objectives));
     }
     objective.status = "resolved";
+    resolvedObjectiveId = objectiveId;
   });
-  return { message: `目标已解决：${event.objectiveId}。` };
+  return { message: `目标已解决：${resolvedObjectiveId!}。` };
+}
+
+function resolveSingleObjectiveId(
+  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
+  objectiveId: SceneObjectiveId | undefined,
+  objectiveSummary: string | undefined,
+): SceneObjectiveId {
+  if (objectiveId !== undefined) {
+    return assertNonEmptyString(objectiveId, "objectiveId");
+  }
+  if (objectiveSummary !== undefined) {
+    const normalizedSummary = assertNonEmptyString(objectiveSummary, "objectiveSummary");
+    const objective = findObjectiveBySummary(objectives, normalizedSummary);
+    if (objective === undefined) {
+      throw new Error(formatObjectiveSummaryNotFoundError(normalizedSummary, objectives));
+    }
+    return objective.id;
+  }
+  throw new Error(formatMissingObjectiveSelectorError(objectives));
 }
 
 function addThreat(event: Extract<SceneEvent, { kind: "add-threat" }>): SceneEventResult {
@@ -381,6 +424,28 @@ function formatUnresolvedObjectivesError(
   return [
     "无法 transition beat：仍有未解决目标。",
     "可用 resolvedObjectiveSummaries 或 resolveAllObjectives=true。",
+    ...objectives.map((objective) => `- ${objective.id}: ${objective.summary}`),
+  ].join("\n");
+}
+
+function formatObjectiveIdNotFoundError(
+  objectiveId: SceneObjectiveId,
+  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
+): string {
+  return [
+    `目标不存在: ${objectiveId}`,
+    "可用 objectiveId / objectiveSummary：",
+    ...objectives.map((objective) => `- ${objective.id}: ${objective.summary}`),
+  ].join("\n");
+}
+
+function formatMissingObjectiveSelectorError(
+  objectives: ReadonlyArray<{ id: SceneObjectiveId; summary: string }>,
+): string {
+  return [
+    "resolve-objective 必须提供 objectiveId 或 objectiveSummary。",
+    "如果当前 beat 已全部完成，优先使用 scene_beat transition-beat 或 commit_turn scene-beat transition-beat，并设置 resolveAllObjectives=true。",
+    "可用 objectiveId / objectiveSummary：",
     ...objectives.map((objective) => `- ${objective.id}: ${objective.summary}`),
   ].join("\n");
 }

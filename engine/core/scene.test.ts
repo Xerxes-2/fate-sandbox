@@ -298,6 +298,59 @@ void test("transitionSceneBeat accepts partial objective summaries", () => {
   assert.equal(result.resolvedObjectiveIds.length, 1);
 });
 
+void test("transitionSceneBeat resolves all objectives by default when no selectors are provided", () => {
+  resetState();
+  beginSceneBeat({
+    storyWindow: {
+      currentArcId: "B2",
+      currentBeatId: "night-scan",
+      title: "夜间魔力分布观察",
+      allowedActions: ["观察"],
+      forbiddenEscalations: ["不得开战"],
+      completionCriteria: ["观察完成", "局势确认"],
+      nextBeatHints: [],
+    },
+    objectives: ["观察冬木市夜晚的魔力分布", "确认当前圣杯战争的基本局势"],
+    reason: "设置 beat",
+  });
+
+  const result = transitionSceneBeat({
+    completedBeatId: "night-scan",
+    reason: "观察与确认都已完成",
+  });
+
+  const state = getState();
+  assert.equal(state.public.scene.storyWindow, null);
+  assert.equal(result.resolvedObjectiveIds.length, 2);
+});
+
+void test("updateScene resolves objectives by summary", () => {
+  resetState();
+  updateScene({ kind: "add-objective", summary: "确认当前圣杯战争的基本局势", reason: "测试" });
+
+  updateScene({
+    kind: "resolve-objective",
+    objectiveSummary: "圣杯战争的基本局势",
+    reason: "已确认局势",
+  });
+
+  assert.equal(getState().public.scene.objectives[0]?.status, "resolved");
+});
+
+void test("updateScene explains missing resolve-objective selector", () => {
+  resetState();
+  updateScene({ kind: "add-objective", summary: "确认当前圣杯战争的基本局势", reason: "测试" });
+
+  assert.throws(
+    () =>
+      updateScene({
+        kind: "resolve-objective",
+        reason: "模型漏填 objectiveId",
+      }),
+    /必须提供 objectiveId 或 objectiveSummary/,
+  );
+});
+
 void test("transitionSceneBeat clears completed window and can open next beat", () => {
   resetState();
   const beat = beginSceneBeat({

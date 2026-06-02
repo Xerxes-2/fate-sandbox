@@ -26,7 +26,7 @@ type WithOptionalReason<T> = T extends { reason: string }
   ? Omit<T, "reason"> & { reason?: string }
   : T;
 
-type SceneBeatTurnInputEvent =
+export type SceneBeatTurnInputEvent =
   | { kind: "begin-beat"; input: WithOptionalReason<SceneBeatInput> }
   | { kind: "transition-beat"; input: WithOptionalReason<SceneBeatTransitionInput> }
   | { kind: "move-location"; input: WithOptionalReason<SceneBeatMoveInput> }

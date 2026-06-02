@@ -273,6 +273,68 @@ void test("commitTurn routes scene set-scene-presence to scene presence", () => 
   assert.equal(result.results[0]?.kind, "scene-presence");
 });
 
+void test("commitTurn transition beat defaults to resolving all objectives", () => {
+  resetState();
+
+  commitTurn({
+    summary: "开启夜间观测 beat。",
+    events: [
+      {
+        kind: "scene-beat",
+        event: {
+          kind: "begin-beat",
+          input: {
+            storyWindow: {
+              currentArcId: "B1",
+              currentBeatId: "night-scan",
+              title: "夜间魔力分布观察",
+              allowedActions: ["观察", "确认局势"],
+              forbiddenEscalations: ["不得开战"],
+              completionCriteria: ["观察完成", "局势确认"],
+              nextBeatHints: [],
+            },
+            objectives: ["观察冬木市夜晚的魔力分布", "确认当前圣杯战争的基本局势"],
+            reason: "开始观测",
+          },
+        },
+      },
+    ],
+  });
+
+  const result = commitTurn({
+    summary: "观测完成后移动到新都。",
+    events: [
+      {
+        kind: "scene-beat",
+        event: {
+          kind: "transition-beat",
+          input: {
+            completedBeatId: "night-scan",
+          },
+        },
+      },
+      {
+        kind: "scene",
+        event: {
+          kind: "move-location",
+          location: {
+            region: "冬木市",
+            site: "新都",
+            detail: "商业街",
+            boundary: "normal",
+          },
+          elapsedMinutes: 45,
+        },
+      },
+    ],
+  });
+
+  const state = getState();
+  assert.equal(state.public.scene.storyWindow, null);
+  assert.equal(state.public.scene.location.detail, "商业街");
+  assert.equal(result.results.length, 2);
+});
+
 void test("commitTurn can transition scene beat by objective summaries", () => {
   resetState();
 

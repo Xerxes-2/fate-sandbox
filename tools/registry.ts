@@ -34,7 +34,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "【必须调用的场景】\n" +
       "- 一轮回复同时改变时间/地点、Scene Objective、伤势、物品、资金、记忆或从者资源中的多个状态\n" +
       "- 叙事已经发生购买、治疗、移动、揭示、消耗、战斗结算等 canonical Game State 变化\n" +
-      "- 复杂 beat 收口时需要按顺序提交 scene_beat transition-beat、移动、memory 等多个事件\n\n" +
+      "- 复杂 beat 收口时需要按顺序提交 scene_beat transition-beat、移动、memory 等多个事件；若本轮叙事已满足所有目标，transition-beat 可只填 completedBeatId，或显式 resolveAllObjectives=true\n\n" +
       "【严禁的行为】\n" +
       "- 把它当裸 patch；events 必须是已有领域事件\n" +
       "- 提交 Hidden Fact 到 Public Game State；秘密仍必须走 reveal_secret/private_resolve/record_offscreen_event\n" +
@@ -54,7 +54,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
           ]),
           event: Type.Unknown({
             description:
-              "对应领域事件载荷；scene-presence 使用 {presentActorIds, allyActorIds}，也可兼容 scene event kind='set-scene-presence'；scene-beat 使用 {kind:'begin-beat'|'transition-beat', input:{...}}",
+              "对应领域事件载荷；scene-presence 使用 {presentActorIds, allyActorIds}，也可兼容 scene event kind='set-scene-presence'；scene-beat 使用 {kind:'begin-beat'|'transition-beat'|'move-location', input:{...}}。transition-beat 未提供 resolvedObjectiveIds/resolvedObjectiveSummaries 时默认解决当前 beat 全部目标；resolve-objective 可用 objectiveSummary，不要传 undefined",
           }),
         }),
       ),
@@ -86,11 +86,11 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "【必须调用的场景】\n" +
       "- 复杂场景进入新 beat，需要同时建立剧情窗口和 1-5 个 Scene Objective\n" +
       "- 进入复杂 beat 的同时发生地点移动或时间推进：使用 kind=move-location\n" +
-      "- beat 完成，需要验证所有 Scene Objective 已解决后切换或清除窗口\n" +
+      "- beat 完成，需要验证所有 Scene Objective 已解决后切换或清除窗口；若本轮叙事已满足全部目标，transition-beat 可省略 resolvedObjectiveIds/resolvedObjectiveSummaries，默认全部解决\n" +
       "- 场景切换伴随在场 actor / 同行者变化\n\n" +
       "【严禁的行为】\n" +
       "- 用它记录长期目标；长期后果应写入 record_memory\n" +
-      "- 未解决当前目标就 transition-beat\n" +
+      "- 未解决当前目标就 transition-beat；不要用空数组表达未完成，若确实全部完成可省略 resolvedObjectiveIds/resolvedObjectiveSummaries 或填 resolveAllObjectives=true\n" +
       "- 写入不存在的 actorId 或隐藏真相",
     parameters: Type.Object({
       kind: Type.Union([
@@ -170,7 +170,12 @@ export function registerAllTools(pi: ExtensionAPI): void {
       summary: Type.Optional(
         Type.String({ description: "add-objective/add-threat 必填：目标或威胁的玩家可见摘要" }),
       ),
-      objectiveId: Type.Optional(Type.String()),
+      objectiveId: Type.Optional(
+        Type.String({ description: "resolve-objective 可选；不确定 id 时用 objectiveSummary" }),
+      ),
+      objectiveSummary: Type.Optional(
+        Type.String({ description: "resolve-objective 可选：目标原文或片段；不要传 undefined" }),
+      ),
       threatId: Type.Optional(Type.String()),
       severity: Type.Optional(threatSeveritySchema()),
       reason: Type.String(),
