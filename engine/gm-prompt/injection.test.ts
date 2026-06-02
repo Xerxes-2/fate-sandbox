@@ -39,6 +39,18 @@ void test("injectGmPromptMessages inserts slot-based prompt stack", () => {
   assert.match(texts[7] ?? "", /<output_contract>/);
 });
 
+void test("injectGmPromptMessages keeps conversation history contiguous before runtime slots", () => {
+  resetState();
+  const messages: UserMessage[] = [createUserMessage("第一句。"), createUserMessage("第二句。")];
+
+  const injected = injectGmPromptMessages<UserMessage>(messages);
+  const texts = injected.map((message) => textOf(message));
+
+  assert.equal(texts[3], "第一句。");
+  assert.equal(texts[4], "第二句。");
+  assert.match(texts[5] ?? "", /<mechanical_state>/);
+});
+
 function createUserMessage(text: string): UserMessage {
   return {
     role: "user",

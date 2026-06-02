@@ -58,22 +58,14 @@ export function buildSystemPrompt(baseSystemPrompt: string): string {
 export function injectGmPromptMessages<TMessage>(
   messages: ReadonlyArray<TMessage>,
 ): Array<TMessage | TextMessage> {
-  const lastUserIndex = findLastUserMessageIndex(messages);
-  if (lastUserIndex === -1) {
-    return [...messages];
-  }
-
-  const lastUserMessage = messages[lastUserIndex];
-  if (lastUserMessage === undefined) {
+  if (!hasUserMessage(messages)) {
     return [...messages];
   }
 
   return [
     ...buildSlotMessages("pre-history"),
-    ...messages.slice(0, lastUserIndex),
-    lastUserMessage,
+    ...messages,
     ...buildSlotMessages("pre-response"),
-    ...messages.slice(lastUserIndex + 1),
     ...buildSlotMessages("final-contract"),
   ];
 }
@@ -133,13 +125,8 @@ function buildPromptModuleMessage(module: PromptModule): TextMessage {
   return buildInjectedUserMessage(module.header, module.body);
 }
 
-function findLastUserMessageIndex(messages: ReadonlyArray<unknown>): number {
-  for (let index = messages.length - 1; index >= 0; index--) {
-    if (isMessageWithRole(messages[index], "user")) {
-      return index;
-    }
-  }
-  return -1;
+function hasUserMessage(messages: ReadonlyArray<unknown>): boolean {
+  return messages.some((message) => isMessageWithRole(message, "user"));
 }
 
 function buildInjectedUserMessage(header: string, body: string): TextMessage {
