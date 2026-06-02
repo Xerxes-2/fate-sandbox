@@ -24,9 +24,16 @@ export interface AdvanceTimeResult {
 export function advanceTime(_state: State, options: AdvanceTimeOptions): AdvanceTimeResult {
   const afterState = advanceClock(options.durationMinutes, options.reason);
   const after = afterState.public.clock.currentAt;
-  return { before: after, after, display: formatHumanTime(after).display };
+  return {
+    before: after,
+    after,
+    display: formatHumanTime(after, afterState.public.clock.timezone).display,
+  };
 }
 
-export function sameTokyoDate(leftIso: string, rightIso: string): boolean {
-  return formatHumanTime(leftIso).date === formatHumanTime(rightIso).date;
+export function sameGameDate(leftIso: string, rightIso: string, state: State): boolean {
+  return (
+    formatHumanTime(leftIso, state.public.clock.timezone).date ===
+    formatHumanTime(rightIso, state.public.clock.timezone).date
+  );
 }

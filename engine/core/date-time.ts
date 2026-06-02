@@ -1,17 +1,9 @@
+import type { TimeZoneId } from "./state";
+
 import { Temporal } from "@js-temporal/polyfill";
 
-const GAME_TIME_ZONE = "Asia/Tokyo";
+export const DEFAULT_TIME_ZONE: TimeZoneId = "Asia/Tokyo";
 const CHINESE_LOCALE = "zh-CN";
-const DATE_TIME_FORMAT = new Intl.DateTimeFormat(CHINESE_LOCALE, {
-  timeZone: GAME_TIME_ZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  weekday: "long",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
 
 export interface HumanTimeParts {
   iso: string;
@@ -48,16 +40,23 @@ export function diffMinutes(fromIso: string, toIso: string): number {
   return duration.minutes;
 }
 
-export function isDifferentGameDate(beforeIso: string, afterIso: string): boolean {
-  const beforeDate = toGamePlainDate(beforeIso);
-  const afterDate = toGamePlainDate(afterIso);
+export function isDifferentGameDate(
+  beforeIso: string,
+  afterIso: string,
+  timezone: TimeZoneId = DEFAULT_TIME_ZONE,
+): boolean {
+  const beforeDate = toGamePlainDate(beforeIso, timezone);
+  const afterDate = toGamePlainDate(afterIso, timezone);
   return !beforeDate.equals(afterDate);
 }
 
-export function formatHumanTime(isoTime: string): HumanTimeParts {
+export function formatHumanTime(
+  isoTime: string,
+  timezone: TimeZoneId = DEFAULT_TIME_ZONE,
+): HumanTimeParts {
   const instant = parseInstant(isoTime, "显示时间");
-  const zoned = instant.toZonedDateTimeISO(GAME_TIME_ZONE);
-  const parts = DATE_TIME_FORMAT.formatToParts(new Date(instant.epochMilliseconds));
+  const zoned = instant.toZonedDateTimeISO(timezone);
+  const parts = createDateTimeFormat(timezone).formatToParts(new Date(instant.epochMilliseconds));
   const weekday = readDateTimePart(parts, "weekday");
   const date = `${zoned.year}年${pad2(zoned.month)}月${pad2(zoned.day)}日`;
   const time = `${pad2(zoned.hour)}:${pad2(zoned.minute)}`;
@@ -70,6 +69,19 @@ export function formatHumanTime(isoTime: string): HumanTimeParts {
   };
 }
 
+function createDateTimeFormat(timezone: TimeZoneId): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(CHINESE_LOCALE, {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 function parseInstant(isoTime: string, fieldName: string): Temporal.Instant {
   try {
     return Temporal.Instant.from(isoTime);
@@ -78,8 +90,8 @@ function parseInstant(isoTime: string, fieldName: string): Temporal.Instant {
   }
 }
 
-function toGamePlainDate(isoTime: string): Temporal.PlainDate {
-  return parseInstant(isoTime, "游戏日期").toZonedDateTimeISO(GAME_TIME_ZONE).toPlainDate();
+function toGamePlainDate(isoTime: string, timezone: TimeZoneId): Temporal.PlainDate {
+  return parseInstant(isoTime, "游戏日期").toZonedDateTimeISO(timezone).toPlainDate();
 }
 
 function readDateTimePart(

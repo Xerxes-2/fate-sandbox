@@ -39,6 +39,8 @@ export type TimelineId =
   | "tsukihime-2000"
   | "tsukihime-2021"
   | "custom";
+export type TimeZoneId = "Asia/Tokyo" | "America/Denver";
+export type CurrencyCode = "JPY" | "USD" | "custom";
 export type OpeningMode = "random" | "selected" | "custom";
 export type BoundaryKind = "normal" | "bounded-field" | "reality-marble" | "otherworld";
 export type SituationKind =
@@ -121,7 +123,7 @@ export interface CampaignState {
 export interface ClockState {
   startedAt: string;
   currentAt: string;
-  timezone: "Asia/Tokyo";
+  timezone: TimeZoneId;
   lastLongRestAt: string | null;
 }
 
@@ -417,7 +419,7 @@ export interface NoblePhantasm {
 }
 
 export interface EconomyState {
-  currency: "JPY";
+  currency: CurrencyCode;
   accessibleFunds: MoneyPurse[];
   debts: DebtState[];
 }
@@ -683,7 +685,10 @@ function writeStateDebugSnapshot(state: State): void {
 
 function toStateExport(state: State): StateExport {
   const snapshot = structuredClone(state);
-  const humanTime = formatHumanTime(snapshot.public.clock.currentAt);
+  const humanTime = formatHumanTime(
+    snapshot.public.clock.currentAt,
+    snapshot.public.clock.timezone,
+  );
   return {
     ...snapshot,
     public: {
@@ -910,7 +915,7 @@ function assertClockState(raw: unknown): ClockState {
   return {
     startedAt: assertIsoDateString(raw["startedAt"], "clock.startedAt"),
     currentAt: assertIsoDateString(raw["currentAt"], "clock.currentAt"),
-    timezone: assertOneOf(raw["timezone"], ["Asia/Tokyo"] as const, "clock.timezone"),
+    timezone: assertOneOf(raw["timezone"], TIME_ZONES, "clock.timezone"),
     lastLongRestAt:
       raw["lastLongRestAt"] === null
         ? null
@@ -1508,7 +1513,7 @@ function assertEconomyState(raw: unknown, actors: Record<ActorId, PublicActorSta
     throw new Error(`非法 economy: ${formatUnknown(raw)}。`);
   }
   return {
-    currency: assertOneOf(raw["currency"], ["JPY"] as const, "economy.currency"),
+    currency: assertOneOf(raw["currency"], CURRENCIES, "economy.currency"),
     accessibleFunds: assertArray(raw["accessibleFunds"], "economy.accessibleFunds").map((value) =>
       assertMoneyPurse(value, actors),
     ),
@@ -1848,6 +1853,8 @@ const TIMELINES = [
   "tsukihime-2021",
   "custom",
 ] as const;
+const CURRENCIES = ["JPY", "USD", "custom"] as const;
+const TIME_ZONES = ["Asia/Tokyo", "America/Denver"] as const;
 const OPENING_MODES = ["random", "selected", "custom"] as const;
 const BOUNDARIES = ["normal", "bounded-field", "reality-marble", "otherworld"] as const;
 const SITUATIONS = [

@@ -14,6 +14,15 @@ describe("date-time", () => {
     assert.equal(formatted.display, "2004年01月30日 星期五 16:00");
   });
 
+  it("formats game time with weekday in America/Denver", () => {
+    const formatted = formatHumanTime("2008-06-03T03:28:00.000Z", "America/Denver");
+
+    assert.equal(formatted.date, "2008年06月02日");
+    assert.equal(formatted.weekday, "星期一");
+    assert.equal(formatted.time, "21:28");
+    assert.equal(formatted.display, "2008年06月02日 星期一 21:28");
+  });
+
   it("advances time using Temporal instants", () => {
     assert.equal(advanceIsoTime("2004-01-30T07:00:00.000Z", 90), "2004-01-30T08:30:00.000Z");
   });
@@ -22,7 +31,10 @@ describe("date-time", () => {
     assert.equal(diffMinutes("2004-01-30T07:00:00Z", "2004-01-30T08:30:00Z"), 90);
   });
 
-  it("detects game-date crossing in Asia/Tokyo", () => {
-    assert.equal(isDifferentGameDate("2004-01-30T14:50:00Z", "2004-01-30T15:10:00Z"), true);
+  it("detects game-date crossing in America/Denver", () => {
+    assert.equal(
+      isDifferentGameDate("2008-06-03T05:50:00Z", "2008-06-03T06:10:00Z", "America/Denver"),
+      true,
+    );
   });
 });

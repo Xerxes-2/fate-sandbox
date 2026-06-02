@@ -7,7 +7,7 @@ export function buildGmBrief(publicState: PublicGameState): string {
   if (protagonist === undefined) {
     throw new Error(`GM brief failed: protagonist ${publicState.protagonistActorId} missing.`);
   }
-  const time = formatHumanTime(publicState.clock.currentAt);
+  const time = formatHumanTime(publicState.clock.currentAt, publicState.clock.timezone);
   return [
     "[当前 GM 简报]",
     `时间：${time.display}`,
