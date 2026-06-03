@@ -121,6 +121,9 @@ subagent 返回结构化 offscreen event
 ```ts
 interface ParallelLineInput {
   lineId: string;
+  timelineId: TimelineId;
+  genreContract: string;
+  activePressurePalette: string[];
   timeWindow: {
     start: string;
     end: string;
@@ -139,6 +142,9 @@ interface ParallelLineInput {
 
 重点字段：
 
+- `timelineId`: 当前世界线；平行线必须按对应 profile 推进，不能把 FSF/FSN/事件簿/月姬模板互相硬套。
+- `genreContract`: 本次调用时主 GM 给出的题材契约短句。
+- `activePressurePalette`: 当前世界线/篇章允许优先使用的压力类型。
 - `allowedScope`: 本次平行线允许推进的内容。
 - `forbiddenEscalations`: 禁止提前触发的剧情，如“不得进入柳洞寺山门战斗”。
 - `knownFacts`: 该阵营实际知道的事实。
@@ -152,6 +158,7 @@ subagent 不输出完整小说作为默认结果，而输出结构化事件。
 ```ts
 interface ParallelLineOutput {
   lineId: string;
+  timelineId: string;
   actorIds: string[];
   timeRange: {
     start: string;
@@ -162,6 +169,8 @@ interface ParallelLineOutput {
   secretStateChanges: string[];
   publicLeakCandidates: string[];
   futureHooks: string[];
+  toneDriftRisk: "none" | "watch" | "drifting";
+  genreFitNotes: string[];
   riskFlags: string[];
   optionalNarrativeSnippet: string | null;
 }
@@ -173,6 +182,8 @@ interface ParallelLineOutput {
 - `secretStateChanges`: 可落入 secret state 的变更。
 - `publicLeakCandidates`: 可通过痕迹、传闻、梦境、NPC 表情等方式投影到玩家侧的信息。
 - `futureHooks`: 后续遭遇或冲突钩子。
+- `toneDriftRisk`: 这条后台推进是否有偏离当前世界线题材契约的风险。
+- `genreFitNotes`: 为什么这条推进符合/不符合当前 timeline 的说明，供主 GM 审核。
 - `optionalNarrativeSnippet`: 只有 major beat 结束时才考虑展示给玩家。
 
 ## 状态模型建议
