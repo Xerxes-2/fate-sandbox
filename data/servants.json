@@ -3,7 +3,7 @@
     {
       "id": "artoria-pendragon-saber",
       "name": "阿尔托莉雅·潘德拉贡",
-      "aliases": ["Saber", "骑士王", "亚瑟王"],
+      "aliases": ["Saber", "骑士王", "亚瑟王", "Artoria Pendragon"],
       "className": "Saber",
       "trueName": "阿尔托莉雅·潘德拉贡",
       "parameters": {
@@ -19,21 +19,25 @@
           "name": "Excalibur",
           "rank": "A++",
           "kind": "对城宝具",
-          "summary": "星之圣剑。全力解放必须伴随真名与巨大魔力消耗。"
+          "summary": "星之圣剑。全力解放需要真名、魔力和明确战斗窗口。"
         },
         {
           "name": "Avalon",
           "rank": "EX",
           "kind": "结界宝具",
-          "summary": "遥远的理想乡。通常不作为常规可用装备处理，必须由剧情与持有状态确认。"
+          "summary": "遥远的理想乡。是否可用必须由持有状态与剧情确认。"
         }
       ],
-      "notes": ["真名暴露会带来身份与弱点信息", "供魔不足时无法长期维持高强度战斗"]
+      "notes": [
+        "参数会随御主与供魔状态变化。",
+        "真名暴露会带来传说弱点与战术针对。",
+        "不要把 Avalon 当作默认装备。"
+      ]
     },
     {
       "id": "emiya-archer",
       "name": "卫宫",
-      "aliases": ["Archer", "红衣弓兵"],
+      "aliases": ["Archer", "红衣弓兵", "EMIYA"],
       "className": "Archer",
       "trueName": "卫宫",
       "parameters": {
@@ -49,15 +53,15 @@
           "name": "Unlimited Blade Works",
           "rank": "E-~A++",
           "kind": "固有结界",
-          "summary": "无限剑制。不是普通技能；展开需要条件、魔力和明确战术目的。"
+          "summary": "无限剑制。展开需要精神世界、魔力与战术条件，不是普通技能。"
         }
       ],
-      "notes": ["投影与战术经验常比单纯参数更关键", "真实身份属于重大隐藏事实"]
+      "notes": ["真实身份属于重大隐藏事实。", "投影、战术经验和相性常比参数更关键。"]
     },
     {
       "id": "cu-chulainn-lancer",
       "name": "库丘林",
-      "aliases": ["Lancer", "蓝色枪兵"],
+      "aliases": ["Lancer", "蓝色枪兵", "Cu Chulainn"],
       "className": "Lancer",
       "trueName": "库丘林",
       "parameters": {
@@ -73,15 +77,15 @@
           "name": "Gae Bolg",
           "rank": "B",
           "kind": "对人宝具",
-          "summary": "逆转因果的刺穿死棘之枪。幸运、距离、发动条件与防御手段决定能否回避致命结果。"
+          "summary": "刺穿死棘之枪。发动条件、距离、幸运与防御手段共同决定结果。"
         }
       ],
-      "notes": ["敏捷与战斗经验极高", "御主命令可能限制发挥"]
+      "notes": ["敏捷、战斗经验和生存能力极高。", "御主命令常限制发挥。"]
     },
     {
       "id": "medusa-rider",
       "name": "美杜莎",
-      "aliases": ["Rider"],
+      "aliases": ["Rider", "Medusa"],
       "className": "Rider",
       "trueName": "美杜莎",
       "parameters": {
@@ -97,15 +101,15 @@
           "name": "Bellerophon",
           "rank": "A+",
           "kind": "对军宝具",
-          "summary": "骑英之缰绳。高速突击威力巨大，但需要骑乘、展开与魔力成本。"
+          "summary": "骑英之缰绳。高速突击威力巨大，但需要坐骑、展开空间与魔力。"
         }
       ],
-      "notes": ["魔眼、机动与突袭强", "御主与供魔状态会显著影响表现"]
+      "notes": ["魔眼、机动与突袭强。", "供魔不足会显著压低表现。"]
     },
     {
       "id": "heracles-berserker",
       "name": "赫拉克勒斯",
-      "aliases": ["Berserker"],
+      "aliases": ["Berserker", "Heracles"],
       "className": "Berserker",
       "trueName": "赫拉克勒斯",
       "parameters": {
@@ -121,15 +125,87 @@
           "name": "God Hand",
           "rank": "B",
           "kind": "对人宝具",
-          "summary": "十二试炼。低等级攻击无效并具备多重生命，必须严格按神秘与等级处理。"
+          "summary": "十二试炼。低等级攻击无效并具备多重生命，必须按神秘与等级处理。"
         }
       ],
-      "notes": ["参数压制极强", "狂化限制交流与技巧表达"]
+      "notes": ["参数压制极强。", "狂化限制交流与技巧表达。"]
+    },
+    {
+      "id": "medea-caster",
+      "name": "美狄亚",
+      "aliases": ["Caster", "Medea"],
+      "className": "Caster",
+      "trueName": "美狄亚",
+      "parameters": {
+        "strength": "E",
+        "endurance": "D",
+        "agility": "C",
+        "mana": "A+",
+        "luck": "B",
+        "noblePhantasm": "C"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Rule Breaker",
+          "rank": "C",
+          "kind": "对魔术宝具",
+          "summary": "破戒应为全てを。能切断契约与魔术效果，但需要接触和明确对象。"
+        }
+      ],
+      "notes": ["阵地作成与高速神言是核心优势。", "近战脆弱但准备充分时极危险。"]
+    },
+    {
+      "id": "hassan-cursed-arm-assassin",
+      "name": "咒腕哈桑",
+      "aliases": ["Assassin", "Cursed Arm Hassan", "真Assassin"],
+      "className": "Assassin",
+      "trueName": "哈桑·萨巴赫",
+      "parameters": {
+        "strength": "B",
+        "endurance": "C",
+        "agility": "A",
+        "mana": "C",
+        "luck": "E",
+        "noblePhantasm": "C"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Zabaniya",
+          "rank": "C",
+          "kind": "对人宝具",
+          "summary": "妄想心音。对心脏的诅咒性暗杀，需满足距离与目标条件。"
+        }
+      ],
+      "notes": ["气息遮断与御主暗杀威胁高。", "正面对从者战不是优势。"]
+    },
+    {
+      "id": "sasaki-kojiro-assassin",
+      "name": "佐佐木小次郎",
+      "aliases": ["Assassin", "小次郎"],
+      "className": "Assassin",
+      "trueName": "佐佐木小次郎",
+      "parameters": {
+        "strength": "C",
+        "endurance": "E",
+        "agility": "A+",
+        "mana": "E",
+        "luck": "A",
+        "noblePhantasm": "-"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Tsubame Gaeshi",
+          "rank": "-",
+          "kind": "对人魔剑",
+          "summary": "燕返。以纯剑技抵达近似第二魔法的多重斩击，不是宝具真名解放。"
+        }
+      ],
+      "notes": ["被柳洞寺山门等召唤条件限制。", "剑技极端强但机动与现界条件受限。"]
     },
     {
       "id": "gilgamesh-archer",
       "name": "吉尔伽美什",
-      "aliases": ["Archer", "英雄王"],
+      "aliases": ["Archer", "英雄王", "Gilgamesh"],
       "className": "Archer",
       "trueName": "吉尔伽美什",
       "parameters": {
@@ -154,7 +230,149 @@
           "summary": "乖离剑。对界级别，不能作为普通攻击轻率使用。"
         }
       ],
-      "notes": ["神秘与宝具层级极高", "性格缺陷是重要战术因素"]
+      "notes": [
+        "神秘与宝具层级极高。",
+        "性格缺陷是重要战术因素。",
+        "FSF 中与蒂妮、恩奇都和斯诺菲尔德局势强相关。"
+      ]
+    },
+    {
+      "id": "iskandar-rider",
+      "name": "伊斯坎达尔",
+      "aliases": ["Rider", "征服王", "Iskandar"],
+      "className": "Rider",
+      "trueName": "伊斯坎达尔",
+      "parameters": {
+        "strength": "B",
+        "endurance": "A",
+        "agility": "D",
+        "mana": "C",
+        "luck": "A+",
+        "noblePhantasm": "A++"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Gordius Wheel",
+          "rank": "A+",
+          "kind": "对军宝具",
+          "summary": "神威车轮。战车突击适合突破与乱入。"
+        },
+        {
+          "name": "Ionioi Hetairoi",
+          "rank": "EX",
+          "kind": "固有结界",
+          "summary": "王之军势。展开消耗巨大，需要明确高潮窗口。"
+        }
+      ],
+      "notes": ["气魄、机动和军势压迫强。", "常把战斗转化为王道与选择的对话。"]
+    },
+    {
+      "id": "diarmuid-lancer",
+      "name": "迪尔姆德·奥迪那",
+      "aliases": ["Lancer", "Diarmuid"],
+      "className": "Lancer",
+      "trueName": "迪尔姆德·奥迪那",
+      "parameters": {
+        "strength": "B",
+        "endurance": "C",
+        "agility": "A+",
+        "mana": "D",
+        "luck": "E",
+        "noblePhantasm": "B"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Gae Dearg",
+          "rank": "B",
+          "kind": "对人宝具",
+          "summary": "破魔的红蔷薇。能破除魔力防御。"
+        },
+        {
+          "name": "Gae Buidhe",
+          "rank": "B",
+          "kind": "对人宝具",
+          "summary": "必灭的黄蔷薇。造成难以治愈的伤口。"
+        }
+      ],
+      "notes": ["骑士道强，但御主关系会严重影响战术。"]
+    },
+    {
+      "id": "gilles-caster",
+      "name": "吉尔·德·雷",
+      "aliases": ["Caster", "Gilles de Rais", "蓝胡子"],
+      "className": "Caster",
+      "trueName": "吉尔·德·雷",
+      "parameters": {
+        "strength": "D",
+        "endurance": "E",
+        "agility": "D",
+        "mana": "C",
+        "luck": "E",
+        "noblePhantasm": "A+"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Prelati's Spellbook",
+          "rank": "A+",
+          "kind": "对军宝具",
+          "summary": "螺湮城教本。召唤海魔与异端魔术，极易造成公共灾害。"
+        }
+      ],
+      "notes": ["FZ 中普通社会暴露风险极高。", "不应美化其暴行。"]
+    },
+    {
+      "id": "hundred-face-hassan-assassin",
+      "name": "百貌哈桑",
+      "aliases": ["Assassin", "Hundred Personas"],
+      "className": "Assassin",
+      "trueName": "哈桑·萨巴赫",
+      "parameters": {
+        "strength": "C",
+        "endurance": "D",
+        "agility": "A",
+        "mana": "C",
+        "luck": "E",
+        "noblePhantasm": "B"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Zabaniya",
+          "rank": "B",
+          "kind": "对人宝具",
+          "summary": "妄想幻像。多重人格分割成多个个体，适合侦察、扰乱和暗杀。"
+        }
+      ],
+      "notes": ["数量优势不等于正面战强。", "适合情报战和诱敌。"]
+    },
+    {
+      "id": "lancelot-berserker",
+      "name": "兰斯洛特",
+      "aliases": ["Berserker", "湖上骑士", "Lancelot"],
+      "className": "Berserker",
+      "trueName": "兰斯洛特",
+      "parameters": {
+        "strength": "A",
+        "endurance": "A",
+        "agility": "A+",
+        "mana": "C",
+        "luck": "B",
+        "noblePhantasm": "A"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Knight of Owner",
+          "rank": "A++",
+          "kind": "对人宝具",
+          "summary": "骑士不死于徒手。夺取并宝具化手中武器。"
+        },
+        {
+          "name": "For Someone's Glory",
+          "rank": "B",
+          "kind": "对人宝具",
+          "summary": "不为一己之荣光。隐藏身份与能力。"
+        }
+      ],
+      "notes": ["与阿尔托莉雅的因缘是核心压力。", "狂化供魔代价极高。"]
     },
     {
       "id": "richard-i-saber-fsf",
@@ -175,14 +393,184 @@
           "name": "Excalibur",
           "rank": "A",
           "kind": "特殊/对军级表现",
-          "summary": "理查将生前追逐的圣剑传说投影到各种武器上的表现。具体威力与使用方式须以当前剧情确认。"
+          "summary": "将圣剑传说投影到各种武器上的表现。具体威力与使用方式须以当前剧情确认。"
         }
       ],
       "notes": [
-        "Fate/strange Fake 原作中 Ayaka 的 Saber；沙盒可被玩家从者替代。",
-        "原作关系只提供结构参考：意外契约、新人御主、公开事故后被多阵营关注。",
-        "若当前局不是理查一世，不得把他的真名、性格、宝具自动套给玩家从者。"
+        "FSF 原作中 Ayaka 的 Saber；沙盒可被玩家从者替代。",
+        "原作关系只提供结构参考，不自动套给玩家从者。"
       ]
+    },
+    {
+      "id": "enkidu-false-lancer-fsf",
+      "name": "恩奇都",
+      "aliases": ["False Lancer", "Enkidu", "银狼从者"],
+      "className": "Lancer",
+      "trueName": "恩奇都",
+      "parameters": {
+        "strength": "?",
+        "endurance": "?",
+        "agility": "?",
+        "mana": "?",
+        "luck": "?",
+        "noblePhantasm": "A++"
+      },
+      "noblePhantasms": [
+        {
+          "name": "Enuma Elish",
+          "rank": "A++",
+          "kind": "对肃正宝具",
+          "summary": "人子啊，紧系神明。与吉尔伽美什的乖离剑形成神话级对照。"
+        }
+      ],
+      "notes": ["FSF 中由合成兽银狼召唤。", "与吉尔伽美什重逢会迅速提升战场规模。"]
+    },
+    {
+      "id": "jack-the-ripper-false-berserker-fsf",
+      "name": "杰克开膛手",
+      "aliases": ["False Berserker", "Jack the Ripper", "杰克"],
+      "className": "Berserker",
+      "trueName": "杰克开膛手",
+      "parameters": {
+        "strength": "?",
+        "endurance": "?",
+        "agility": "?",
+        "mana": "?",
+        "luck": "?",
+        "noblePhantasm": "?"
+      },
+      "noblePhantasms": [
+        {
+          "name": "From Hell",
+          "rank": "?",
+          "kind": "特殊宝具",
+          "summary": "与“杰克开膛手”传说的不定形身份相关，具体表现需按 FSF 情境处理。"
+        }
+      ],
+      "notes": ["FSF 中由弗拉特召唤。", "身份不定性和现代都市传说感是核心，不要写成单一固定怪物。"]
+    },
+    {
+      "id": "pale-rider-false-rider-fsf",
+      "name": "苍白骑手",
+      "aliases": ["False Rider", "Pale Rider"],
+      "className": "Rider",
+      "trueName": "苍白骑手",
+      "parameters": {
+        "strength": "?",
+        "endurance": "?",
+        "agility": "?",
+        "mana": "?",
+        "luck": "?",
+        "noblePhantasm": "?"
+      },
+      "noblePhantasms": [
+        {
+          "name": "传染/梦境系表现",
+          "rank": "?",
+          "kind": "灾害型",
+          "summary": "以疾病、梦境和城市规模异常体现存在；不适合用普通单挑参数处理。"
+        }
+      ],
+      "notes": ["FSF 中与病童椿相关。", "压力应体现公共卫生、梦境和不可见传播，而非普通骑乘战。"]
+    },
+    {
+      "id": "alcides-true-archer-fsf",
+      "name": "阿尔喀德斯",
+      "aliases": ["True Archer", "Alcides", "被污染的赫拉克勒斯"],
+      "className": "Archer",
+      "trueName": "阿尔喀德斯",
+      "parameters": {
+        "strength": "A",
+        "endurance": "B",
+        "agility": "A",
+        "mana": "A",
+        "luck": "E",
+        "noblePhantasm": "A++"
+      },
+      "noblePhantasms": [
+        {
+          "name": "King's Order",
+          "rank": "A",
+          "kind": "复合宝具",
+          "summary": "十二荣光。与赫拉克勒斯十二功业相关的复合能力，需逐项确认表现。"
+        }
+      ],
+      "notes": ["由巴兹迪洛特污染后的真实 Archer。", "不要提前让玩家知道全部能力清单。"]
+    },
+    {
+      "id": "dumas-false-caster-fsf",
+      "name": "大仲马",
+      "aliases": ["False Caster", "Alexandre Dumas", "亚历山大·仲马"],
+      "className": "Caster",
+      "trueName": "亚历山大·仲马",
+      "parameters": {
+        "strength": "E",
+        "endurance": "E",
+        "agility": "D",
+        "mana": "C",
+        "luck": "A",
+        "noblePhantasm": "B"
+      },
+      "noblePhantasms": [
+        {
+          "name": "不朽名作",
+          "rank": "B",
+          "kind": "支援/改造型",
+          "summary": "通过故事与创作强化他人装备、传说或文件叙事；适合支援而非正面炮击。"
+        }
+      ],
+      "notes": [
+        "FSF 中奥兰多阵营支援核心。",
+        "可用于伪造文件、装备强化和黑色幽默，但不能无代价改写现实。"
+      ]
+    },
+    {
+      "id": "prelati-true-caster-fsf",
+      "name": "弗朗索瓦·普雷拉蒂",
+      "aliases": ["True Caster", "Francesca Prelati", "弗兰切斯卡·普雷拉蒂"],
+      "className": "Caster",
+      "trueName": "弗朗索瓦·普雷拉蒂",
+      "parameters": {
+        "strength": "?",
+        "endurance": "?",
+        "agility": "?",
+        "mana": "A",
+        "luck": "?",
+        "noblePhantasm": "?"
+      },
+      "noblePhantasms": [
+        {
+          "name": "螺湮城教本相关魔术",
+          "rank": "?",
+          "kind": "召唤/异端魔术",
+          "summary": "与吉尔·德·雷、异端魔术和观察娱乐相关；具体表现按剧情证据推进。"
+        }
+      ],
+      "notes": ["FSF 中更偏旁观、搅局和制造戏剧性。", "不要让她过早抢占主线。"]
+    },
+    {
+      "id": "watcher-fsf",
+      "name": "Watcher",
+      "aliases": ["特殊职阶Watcher", "观察者"],
+      "className": "Watcher",
+      "trueName": "未公开",
+      "parameters": {
+        "strength": "?",
+        "endurance": "?",
+        "agility": "?",
+        "mana": "?",
+        "luck": "?",
+        "noblePhantasm": "?"
+      },
+      "noblePhantasms": [
+        {
+          "name": "影法师群像",
+          "rank": "?",
+          "kind": "特殊职阶能力",
+          "summary": "通过多个影子引导西格玛走向真 Lancer 路径；不按常规七职阶处理。"
+        }
+      ],
+      "notes": ["FSF 特殊职阶。", "必须保留信息缺口，不要把全部影子和目的一次性讲明。"]
     }
   ]
 }
