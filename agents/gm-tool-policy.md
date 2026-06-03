@@ -20,7 +20,8 @@
 
 ## 边界
 
-- 普通路人细节、短对话、几分钟生活动作不必调用工具。
+- 简单移动、短时间推进、单个目标/威胁变化：用 `update_scene`。
+- 复杂 beat 中不要手动拼 `set-story-window` + 多个 `add-objective`；优先用 `start_scene_beat`。
 - 10 分钟以上低风险过渡用 `update_scene` 推进时间。
 - 高风险、恢复、睡眠、治疗、补魔必须记录代价。
-- `patch_state` 已禁用常规裸 patch；debug-only 工具只用于开发和修档。
+- 普通路人细节、短对话、几分钟生活动作不必调用工具。
