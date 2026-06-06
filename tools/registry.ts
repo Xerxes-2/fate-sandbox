@@ -131,26 +131,15 @@ export function registerAllTools(pi: ExtensionAPI): void {
           consequences: Type.Optional(Type.Array(Type.String())),
           claims: Type.Array(
             Type.Object({
-              kind: Type.Union([
-                Type.Literal("mundane"),
-                Type.Literal("identity"),
-                Type.Literal("location"),
-                Type.Literal("affiliation"),
-                Type.Literal("motive"),
-                Type.Literal("ability"),
-                Type.Literal("resource"),
-                Type.Literal("relationship"),
-                Type.Literal("event-cause"),
-                Type.Literal("world-fact"),
-              ]),
+              kind: Type.String({
+                description:
+                  "claim 类型，允许: mundane / identity / location / affiliation / motive / ability / resource / relationship / event-cause / world-fact",
+              }),
               statement: Type.String(),
-              certainty: Type.Union([
-                Type.Literal("observed"),
-                Type.Literal("confirmed"),
-                Type.Literal("inferred"),
-                Type.Literal("rumor"),
-                Type.Literal("hypothesis"),
-              ]),
+              certainty: Type.String({
+                description:
+                  "证据确信度，允许: observed / confirmed / inferred / rumor / hypothesis",
+              }),
               subjectId: Type.Optional(Type.String()),
               relatedSecretSlotIds: Type.Optional(Type.Array(Type.String())),
               evidence: Type.Optional(Type.String()),
@@ -159,21 +148,9 @@ export function registerAllTools(pi: ExtensionAPI): void {
         }),
       ),
       nextBeat: Type.Optional(
-        Type.Union([
-          Type.Object({
-            title: Type.String(),
-            objectives: Type.Array(Type.String({ description: "下一 beat 的 1-5 个玩家可见目标" })),
-            beatId: Type.Optional(Type.String()),
-            allowedActions: Type.Optional(Type.Array(Type.String())),
-            forbiddenEscalations: Type.Optional(Type.Array(Type.String())),
-            completionCriteria: Type.Optional(Type.Array(Type.String())),
-            nextBeatHints: Type.Optional(Type.Array(Type.String())),
-            presentActorIds: Type.Optional(Type.Array(Type.String())),
-            allyActorIds: Type.Optional(Type.Array(Type.String())),
-            situation: Type.Optional(situationSchema()),
-          }),
-          Type.Null(),
-        ]),
+        Type.Unknown({
+          description: "下一 beat 对象或 null；对象字段由 finish_current_beat normalizer 校验。",
+        }),
       ),
       presentActorIds: Type.Optional(Type.Array(Type.String())),
       allyActorIds: Type.Optional(Type.Array(Type.String())),
@@ -236,7 +213,9 @@ export function registerAllTools(pi: ExtensionAPI): void {
       allyActorIds: Type.Optional(Type.Array(Type.String())),
       situation: Type.Optional(situationSchema()),
       location: Type.Optional(locationSchema()),
-      elapsedMinutes: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
+      elapsedMinutes: Type.Optional(
+        Type.Unknown({ description: "分钟数；可填 number 或数字字符串，由领域工具校验。" }),
+      ),
     }),
     execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
       startSceneBeatTool(params, ctx.sessionManager),
@@ -263,20 +242,14 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 在场 NPC 尚未写入 actor registry 时调用 private_resolve 或把 actorId 编出来\n" +
       "- 把长期目标塞进 scene；场景结束后应写入 memory",
     parameters: Type.Object({
-      kind: Type.Union([
-        Type.Literal("advance-time"),
-        Type.Literal("move-location"),
-        Type.Literal("set-location"),
-        Type.Literal("set-situation"),
-        Type.Literal("set-story-window"),
-        Type.Literal("clear-story-window"),
-        Type.Literal("add-objective"),
-        Type.Literal("resolve-objective"),
-        Type.Literal("add-threat"),
-        Type.Literal("clear-threat"),
-      ]),
+      kind: Type.String({
+        description:
+          "允许: advance-time / move-location / set-location / set-situation / set-story-window / clear-story-window / add-objective / resolve-objective / add-threat / clear-threat",
+      }),
       location: Type.Optional(locationSchema()),
-      elapsedMinutes: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
+      elapsedMinutes: Type.Optional(
+        Type.Unknown({ description: "分钟数；可填 number 或数字字符串，由领域工具校验。" }),
+      ),
       situation: Type.Optional(situationSchema()),
       storyWindow: Type.Optional(storyWindowSchema()),
       summary: Type.Optional(
@@ -316,44 +289,25 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 非 mundane claim 缺少 evidence 或 relatedSecretSlotIds 却写成 confirmed/observed/inferred\n" +
       "- 用 record-daily-summary 绕过 claims 记录单次采购、单次调查或单次战斗结论",
     parameters: Type.Object({
-      kind: Type.Union([
-        Type.Literal("pin-fact"),
-        Type.Literal("record-major-event"),
-        Type.Literal("record-daily-summary"),
-      ]),
+      kind: Type.String({
+        description: "允许: pin-fact / record-major-event / record-daily-summary",
+      }),
       scope: Type.Optional(
-        Type.Union([
-          Type.Literal("protagonist"),
-          Type.Literal("npc"),
-          Type.Literal("faction"),
-          Type.Literal("world"),
-        ]),
+        Type.String({ description: "可选范围，允许: protagonist / npc / faction / world" }),
       ),
       subject: Type.Optional(Type.String()),
       text: Type.Optional(Type.String()),
       sourceEventId: Type.Optional(Type.String()),
       claims: Type.Array(
         Type.Object({
-          kind: Type.Union([
-            Type.Literal("mundane"),
-            Type.Literal("identity"),
-            Type.Literal("location"),
-            Type.Literal("affiliation"),
-            Type.Literal("motive"),
-            Type.Literal("ability"),
-            Type.Literal("resource"),
-            Type.Literal("relationship"),
-            Type.Literal("event-cause"),
-            Type.Literal("world-fact"),
-          ]),
+          kind: Type.String({
+            description:
+              "claim 类型，允许: mundane / identity / location / affiliation / motive / ability / resource / relationship / event-cause / world-fact",
+          }),
           statement: Type.String(),
-          certainty: Type.Union([
-            Type.Literal("observed"),
-            Type.Literal("confirmed"),
-            Type.Literal("inferred"),
-            Type.Literal("rumor"),
-            Type.Literal("hypothesis"),
-          ]),
+          certainty: Type.String({
+            description: "证据确信度，允许: observed / confirmed / inferred / rumor / hypothesis",
+          }),
           subjectId: Type.Optional(Type.String()),
           relatedSecretSlotIds: Type.Optional(Type.Array(Type.String())),
           evidence: Type.Optional(Type.String()),
@@ -386,15 +340,11 @@ export function registerAllTools(pi: ExtensionAPI): void {
       lineId: Type.String(),
       actorIds: Type.Array(Type.String()),
       timeRange: Type.Object({ start: Type.String(), end: Type.String() }),
-      visibility: Type.Union([Type.Literal("secret"), Type.Literal("foreshadowed")]),
+      visibility: Type.String({ description: "允许: secret / foreshadowed" }),
       summary: Type.String(),
       consequences: Type.Array(Type.String()),
       futureHooks: Type.Array(Type.String()),
-      createdFrom: Type.Union([
-        Type.Literal("parallel-line-subagent"),
-        Type.Literal("gm"),
-        Type.Literal("debug"),
-      ]),
+      createdFrom: Type.String({ description: "允许: parallel-line-subagent / gm / debug" }),
     }),
     execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
       recordOffscreenEventTool(params, ctx.sessionManager),
@@ -447,30 +397,23 @@ export function registerAllTools(pi: ExtensionAPI): void {
       }),
       actorId: Type.Optional(Type.String()),
       severity: Type.Optional(
-        Type.Union([
-          Type.Literal("minor"),
-          Type.Literal("moderate"),
-          Type.Literal("severe"),
-          Type.Literal("critical"),
-        ]),
+        Type.String({ description: "伤势严重度，允许: minor / moderate / severe / critical" }),
       ),
       text: Type.Optional(Type.String()),
       source: Type.Optional(Type.String()),
       recoverable: Type.Optional(Type.Boolean()),
-      expectedDuration: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+      expectedDuration: Type.Optional(
+        Type.Unknown({ description: "异常预计持续时间；可填字符串或 null。" }),
+      ),
       mechanicalEffect: Type.Optional(Type.String()),
       circuits: Type.Optional(
         Type.Object({
           count: Type.String({ description: "魔术回路数量摘要，如 27" }),
           quality: Type.String({ description: "Fate rank 或 none" }),
           od: Type.Integer({ description: "0-100 的内部 Od / 人类魔力余量" }),
-          status: Type.Union([
-            Type.Literal("normal"),
-            Type.Literal("overheated"),
-            Type.Literal("depleted"),
-            Type.Literal("dormant"),
-            Type.Literal("damaged"),
-          ]),
+          status: Type.String({
+            description: "魔术回路状态，允许: normal / overheated / depleted / dormant / damaged",
+          }),
           traits: Type.Array(Type.String()),
         }),
       ),
@@ -481,38 +424,34 @@ export function registerAllTools(pi: ExtensionAPI): void {
         }),
       ),
       itemId: Type.Optional(Type.String()),
-      holderActorId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-      ownerActorId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+      holderActorId: Type.Optional(
+        Type.Unknown({ description: "持有者 actorId；可填字符串或 null。" }),
+      ),
+      ownerActorId: Type.Optional(
+        Type.Unknown({ description: "所有者 actorId；可填字符串或 null。" }),
+      ),
       label: Type.Optional(
         Type.String({ description: "add-tracked-item 必填：物品的玩家可见标签" }),
       ),
       itemKind: Type.Optional(
-        Type.Union([
-          Type.Literal("mundane"),
-          Type.Literal("weapon"),
-          Type.Literal("mystic-code"),
-          Type.Literal("document"),
-          Type.Literal("key-item"),
-          Type.Literal("other"),
-        ]),
+        Type.String({
+          description:
+            "物品类型，允许: mundane / weapon / mystic-code / document / key-item / other",
+        }),
       ),
       condition: Type.Optional(
-        Type.Union([
-          Type.Literal("intact"),
-          Type.Literal("damaged"),
-          Type.Literal("broken"),
-          Type.Literal("spent"),
-          Type.Literal("unknown"),
-        ]),
+        Type.String({ description: "物品状态，允许: intact / damaged / broken / spent / unknown" }),
       ),
       visibility: Type.Optional(
-        Type.Union([Type.Literal("player-known"), Type.Literal("suspected")]),
+        Type.String({ description: "玩家可见性，允许: player-known / suspected" }),
       ),
       notes: Type.Optional(Type.Array(Type.String())),
       treatment: Type.Optional(
         Type.String({ description: "update-wound 可用：伤势当前治疗/处理状态" }),
       ),
-      conditionKind: Type.Optional(Type.Union([Type.Literal("wound"), Type.Literal("affliction")])),
+      conditionKind: Type.Optional(
+        Type.String({ description: "resolve-condition 专用，允许: wound / affliction" }),
+      ),
       conditionId: Type.Optional(Type.String()),
       outcome: Type.Optional(
         Type.String({
@@ -590,13 +529,9 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 资金不足时默认免费兜底\n" +
       "- 用 gain-money 把现金设为目标数值或凭空发财；gain-money 必须提供 source 和 counterparty",
     parameters: Type.Object({
-      kind: Type.Union([
-        Type.Literal("spend-money"),
-        Type.Literal("gain-money"),
-        Type.Literal("add-purse"),
-        Type.Literal("rename-purse"),
-        Type.Literal("add-debt"),
-      ]),
+      kind: Type.String({
+        description: "允许: spend-money / gain-money / add-purse / rename-purse / add-debt",
+      }),
       purseId: Type.Optional(
         Type.String({
           description:
@@ -611,27 +546,20 @@ export function registerAllTools(pi: ExtensionAPI): void {
       debtorActorId: Type.Optional(Type.String()),
       creditor: Type.Optional(Type.String()),
       source: Type.Optional(
-        Type.Union([
-          Type.Literal("earned"),
-          Type.Literal("refund"),
-          Type.Literal("found"),
-          Type.Literal("gift"),
-          Type.Literal("withdrawal"),
-          Type.Literal("sale"),
-          Type.Literal("quest-reward"),
-        ]),
+        Type.String({
+          description:
+            "资金来源，允许: earned / refund / found / gift / withdrawal / sale / quest-reward",
+        }),
       ),
       counterparty: Type.Optional(Type.String({ description: "gain-money 必填：付款方/来源说明" })),
       label: Type.Optional(
         Type.String({ description: "add-purse / rename-purse 必填：资金账户玩家可见名称" }),
       ),
-      amount: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
+      amount: Type.Optional(
+        Type.Unknown({ description: "金额；可填 number 或数字字符串，由领域工具校验。" }),
+      ),
       access: Type.Optional(
-        Type.Union([
-          Type.Literal("held"),
-          Type.Literal("shared"),
-          Type.Literal("requires-permission"),
-        ]),
+        Type.String({ description: "资金访问权限，允许: held / shared / requires-permission" }),
       ),
       reason: Type.String(),
     }),
@@ -658,7 +586,9 @@ export function registerAllTools(pi: ExtensionAPI): void {
           "允许: spend-mana, restore-mana, damage-spiritual-core, add-param-modifier, change-contract, add-permanent-defect。锁定字段不可用本工具修改。",
       }),
       actorId: Type.String(),
-      amount: Type.Optional(Type.Union([Type.Integer(), Type.String()])),
+      amount: Type.Optional(
+        Type.Unknown({ description: "数值；可填 number 或数字字符串，由领域工具校验。" }),
+      ),
       modifier: Type.Optional(paramModifierSchema()),
       contract: Type.Optional(servantContractSchema()),
       defect: Type.Optional(permanentDefectSchema()),
@@ -683,12 +613,10 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 要求列出 secret slots 或幕后真相\n" +
       "- 证据不足时泄露正确答案",
     parameters: Type.Object({
-      kind: Type.Union([
-        Type.Literal("claim-reveal"),
-        Type.Literal("observed-reveal"),
-        Type.Literal("configure-servant-secrets"),
-        Type.Literal("configure-actor-secrets"),
-      ]),
+      kind: Type.String({
+        description:
+          "允许: claim-reveal / observed-reveal / configure-servant-secrets / configure-actor-secrets",
+      }),
       actorId: Type.String(),
       claim: Type.Optional(Type.String()),
       trigger: Type.Optional(Type.String()),
@@ -708,11 +636,9 @@ export function registerAllTools(pi: ExtensionAPI): void {
               name: Type.String(),
               rank: Type.String({ description: "Fate rank；非真正宝具/无宝具可填 none" }),
               kind: Type.String({ description: "宝具类型，如 对魔术宝具" }),
-              status: Type.Union([
-                Type.Literal("hidden"),
-                Type.Literal("suspected"),
-                Type.Literal("revealed"),
-              ]),
+              status: Type.String({
+                description: "隐藏宝具状态，允许: hidden / suspected / revealed",
+              }),
               summary: Type.String(),
             }),
             revealConditions: Type.Array(Type.String()),
@@ -753,7 +679,7 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "- 询问完整隐藏真相或幕后动机\n" +
       "- 用它替代 reveal_secret",
     parameters: Type.Object({
-      kind: Type.Union([Type.Literal("hidden-reaction"), Type.Literal("secret-compatibility")]),
+      kind: Type.String({ description: "允许: hidden-reaction / secret-compatibility" }),
       actorId: Type.String(),
       targetActorId: Type.Optional(Type.String()),
       stimulus: Type.Optional(Type.String()),
@@ -807,17 +733,15 @@ export function registerAllTools(pi: ExtensionAPI): void {
     description:
       "【调试工具】覆盖已锁定的从者职阶、真名或基础参数。仅用于开发修档，必须写明 reason。",
     parameters: Type.Object({
-      kind: Type.Union([
-        Type.Literal("servant-class"),
-        Type.Literal("servant-true-name"),
-        Type.Literal("servant-base-params"),
-      ]),
+      kind: Type.String({
+        description: "允许: servant-class / servant-true-name / servant-base-params",
+      }),
       actorId: Type.String(),
       className: Type.Optional(Type.String()),
       display: Type.Optional(Type.String()),
       status: Type.Optional(
-        Type.Union([Type.Literal("hidden"), Type.Literal("suspected"), Type.Literal("revealed")], {
-          description: "servant-true-name 可选；修正误泄露时填 hidden/suspected，默认 revealed",
+        Type.String({
+          description: "servant-true-name 可选；允许 hidden / suspected / revealed，默认 revealed",
         }),
       ),
       base: Type.Optional(Type.Unknown()),
@@ -953,8 +877,12 @@ function looseServantSchema(): ReturnType<typeof Type.Object> {
     spiritualCore: Type.Integer({ description: "0-100 灵核完整度" }),
     mana: Type.Integer({ description: "0-100 从者魔力余量" }),
     spiritualCondition: Type.String({ description: "灵核状态描述，如 完好" }),
-    masterActorId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    masterName: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+    masterActorId: Type.Optional(
+      Type.Unknown({ description: "当前御主 actor id；无主从者可省略、填 null 或填 none" }),
+    ),
+    masterName: Type.Optional(
+      Type.Unknown({ description: "当前御主玩家可见姓名；无主从者可省略、填 null 或填 无" }),
+    ),
     contractStatus: Type.String({ description: "stable / weak / cut / masterless" }),
     manaSupply: Type.String({ description: "sufficient / strained / starved" }),
     currentOrder: Type.String({ description: "当前御主命令或自主行动目标" }),
@@ -974,54 +902,14 @@ function looseServantSchema(): ReturnType<typeof Type.Object> {
 function publicActorSchema(): ReturnType<typeof Type.Object> {
   return Type.Object({
     id: Type.String(),
-    kind: Type.Union([
-      Type.Literal("human"),
-      Type.Literal("outsider"),
-      Type.Literal("spirit"),
-      Type.Literal("other"),
-    ]),
-    roles: Type.Array(
-      Type.Union([
-        Type.Object({ kind: Type.Literal("social"), label: Type.String() }),
-        Type.Object({
-          kind: Type.Literal("faction"),
-          factionId: Type.String(),
-          label: Type.String(),
-        }),
-        Type.Object({
-          kind: Type.Literal("master"),
-          commandSpells: Type.Object({ total: Type.Integer(), remaining: Type.Integer() }),
-          contractedServantIds: Type.Array(Type.String()),
-        }),
-      ]),
-    ),
-    magecraft: Type.Union([
-      Type.Null(),
-      Type.Object({
-        circuits: Type.Object({
-          count: Type.String(),
-          quality: Type.String({ description: "Fate rank 或 none" }),
-          od: Type.Integer({ description: "0-100" }),
-          status: Type.Union([
-            Type.Literal("normal"),
-            Type.Literal("overheated"),
-            Type.Literal("depleted"),
-            Type.Literal("dormant"),
-            Type.Literal("damaged"),
-          ]),
-          traits: Type.Array(Type.String()),
-        }),
-        disciplines: Type.Array(
-          Type.Object({
-            name: Type.String(),
-            rank: Type.String({ description: "Fate rank 或 none" }),
-            notes: Type.String(),
-          }),
-        ),
-        affiliation: Type.Union([Type.String(), Type.Null()]),
-      }),
-    ]),
-    servantForm: Type.Union([servantFormSchema(), Type.Null()]),
+    kind: Type.String({ description: "actor 类型，允许: human / outsider / spirit / other" }),
+    roles: Type.Array(looseActorRoleSchema()),
+    magecraft: Type.Unknown({
+      description: "魔术回路对象或 null；内部字段由 upsert_actor 工具校验。",
+    }),
+    servantForm: Type.Unknown({
+      description: "从者形态对象或 null；内部字段由 upsert_actor 工具校验。",
+    }),
     identity: Type.Object({
       publicIdentity: Type.String(),
       background: Type.String(),
@@ -1046,103 +934,24 @@ function publicActorSchema(): ReturnType<typeof Type.Object> {
       Type.Object({ id: Type.String(), label: Type.String(), summary: Type.String() }),
     ),
     relationshipToProtagonist: Type.Object({
-      stance: Type.Union([
-        Type.Literal("self"),
-        Type.Literal("ally"),
-        Type.Literal("friendly"),
-        Type.Literal("neutral"),
-        Type.Literal("wary"),
-        Type.Literal("hostile"),
-        Type.Literal("unknown"),
-      ]),
+      stance: Type.String({
+        description: "关系立场，允许: self / ally / friendly / neutral / wary / hostile / unknown",
+      }),
       summary: Type.String(),
     }),
-  });
-}
-
-function servantFormSchema(): ReturnType<typeof Type.Object> {
-  return Type.Object({
-    identity: Type.Object({
-      className: Type.String({ description: "Servant class, e.g. Saber" }),
-      trueName: Type.Object({
-        status: Type.Union([
-          Type.Literal("hidden"),
-          Type.Literal("suspected"),
-          Type.Literal("revealed"),
-        ]),
-        display: Type.String({ description: "玩家可见真名显示；隐藏时可用 ???" }),
-      }),
-      locked: Type.Literal(true),
-    }),
-    condition: Type.Object({
-      spiritualCore: Type.Object({ value: Type.Integer({ description: "0-100" }) }),
-      mana: Type.Object({ value: Type.Integer({ description: "0-100" }) }),
-      spiritualCondition: Type.String(),
-      permanentDefects: Type.Array(permanentDefectSchema()),
-    }),
-    contract: servantContractSchema(),
-    parameters: Type.Object({
-      base: Type.Object({
-        strength: Type.String(),
-        endurance: Type.String(),
-        agility: Type.String(),
-        mana: Type.String(),
-        luck: Type.String(),
-        noblePhantasm: Type.String(),
-      }),
-      modifiers: Type.Array(paramModifierSchema()),
-      baseLocked: Type.Literal(true),
-    }),
-    skills: Type.Object({
-      classSkills: Type.Array(
-        Type.Object({ name: Type.String(), rank: Type.String(), summary: Type.String() }),
-      ),
-      personalSkills: Type.Array(
-        Type.Object({ name: Type.String(), rank: Type.String(), summary: Type.String() }),
-      ),
-    }),
-    noblePhantasms: Type.Array(
-      Type.Object({
-        name: Type.String(),
-        rank: Type.String(),
-        kind: Type.String(),
-        status: Type.Union([
-          Type.Literal("hidden"),
-          Type.Literal("suspected"),
-          Type.Literal("revealed"),
-        ]),
-        summary: Type.String(),
-      }),
-    ),
-    currentOrder: Type.String(),
   });
 }
 
 function servantContractSchema(): ReturnType<typeof Type.Object> {
   return Type.Object({
     masterActorId: Type.Optional(
-      Type.Union([
-        Type.String({ description: "当前御主 actor id；无主从者可省略、填 null 或填 none" }),
-        Type.Null(),
-      ]),
+      Type.Unknown({ description: "当前御主 actor id；无主从者可省略、填 null 或填 none" }),
     ),
     masterName: Type.Optional(
-      Type.Union([
-        Type.String({ description: "当前御主玩家可见姓名；无主从者可省略、填 null 或填 无" }),
-        Type.Null(),
-      ]),
+      Type.Unknown({ description: "当前御主玩家可见姓名；无主从者可省略、填 null 或填 无" }),
     ),
-    status: Type.Union([
-      Type.Literal("stable"),
-      Type.Literal("weak"),
-      Type.Literal("cut"),
-      Type.Literal("masterless"),
-    ]),
-    manaSupply: Type.Union([
-      Type.Literal("sufficient"),
-      Type.Literal("strained"),
-      Type.Literal("starved"),
-    ]),
+    status: Type.String({ description: "契约状态，允许: stable / weak / cut / masterless" }),
+    manaSupply: Type.String({ description: "供魔状态，允许: sufficient / strained / starved" }),
   });
 }
 
@@ -1151,17 +960,13 @@ function paramModifierSchema(): ReturnType<typeof Type.Object> {
     id: Type.Optional(Type.String()),
     source: Type.String(),
     affectedParams: Type.Array(
-      Type.Union([
-        Type.Literal("strength"),
-        Type.Literal("endurance"),
-        Type.Literal("agility"),
-        Type.Literal("mana"),
-        Type.Literal("luck"),
-        Type.Literal("noblePhantasm"),
-      ]),
+      Type.String({
+        description:
+          "受影响参数，允许: strength / endurance / agility / mana / luck / noblePhantasm",
+      }),
     ),
     summary: Type.String(),
-    expiresAt: Type.Union([Type.String(), Type.Null()]),
+    expiresAt: Type.Unknown({ description: "过期时间 ISO 字符串或 null。" }),
   });
 }
 
@@ -1179,32 +984,19 @@ function locationSchema(): ReturnType<typeof Type.Object> {
     region: Type.String(),
     site: Type.String(),
     detail: Type.String(),
-    boundary: Type.Union([
-      Type.Literal("normal"),
-      Type.Literal("bounded-field"),
-      Type.Literal("reality-marble"),
-      Type.Literal("otherworld"),
-    ]),
+    boundary: Type.String({
+      description: "地点边界类型，允许: normal / bounded-field / reality-marble / otherworld",
+    }),
   });
 }
 
-function situationSchema(): ReturnType<typeof Type.Union> {
-  return Type.Union([
-    Type.Literal("daily"),
-    Type.Literal("investigation"),
-    Type.Literal("social"),
-    Type.Literal("combat"),
-    Type.Literal("ritual"),
-    Type.Literal("escape"),
-    Type.Literal("downtime"),
-  ]);
+function situationSchema(): ReturnType<typeof Type.String> {
+  return Type.String({
+    description:
+      "场景类型，允许: daily / investigation / social / combat / ritual / escape / downtime",
+  });
 }
 
-function threatSeveritySchema(): ReturnType<typeof Type.Union> {
-  return Type.Union([
-    Type.Literal("low"),
-    Type.Literal("medium"),
-    Type.Literal("high"),
-    Type.Literal("lethal"),
-  ]);
+function threatSeveritySchema(): ReturnType<typeof Type.String> {
+  return Type.String({ description: "威胁等级，允许: low / medium / high / lethal" });
 }
