@@ -44,6 +44,30 @@ void test("upsertActorTool normalizes placeholder master fields for masterless s
   assert.equal(contract?.masterName, null);
 });
 
+void test("upsertActorTool defaults omitted public NPC master role fields", () => {
+  resetState();
+
+  upsertActorTool(
+    {
+      kind: "ensure-public-npc",
+      npc: {
+        actorId: "moon-master",
+        displayName: "未知御主",
+        publicIdentity: "月之圣杯战争参赛者",
+        publicRoles: [{ kind: "master" }],
+      },
+      reason: "测试 NPC Master role 缺省字段。",
+    },
+    createNoopSessionManager(),
+  );
+
+  const role = getState().public.actors["moon-master"]?.roles[0];
+  assert.equal(role?.kind, "master");
+  if (role?.kind !== "master") throw new Error("expected master role");
+  assert.deepEqual(role.commandSpells, { total: 3, remaining: 3 });
+  assert.deepEqual(role.contractedServantIds, []);
+});
+
 void test("upsertActorTool reports invalid servant enums in domain language", () => {
   resetState();
 
@@ -107,6 +131,81 @@ void test("upsertActorTool rejects revealed true name for protagonist servant se
     /玩家从者初始化不得把 servant\.trueNameStatus 写成 revealed/,
   );
 });
+
+void test("upsertActorTool normalizes undefined protagonist setup optionals", () => {
+  resetState();
+
+  upsertActorTool(
+    {
+      kind: "setup-protagonist",
+      actor: {
+        ...baseProtagonistActor(),
+        roles: [{ kind: "master", commandSpells: undefined, contractedServantIds: undefined }],
+        magecraft: { circuits: undefined, disciplines: undefined, affiliation: undefined },
+      },
+      reason: "测试模型传入 undefined 可选字段。",
+    },
+    createNoopSessionManager(),
+  );
+
+  const protagonist = getState().public.actors["protagonist"];
+  const masterRole = protagonist?.roles[0];
+  assert.equal(masterRole?.kind, "master");
+  if (masterRole?.kind !== "master") throw new Error("expected master role");
+  assert.deepEqual(masterRole.commandSpells, { total: 3, remaining: 3 });
+  assert.deepEqual(masterRole.contractedServantIds, []);
+  assert.equal(protagonist?.magecraft, null);
+});
+
+void test("upsertActorTool fills omitted magecraft discipline array", () => {
+  resetState();
+
+  upsertActorTool(
+    {
+      kind: "setup-protagonist",
+      actor: {
+        ...baseProtagonistActor(),
+        magecraft: {
+          circuits: { count: "未确认", quality: "none", od: 100, status: "normal", traits: undefined },
+          disciplines: undefined,
+          affiliation: undefined,
+        },
+      },
+      reason: "测试魔术字段缺省数组归一化。",
+    },
+    createNoopSessionManager(),
+  );
+
+  const magecraft = getState().public.actors["protagonist"]?.magecraft;
+  assert.deepEqual(magecraft?.disciplines, []);
+  assert.deepEqual(magecraft?.circuits.traits, []);
+  assert.equal(magecraft?.affiliation, null);
+});
+
+function baseProtagonistActor(): Record<string, unknown> {
+  return {
+    id: "protagonist",
+    kind: "human",
+    roles: [],
+    magecraft: null,
+    servantForm: null,
+    identity: {
+      publicIdentity: "月之圣杯战争参赛者",
+      background: "月之圣杯战争参赛者",
+      lockedFacts: [],
+    },
+    presentation: {
+      displayName: "主人公",
+      apparentAge: "十几岁",
+      outfit: { label: "旧校舍制服", details: "黑色学生制服。" },
+      demeanor: "警惕但保持冷静",
+    },
+    condition: { wounds: [], afflictions: [], permanentEffects: [] },
+    inventory: { ordinaryItems: [], heldTrackedItemIds: [] },
+    abilities: [],
+    relationshipToProtagonist: { stance: "self", summary: "玩家角色本人。" },
+  };
+}
 
 function baseMasterlessServant(): Record<string, unknown> {
   return {

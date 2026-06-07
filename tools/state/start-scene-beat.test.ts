@@ -58,6 +58,22 @@ void test("startSceneBeatTool can move into a beat", () => {
   assert.equal(state.public.scene.storyWindow?.title, "新都商业街调查");
 });
 
+void test("startSceneBeatTool ignores current location without elapsedMinutes", () => {
+  resetState();
+
+  startSceneBeatTool(
+    {
+      title: "校门口确认情况",
+      objectives: ["确认周围是否安全"],
+      purpose: "在当前地点开始 beat；模型重复传了当前 location。",
+      location: getState().public.scene.location,
+    },
+    createNoopSessionManager(),
+  );
+
+  assert.equal(getState().public.scene.storyWindow?.title, "校门口确认情况");
+});
+
 void test("startSceneBeatTool requires location and elapsedMinutes together", () => {
   resetState();
 

@@ -37,7 +37,7 @@ function assertConfigureCampaignInput(params: unknown): Parameters<typeof config
     currentAt: optionalString(input["currentAt"], "currentAt"),
     location: optionalLocation(input["location"], "location"),
     situation: optionalString(input["situation"], "situation") as SituationKind | undefined,
-    currency: optionalString(input["currency"], "currency") as CurrencyCode | undefined,
+    currency: optionalCurrency(input["currency"], "currency"),
     startingFunds: optionalInteger(input["startingFunds"], "startingFunds"),
     purseLabel: optionalString(input["purseLabel"], "purseLabel"),
     reason: assertString(input["reason"], "reason"),
@@ -62,6 +62,18 @@ function optionalString(value: unknown, fieldName: string): string | undefined {
     return undefined;
   }
   return assertString(value, fieldName);
+}
+
+function optionalCurrency(value: unknown, fieldName: string): CurrencyCode | undefined {
+  const currency = optionalString(value, fieldName);
+  if (currency === undefined) {
+    return undefined;
+  }
+  const normalized = currency.toUpperCase();
+  if (normalized === "PP" || normalized === "PPT" || currency === "サクラメント") {
+    return "custom";
+  }
+  return currency as CurrencyCode; // safe: engine state assertion reports unsupported canonical currencies.
 }
 
 function optionalInteger(value: unknown, fieldName: string): number | undefined {

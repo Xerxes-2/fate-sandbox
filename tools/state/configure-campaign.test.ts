@@ -24,6 +24,22 @@ void test("configureCampaignTool updates campaign and timezone", () => {
   assert.equal(state.public.clock.displayTime, "2008年06月02日 星期一 21:28");
 });
 
+void test("configureCampaignTool normalizes Moon Cell currency aliases", () => {
+  resetState();
+
+  configureCampaignTool(
+    {
+      presetId: "extra_ccc_2032_far_side",
+      title: "月之海的残响",
+      currency: "PPT",
+      reason: "测试 Moon Cell 货币别名归一化。",
+    },
+    createNoopSessionManager(),
+  );
+
+  assert.equal(exportState().public.economy.currency, "custom");
+});
+
 function createNoopSessionManager(): unknown {
   return { appendCustomEntry: () => "entry-test" };
 }

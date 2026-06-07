@@ -7,6 +7,16 @@ import { createId, getState, writeStateToDetails } from "../../engine/core/state
 import { persistCurrentState } from "../../engine/core/state-persistence";
 import { textResult, type ToolResult } from "../runtime/tool-result";
 
+interface SceneBeatWindowInput {
+  currentArcId: StoryArcId;
+  currentBeatId: StoryBeatId;
+  title: string;
+  allowedActions: string[];
+  forbiddenEscalations: string[];
+  completionCriteria: string[];
+  nextBeatHints: string[];
+}
+
 interface StartSceneBeatInput {
   title: string;
   objectives: string[];
@@ -49,9 +59,13 @@ function buildTurnCommitInput(input: StartSceneBeatInput): TurnCommitInput {
     nextBeatHints: input.nextBeatHints ?? [],
   };
 
+  if (input.location !== undefined && input.elapsedMinutes === undefined && isCurrentLocation(input.location)) {
+    return buildBeginBeatTurn(input, storyWindow);
+  }
+
   if (input.location !== undefined || input.elapsedMinutes !== undefined) {
     if (input.location === undefined || input.elapsedMinutes === undefined) {
-      throw new Error("start_scene_beat 同步移动时必须同时提供 location 和 elapsedMinutes。");
+      throw new Error("start_scene_beat 同步移动时必须同时提供 location 和 elapsedMinutes；若只是当前地点开 beat，请不要重复传 location。");
     }
     return {
       summary: input.purpose,
@@ -77,6 +91,10 @@ function buildTurnCommitInput(input: StartSceneBeatInput): TurnCommitInput {
     };
   }
 
+  return buildBeginBeatTurn(input, storyWindow);
+}
+
+function buildBeginBeatTurn(input: StartSceneBeatInput, storyWindow: SceneBeatWindowInput): TurnCommitInput {
   return {
     summary: input.purpose,
     events: [
@@ -97,6 +115,16 @@ function buildTurnCommitInput(input: StartSceneBeatInput): TurnCommitInput {
       },
     ],
   };
+}
+
+function isCurrentLocation(location: LocationState): boolean {
+  const current = getState().public.scene.location;
+  return (
+    current.region === location.region &&
+    current.site === location.site &&
+    current.detail === location.detail &&
+    current.boundary === location.boundary
+  );
 }
 
 function normalizeStartSceneBeatInput(params: unknown): StartSceneBeatInput {

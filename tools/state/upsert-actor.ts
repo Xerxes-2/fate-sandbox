@@ -7,9 +7,11 @@ import type {
 import type {
   ActorKind,
   ActorRole,
-  FateParams,FateRank,
+  FateParams,
+  FateRank,
   NoblePhantasm,
   OutfitState,
+  PublicActorState,
   RelationshipState,
   ServantClass,
   ServantSkill,
@@ -45,9 +47,9 @@ function assertActorRegistryInput(params: unknown): ActorRegistryInput {
     case "setup-protagonist":
       return {
         kind,
-        actor: assertRecord(params["actor"], "actor"),
+        actor: normalizeSetupProtagonistActor(assertRecord(params["actor"], "actor")),
         reason: assertString(params["reason"], "reason"),
-      } as unknown as ActorRegistryInput; // safe: protagonist setup preserves legacy full-state schema validation in engine/state.
+      };
     case "upsert-public-npc":
       return {
         kind,
@@ -71,6 +73,105 @@ function assertActorRegistryInput(params: unknown): ActorRegistryInput {
         `非法 upsert_actor.kind: ${kind}。允许值: setup-protagonist, ensure-public-npc, upsert-public-npc, upsert-servant。`,
       );
   }
+}
+
+function normalizeSetupProtagonistActor(actor: Record<string, unknown>): PublicActorState {
+  const normalized = stripUndefinedRecord(actor);
+  const roles = normalized["roles"];
+  if (Array.isArray(roles)) {
+    normalized["roles"] = roles.map(normalizeSetupActorRole);
+  }
+  normalized["magecraft"] = normalizeSetupMagecraft(normalized["magecraft"]);
+  if (normalized["servantForm"] === undefined) {
+    normalized["servantForm"] = null;
+  }
+  assertPublicActorStateCandidate(normalized);
+  return normalized;
+}
+
+function assertPublicActorStateCandidate(value: unknown): asserts value is PublicActorState {
+  const actor = assertRecord(value, "actor");
+  assertString(actor["id"], "actor.id");
+  assertActorKind(actor["kind"], "actor.kind");
+  // Full actor shape is intentionally validated by updateState/assertState after cleanup; this assertion only narrows the tool-boundary record type.
+}
+
+function normalizeSetupActorRole(value: unknown): unknown {
+  const role = stripUndefined(value);
+  if (!isRecord(role) || role["kind"] !== "master") {
+    return role;
+  }
+  return {
+    ...role,
+    commandSpells: role["commandSpells"] ?? { total: 3, remaining: 3 },
+    contractedServantIds: role["contractedServantIds"] ?? [],
+  };
+}
+
+function normalizeSetupMagecraft(value: unknown): unknown {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  const magecraft = stripUndefined(value);
+  if (!isRecord(magecraft)) {
+    return magecraft;
+  }
+
+  const circuits = normalizeSetupCircuits(magecraft["circuits"]);
+  const disciplines = magecraft["disciplines"];
+  const affiliation = magecraft["affiliation"];
+  const hasDisciplines = Array.isArray(disciplines) && disciplines.length > 0;
+  const hasAffiliation = typeof affiliation === "string" && affiliation.trim().length > 0;
+  if (circuits === undefined && !hasDisciplines && !hasAffiliation) {
+    return null;
+  }
+
+  return {
+    circuits: circuits ?? defaultUnknownCircuits(),
+    disciplines: disciplines ?? [],
+    affiliation: hasAffiliation ? affiliation.trim() : null,
+  };
+}
+
+function normalizeSetupCircuits(value: unknown): unknown {
+  if (value === undefined) {
+    return undefined;
+  }
+  const circuits = stripUndefined(value);
+  if (!isRecord(circuits)) {
+    return circuits;
+  }
+  return {
+    count: circuits["count"] ?? "未确认",
+    quality: circuits["quality"] ?? "none",
+    od: circuits["od"] ?? 100,
+    status: circuits["status"] ?? "normal",
+    traits: circuits["traits"] ?? [],
+  };
+}
+
+function defaultUnknownCircuits(): Record<string, unknown> {
+  return { count: "未确认", quality: "none", od: 100, status: "normal", traits: [] };
+}
+
+function stripUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(stripUndefined);
+  }
+  if (!isRecord(value)) {
+    return value;
+  }
+  return stripUndefinedRecord(value);
+}
+
+function stripUndefinedRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(record)) {
+    if (value !== undefined) {
+      result[key] = stripUndefined(value);
+    }
+  }
+  return result;
 }
 
 function assertPublicNpcInput(value: unknown): PublicNpcInput {
@@ -295,18 +396,24 @@ function assertActorRole(value: unknown, fieldName: string): ActorRole {
     case "master":
       return {
         kind,
-        commandSpells: assertCommandSpells(role["commandSpells"], `${fieldName}.commandSpells`),
-        contractedServantIds: assertStringArray(
+        commandSpells: assertOptionalCommandSpells(role["commandSpells"], `${fieldName}.commandSpells`),
+        contractedServantIds: assertOptionalStringArray(
           role["contractedServantIds"],
           `${fieldName}.contractedServantIds`,
-        ),
+        ) ?? [],
       };
     default:
       throw new Error(`非法 ${fieldName}.kind: ${kind}。允许值: social, faction, master。`);
   }
 }
 
-function assertCommandSpells(value: unknown, fieldName: string): { total: number; remaining: number } {
+function assertOptionalCommandSpells(
+  value: unknown,
+  fieldName: string,
+): { total: number; remaining: number } {
+  if (value === undefined) {
+    return { total: 3, remaining: 3 };
+  }
   const commandSpells = assertRecord(value, fieldName);
   return {
     total: assertInteger(commandSpells["total"], `${fieldName}.total`),
