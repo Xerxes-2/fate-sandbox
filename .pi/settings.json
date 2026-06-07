@@ -1,4 +1,4 @@
 {
-  "packages": ["npm:pi-subagents"],
+  "packages": ["npm:pi-subagents", "npm:pi-web-access"],
   "npmCommand": ["pnpm"]
 }
