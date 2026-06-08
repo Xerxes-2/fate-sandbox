@@ -13,7 +13,7 @@ void test("progressSceneBeatTool begins a beat from the GM-facing adapter", () =
       title: "柳洞寺外围侦察",
       objectives: ["观察结界", "安全撤回"],
       purpose: "进入柳洞寺外围侦察 beat。",
-      time: { kind: "none", reason: "即时进入侦察态势。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "进入侦察态势。" },
       threats: [{ summary: "山门附近有从者级别气息", severity: "medium" }],
       presence: { presentActorIds: ["protagonist"] },
       situation: "investigation",
@@ -39,7 +39,7 @@ void test("progressSceneBeatTool completes current beat and opens next beat", ()
       title: "真名与宝具揭示收口",
       objectives: ["真名揭示成立", "宝具揭示成立"],
       purpose: "开启揭示收口 beat",
-      time: { kind: "none", reason: "即时开启 beat。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "开启 beat。" },
       beatId: "reveal-wrapup",
       actionPolicy: {
         allowedActions: ["整理线索"],
@@ -55,7 +55,7 @@ void test("progressSceneBeatTool completes current beat and opens next beat", ()
     {
       kind: "complete",
       outcome: "真名与宝具揭示成立，现场进入短暂停顿。",
-      time: { kind: "none", reason: "即时收口当前 beat。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "收口当前 beat。" },
       memory: {
         title: "真名与宝具揭示成立",
         summary: "玩家通过现场线索确认揭示成立，双方暂时停手观察。",

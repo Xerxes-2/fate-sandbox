@@ -2,7 +2,7 @@ import type { LocationState, TurnTimePolicy } from "../../engine/core/state";
 
 import { assertOneOf, assertRecord, assertString, normalizePositiveInteger } from "./tool-input";
 
-const TIME_KINDS = ["none", "elapsed", "travel"] as const;
+const TIME_KINDS = ["elapsed", "travel"] as const;
 const BOUNDARIES = ["normal", "bounded-field", "reality-marble", "otherworld"] as const satisfies readonly LocationState["boundary"][];
 
 export function normalizeTurnTimePolicy(value: unknown, fieldName: string): TurnTimePolicy {
@@ -10,8 +10,6 @@ export function normalizeTurnTimePolicy(value: unknown, fieldName: string): Turn
   const kind = assertOneOf(input["kind"], `${fieldName}.kind`, TIME_KINDS);
   const reason = assertString(input["reason"], `${fieldName}.reason`);
   switch (kind) {
-    case "none":
-      return { kind, reason };
     case "elapsed":
       return {
         kind,
@@ -31,6 +29,8 @@ export function normalizeTurnTimePolicy(value: unknown, fieldName: string): Turn
         ),
         reason,
       };
+    default:
+      throw new Error("unreachable time policy kind");
   }
 }
 

@@ -73,13 +73,13 @@ export type SceneBeatProgressResult =
   | {
       kind: "begin";
       message: string;
-      time: SceneEventResult | null;
+      time: SceneEventResult;
       beat: SceneBeatResult;
     }
   | {
       kind: "complete";
       message: string;
-      time: SceneEventResult | null;
+      time: SceneEventResult;
       transition: SceneBeatTransitionResult;
       memory: MemoryEventResult | null;
       presence: ScenePresenceResult | null;
@@ -111,7 +111,7 @@ function beginCurrentSceneBeat(input: SceneBeatBeginInput): SceneBeatProgressRes
     endedAt: getState().public.clock.currentAt,
     time: input.time,
     eventCount: 1,
-    resultCount: time === null ? 1 : 2,
+    resultCount: 2,
   });
   return { kind: "begin", message: formatBeginMessage(time, beat), time, beat };
 }
@@ -232,12 +232,12 @@ function countCompleteInputEvents(input: SceneBeatCompleteInput): number {
 }
 
 function countCompleteResults(
-  time: SceneEventResult | null,
+  _time: SceneEventResult,
   memory: MemoryEventResult | null,
   presence: ScenePresenceResult | null,
   situation: SceneEventResult | null,
 ): number {
-  let count = time === null ? 1 : 2;
+  let count = 2;
   if (memory !== null) count += 1;
   if (presence !== null) count += 1;
   if (situation !== null) count += 1;
@@ -256,21 +256,18 @@ function shouldApplyPostCompletionSituation(
   return (input.nextBeat === undefined || input.nextBeat === null) && input.situation !== undefined;
 }
 
-function formatBeginMessage(time: SceneEventResult | null, beat: SceneBeatResult): string {
-  if (time === null) {
-    return beat.message;
-  }
+function formatBeginMessage(time: SceneEventResult, beat: SceneBeatResult): string {
   return `${time.message}\n${beat.message}`;
 }
 
 function formatCompleteMessage(
-  time: SceneEventResult | null,
+  time: SceneEventResult,
   transition: SceneBeatTransitionResult,
   memory: MemoryEventResult | null,
   presence: ScenePresenceResult | null,
   situation: SceneEventResult | null,
 ): string {
-  const lines = time === null ? [transition.message] : [time.message, transition.message];
+  const lines = [time.message, transition.message];
   if (memory !== null) {
     lines.push("Campaign Memory 已记录。");
   }

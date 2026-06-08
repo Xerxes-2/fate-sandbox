@@ -4,7 +4,7 @@ import test from "node:test";
 import { getState, resetState } from "./state";
 import { commitTurn } from "./turn-commit";
 
-const NO_TIME = { kind: "none", reason: "即时状态变化。" } as const;
+const MIN_TIME = { kind: "elapsed", elapsedMinutes: 1, reason: "推进一个最小时间单位。" } as const;
 
 void test("commitTurn applies mandatory travel time before domain events", () => {
   resetState();
@@ -55,13 +55,13 @@ void test("commitTurn accepts elapsed time as the only canonical change", () => 
   assert.match(result.message, /领域事件：1/);
 });
 
-void test("commitTurn rejects empty no-time commits", () => {
+void test("commitTurn accepts elapsed time without domain events", () => {
   resetState();
 
-  assert.throws(
-    () => commitTurn({ summary: "没有状态变化。", time: NO_TIME, events: [] }),
-    /至少需要一个领域事件/,
-  );
+  const result = commitTurn({ summary: "只推进时间。", time: MIN_TIME, events: [] });
+
+  assert.equal(getState().public.clock.currentAt, "2004-01-30T07:01:00.000Z");
+  assert.equal(result.results.length, 1);
 });
 
 void test("commitTurn rolls back time when a later domain event fails", () => {
@@ -108,7 +108,7 @@ void test("commitTurn auto-closes a beat after resolving the last objective", ()
 
   commitTurn({
     summary: "开启调查 beat。",
-    time: NO_TIME,
+    time: MIN_TIME,
     events: [
       {
         kind: "scene-beat",
@@ -134,7 +134,7 @@ void test("commitTurn auto-closes a beat after resolving the last objective", ()
 
   const result = commitTurn({
     summary: "解决最后目标。",
-    time: NO_TIME,
+    time: MIN_TIME,
     events: [
       {
         kind: "scene",
@@ -149,15 +149,15 @@ void test("commitTurn auto-closes a beat after resolving the last objective", ()
 
   assert.deepEqual(getState().public.scene.objectives, []);
   assert.equal(getState().public.scene.storyWindow, null);
-  assert.equal(result.results.length, 2);
+  assert.equal(result.results.length, 3);
 });
 
-void test("commitTurn records presence with explicit no-time policy", () => {
+void test("commitTurn records presence with explicit elapsed time policy", () => {
   resetState();
 
   const result = commitTurn({
     summary: "凛暂时离场。",
-    time: NO_TIME,
+    time: MIN_TIME,
     events: [
       {
         kind: "scene-presence",
@@ -171,5 +171,6 @@ void test("commitTurn records presence with explicit no-time policy", () => {
   });
 
   assert.deepEqual(getState().public.scene.presentActorIds, ["protagonist"]);
-  assert.equal(result.results[0]?.kind, "scene-presence");
+  assert.equal(result.results[0]?.kind, "scene");
+  assert.equal(result.results[1]?.kind, "scene-presence");
 });

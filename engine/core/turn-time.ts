@@ -5,11 +5,9 @@ import { Temporal } from "@js-temporal/polyfill";
 
 import { assertNonEmptyString, assertNonNegativeInteger, updateState } from "./state";
 
-export function applyTurnTime(time: TurnTimePolicy): SceneEventResult | null {
+export function applyTurnTime(time: TurnTimePolicy): SceneEventResult {
   assertNonEmptyString(time.reason, "time.reason");
   switch (time.kind) {
-    case "none":
-      return null;
     case "elapsed":
       return advanceTurnTime(time.elapsedMinutes);
     case "travel":
@@ -17,10 +15,6 @@ export function applyTurnTime(time: TurnTimePolicy): SceneEventResult | null {
     default:
       throw new Error("unreachable turn time kind");
   }
-}
-
-export function turnTimeChangesClock(time: TurnTimePolicy): boolean {
-  return time.kind !== "none";
 }
 
 function advanceTurnTime(elapsedMinutesInput: number): SceneEventResult {

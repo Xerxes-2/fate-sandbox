@@ -19,7 +19,7 @@ import { recordMemory } from "./memory";
 import { beginSceneBeat, transitionSceneBeat, updateScene } from "./scene";
 import { updateServantForm } from "./servant";
 import { appendTurnLogEntry, assertNonEmptyString, getState, transactState } from "./state";
-import { applyTurnTime, turnTimeChangesClock } from "./turn-time";
+import { applyTurnTime } from "./turn-time";
 
 export type TurnCommitEvent =
   | { kind: "scene"; event: SceneEvent }
@@ -57,16 +57,10 @@ export function commitTurn(input: TurnCommitInput): TurnCommitResult {
 
 function commitCanonicalTurn(input: TurnCommitInput): TurnCommitResult {
   const summary = assertNonEmptyString(input.summary, "summary");
-  if (input.events.length === 0 && !turnTimeChangesClock(input.time)) {
-    throw new Error(
-      "commit_turn 至少需要一个领域事件或 time.kind != none；若本轮没有状态变化，请不要调用。",
-    );
-  }
-
   const startedAt = getState().public.clock.currentAt;
   const timeResult = applyTurnTime(input.time);
   const results = input.events.map(applyTurnEvent);
-  const timeResults = timeResult === null ? [] : [{ kind: "scene" as const, result: timeResult }];
+  const timeResults = [{ kind: "scene" as const, result: timeResult }];
   const autoCloseResult = closeCompletedOpenStoryWindow();
   const baseResults = [...timeResults, ...results];
   const finalResults = autoCloseResult === null ? baseResults : [...baseResults, autoCloseResult];

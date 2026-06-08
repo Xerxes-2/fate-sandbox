@@ -50,7 +50,7 @@ void test("commitTurnTool accepts canonical non-time event kinds only", () => {
   const result = commitTurnTool(
     {
       summary: "添加目标。",
-      time: { kind: "none", reason: "即时添加目标。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "添加目标推进一个最小时间单位。" },
       events: [
         {
           kind: "scene",
@@ -74,7 +74,7 @@ void test("commitTurnTool rejects flat payload aliases", () => {
     () =>
       commitTurnTool(
         {
-          time: { kind: "none", reason: "即时。" },
+          time: { kind: "elapsed", elapsedMinutes: 1, reason: "即时行动也推进一个最小时间单位。" },
           events: [
             {
               kind: "add-objective",
@@ -94,7 +94,7 @@ void test("commitTurnTool ignores blank objectiveId when objectiveSummary is pre
   commitTurnTool(
     {
       summary: "添加目标。",
-      time: { kind: "none", reason: "即时添加目标。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "添加目标推进一个最小时间单位。" },
       events: [
         {
           kind: "scene",
@@ -111,7 +111,7 @@ void test("commitTurnTool ignores blank objectiveId when objectiveSummary is pre
   const result = commitTurnTool(
     {
       summary: "解决目标。",
-      time: { kind: "none", reason: "即时解决目标。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "解决目标推进一个最小时间单位。" },
       events: [
         {
           kind: "scene",

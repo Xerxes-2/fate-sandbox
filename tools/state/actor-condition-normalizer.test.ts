@@ -115,7 +115,7 @@ void test("commitTurnTool accepts actor-condition update-outfit alias", () => {
   commitTurnTool(
     {
       summary: "Saber 灵子化和服并换上员工外套。",
-      time: { kind: "none", reason: "即时换装。" },
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "换装耗时。" },
       events: [
         {
           kind: "actor-condition",

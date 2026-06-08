@@ -159,7 +159,7 @@ describe("Fate state tool-level smoke flow", () => {
     resetState();
     commitTurnTool(
       {
-        time: { kind: "none", reason: "地点修正不耗时" },
+        time: { kind: "elapsed", elapsedMinutes: 1, reason: "地点修正推进一个最小时间单位" },
         events: [
           {
             kind: "scene",
@@ -195,7 +195,7 @@ describe("Fate state tool-level smoke flow", () => {
     resetState();
     commitTurnTool(
       {
-        time: { kind: "none", reason: "地点修正不耗时" },
+        time: { kind: "elapsed", elapsedMinutes: 1, reason: "地点修正推进一个最小时间单位" },
         events: [
           {
             kind: "scene",
@@ -225,7 +225,7 @@ describe("Fate state tool-level smoke flow", () => {
     const sessionManager = createMockSessionManager();
     commitTurnTool(
       {
-        time: { kind: "none", reason: "地点修正不耗时" },
+        time: { kind: "elapsed", elapsedMinutes: 1, reason: "地点修正推进一个最小时间单位" },
         events: [
           {
             kind: "scene",
@@ -247,7 +247,7 @@ describe("Fate state tool-level smoke flow", () => {
     resetState();
     commitTurnTool(
       {
-        time: { kind: "none", reason: "地点修正不耗时" },
+        time: { kind: "elapsed", elapsedMinutes: 1, reason: "地点修正推进一个最小时间单位" },
         events: [
           {
             kind: "scene",
@@ -268,7 +268,7 @@ describe("Fate state tool-level smoke flow", () => {
     );
     commitTurnTool(
       {
-        time: { kind: "none", reason: "地点修正不耗时" },
+        time: { kind: "elapsed", elapsedMinutes: 1, reason: "地点修正推进一个最小时间单位" },
         events: [
           {
             kind: "scene",

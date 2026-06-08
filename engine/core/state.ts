@@ -92,7 +92,7 @@ export interface GameState {
 }
 
 export interface StateMeta {
-  schemaVersion: 2;
+  schemaVersion: 3;
   createdAt: string;
   updatedAt: string;
 }
@@ -165,7 +165,6 @@ export interface SceneThreat {
 }
 
 export type TurnTimePolicy =
-  | { kind: "none"; reason: string }
   | { kind: "elapsed"; elapsedMinutes: number; reason: string }
   | { kind: "travel"; location: LocationState; elapsedMinutes: number; reason: string };
 
@@ -540,7 +539,7 @@ export interface PatchOp {
 
 export type StatePatchPath = never;
 
-export const CURRENT_STATE_SCHEMA_VERSION = 2;
+export const CURRENT_STATE_SCHEMA_VERSION = 3;
 
 const SESSION_KEY = "fsn-state";
 const DEBUG_STATE_PATH = "state/state.json";
@@ -906,19 +905,32 @@ function assertState(raw: unknown): State {
   if (!isRecord(stateRaw)) {
     throw new Error(`非法状态: ${formatUnknown(raw)}。state 必须是对象。`);
   }
-  return assertGameStateV2(migrateRawGameState(stateRaw));
+  return assertGameStateV3(migrateRawGameState(stateRaw));
 }
 
 function migrateRawGameState(raw: Record<string, unknown>): Record<string, unknown> {
-  const version = readRawSchemaVersion(raw);
+  let current = structuredClone(raw);
+  while (true) {
+    const version = readRawSchemaVersion(current);
+    if (version === CURRENT_STATE_SCHEMA_VERSION) {
+      return current;
+    }
+    current = migrateOneSchemaVersion(current, version);
+  }
+}
+
+function migrateOneSchemaVersion(
+  raw: Record<string, unknown>,
+  version: number,
+): Record<string, unknown> {
   switch (version) {
     case 1:
       return migrateGameStateV1ToV2(raw);
-    case CURRENT_STATE_SCHEMA_VERSION:
-      return raw;
+    case 2:
+      return migrateGameStateV2ToV3(raw);
     default:
       throw new Error(
-        `不支持的 state schemaVersion: ${version}。当前支持从 1 迁移到 ${CURRENT_STATE_SCHEMA_VERSION}。`,
+        `不支持的 state schemaVersion: ${version}。当前支持逐步迁移到 ${CURRENT_STATE_SCHEMA_VERSION}。`,
       );
   }
 }
@@ -931,10 +943,31 @@ function readRawSchemaVersion(raw: Record<string, unknown>): number {
 function migrateGameStateV1ToV2(raw: Record<string, unknown>): Record<string, unknown> {
   const next = structuredClone(raw);
   const meta = assertRecordForMigration(next["meta"], "meta");
-  meta["schemaVersion"] = CURRENT_STATE_SCHEMA_VERSION;
+  meta["schemaVersion"] = 2;
   const publicState = assertRecordForMigration(next["public"], "public");
   publicState["turnLog"] = [];
   return next;
+}
+
+function migrateGameStateV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
+  const next = structuredClone(raw);
+  const meta = assertRecordForMigration(next["meta"], "meta");
+  meta["schemaVersion"] = CURRENT_STATE_SCHEMA_VERSION;
+  const publicState = assertRecordForMigration(next["public"], "public");
+  const rawTurnLog = Array.isArray(publicState["turnLog"]) ? publicState["turnLog"] : [];
+  publicState["turnLog"] = rawTurnLog.filter(hasAdvancingTurnTime);
+  return next;
+}
+
+function hasAdvancingTurnTime(value: unknown): boolean {
+  if (!isRecord(value)) {
+    return false;
+  }
+  const time = value["time"];
+  if (!isRecord(time)) {
+    return false;
+  }
+  return time["kind"] === "elapsed" || time["kind"] === "travel";
 }
 
 function assertRecordForMigration(value: unknown, fieldName: string): Record<string, unknown> {
@@ -944,7 +977,7 @@ function assertRecordForMigration(value: unknown, fieldName: string): Record<str
   return value;
 }
 
-function assertGameStateV2(raw: Record<string, unknown>): State {
+function assertGameStateV3(raw: Record<string, unknown>): State {
   const meta = assertMeta(raw["meta"]);
   const publicState = assertPublicGameState(raw["public"]);
   const secrets = assertSecretGameState(raw["secrets"]);
@@ -1054,8 +1087,6 @@ function assertTurnTimePolicy(raw: unknown, fieldName: string): TurnTimePolicy {
   const kind = assertOneOf(raw["kind"], TURN_TIME_KINDS, `${fieldName}.kind`);
   const reason = assertNonEmptyString(raw["reason"], `${fieldName}.reason`);
   switch (kind) {
-    case "none":
-      return { kind, reason };
     case "elapsed":
       return {
         kind,
@@ -2029,7 +2060,7 @@ const SITUATIONS = [
   "escape",
   "downtime",
 ] as const;
-const TURN_TIME_KINDS = ["none", "elapsed", "travel"] as const;
+const TURN_TIME_KINDS = ["elapsed", "travel"] as const;
 const OBJECTIVE_STATUSES = ["active", "blocked", "resolved"] as const;
 const THREAT_SEVERITIES = ["low", "medium", "high", "lethal"] as const;
 const ACTOR_KINDS = ["human", "outsider", "spirit", "other"] as const;
