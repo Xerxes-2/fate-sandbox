@@ -641,7 +641,8 @@ export function registerAllTools(pi: ExtensionAPI): void {
       "【必须调用的场景】\n" +
       "- 战斗、撤退、保护、破除拘束、试探能力、宝具前摇/解放等高风险交锋需要机械裁决\n" +
       "- 双方有从者参数、魔术资质、伤势、地形、情报或资源投入差异，不能只靠 GM 口胡胜负\n" +
-      "- 玩家行动试图争取局部目标：挡下一击、逼退、撤离、保护 NPC、打断术式、识破能力或创造出手机会\n\n" +
+      "- 玩家行动试图争取局部目标：挡下一击、逼退、撤离、保护 NPC、打断术式、识破能力或创造出手机会\n" +
+      "- tactic=noble-phantasm 且比较 noblePhantasm 时，具体宝具 rank 与面板宝具参数分开；多宝具必须指定公开宝具名\n\n" +
       "【严禁的行为】\n" +
       "- 用它一次结算完整战斗或跳过玩家可回应窗口\n" +
       "- 让模型先决定胜负再反填优势/劣势；输入必须是玩家可见事实、已投入资源和已知压力\n" +
@@ -663,6 +664,16 @@ export function registerAllTools(pi: ExtensionAPI): void {
         description:
           "对手主要参数轴，允许: strength / endurance / agility / mana / luck / noblePhantasm",
       }),
+      actorNoblePhantasmName: Type.Optional(
+        Type.String({
+          description: "本方明确释放具体宝具时，逐字复制公开宝具名；若只有一个公开宝具可省略。",
+        }),
+      ),
+      opponentNoblePhantasmName: Type.Optional(
+        Type.String({
+          description: "对手明确使用具体宝具时，逐字复制公开宝具名；若只有一个公开宝具可省略。",
+        }),
+      ),
       targetObjective: Type.Optional(
         Type.String({ description: "若交锋服务当前 Scene Objective，逐字写目标摘要" }),
       ),

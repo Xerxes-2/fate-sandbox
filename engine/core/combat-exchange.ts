@@ -1,4 +1,4 @@
-import type { FateParams, FateRank, PublicActorState } from "./state";
+import type { FateParams, FateRank, NoblePhantasm, PublicActorState } from "./state";
 
 import { compareFateRanks, type FateRankComparison } from "./fate-rank";
 import { getState } from "./state";
@@ -38,6 +38,8 @@ export interface CombatExchangeInput {
   tactic: CombatExchangeTactic;
   actorParameter: CombatParameter;
   opponentParameter: CombatParameter;
+  actorNoblePhantasmName?: string;
+  opponentNoblePhantasmName?: string;
   targetObjective?: string;
   committedResources: string[];
   knownAdvantages: string[];
@@ -109,6 +111,14 @@ export function assertCombatExchangeInput(raw: RawCombatExchangeInput): CombatEx
       "opponentParameter",
       COMBAT_PARAMETERS,
     ),
+    actorNoblePhantasmName: assertOptionalString(
+      raw["actorNoblePhantasmName"],
+      "actorNoblePhantasmName",
+    ),
+    opponentNoblePhantasmName: assertOptionalString(
+      raw["opponentNoblePhantasmName"],
+      "opponentNoblePhantasmName",
+    ),
     targetObjective: assertOptionalString(raw["targetObjective"], "targetObjective"),
     committedResources: normalizeStringArray(raw["committedResources"], "committedResources"),
     knownAdvantages: normalizeStringArray(raw["knownAdvantages"], "knownAdvantages"),
@@ -121,8 +131,20 @@ export function resolveCombatExchange(input: CombatExchangeInput): CombatExchang
   const state = getState();
   const actor = requireActor(state.public.actors[input.actorId], input.actorId);
   const opponent = requireActor(state.public.actors[input.opponentId], input.opponentId);
-  const actorProfile = buildCombatProfile(actor, input.actorParameter);
-  const opponentProfile = buildCombatProfile(opponent, input.opponentParameter);
+  const actorProfile = buildCombatProfile(
+    actor,
+    input.actorParameter,
+    input.tactic,
+    input.actorNoblePhantasmName,
+    "actorNoblePhantasmName",
+  );
+  const opponentProfile = buildCombatProfile(
+    opponent,
+    input.opponentParameter,
+    input.tactic,
+    input.opponentNoblePhantasmName,
+    "opponentNoblePhantasmName",
+  );
   const rankComparison = compareProfiles(actorProfile, opponentProfile);
   const score = calculateScore(input, actor, opponent, rankComparison);
   const outcome = determineOutcome(score, input);
@@ -148,8 +170,87 @@ function requireActor(actor: PublicActorState | undefined, actorId: string): Pub
   return actor;
 }
 
-function buildCombatProfile(actor: PublicActorState, parameter: CombatParameter): CombatProfile {
+function shouldUseConcreteNoblePhantasm(
+  parameter: CombatParameter,
+  tactic: CombatExchangeTactic,
+  noblePhantasmName: string | undefined,
+): boolean {
+  return (
+    parameter === "noblePhantasm" &&
+    (tactic === "noble-phantasm" || noblePhantasmName !== undefined)
+  );
+}
+
+function selectConcreteNoblePhantasm(
+  actor: PublicActorState,
+  noblePhantasmName: string | undefined,
+  noblePhantasmFieldName: string,
+): { name: string; rank: FateRank } {
+  const servant = actor.servantForm;
+  if (servant === null) {
+    throw new Error(`resolve_combat_exchange: ${actor.id} 不是从者，不能指定具体宝具。`);
+  }
+  const revealedNoblePhantasms = servant.noblePhantasms.filter(isConcreteNoblePhantasm);
+  if (noblePhantasmName !== undefined) {
+    const matched = revealedNoblePhantasms.find(
+      (noblePhantasm) => noblePhantasm.name === noblePhantasmName,
+    );
+    if (matched === undefined) {
+      throw new Error(
+        `resolve_combat_exchange: ${noblePhantasmFieldName} 未匹配公开宝具。可用: ${formatAvailableNoblePhantasms(revealedNoblePhantasms)}。`,
+      );
+    }
+    return { name: matched.name, rank: matched.rank };
+  }
+  if (revealedNoblePhantasms.length !== 1) {
+    throw new Error(
+      `resolve_combat_exchange: ${actor.id} 的公开宝具数量为 ${revealedNoblePhantasms.length}，必须用 ${noblePhantasmFieldName} 指定唯一宝具。可用: ${formatAvailableNoblePhantasms(revealedNoblePhantasms)}。`,
+    );
+  }
+  const onlyNoblePhantasm = revealedNoblePhantasms[0];
+  if (onlyNoblePhantasm === undefined) {
+    throw new Error(`resolve_combat_exchange: ${actor.id} 缺少可用公开宝具。`);
+  }
+  return { name: onlyNoblePhantasm.name, rank: onlyNoblePhantasm.rank };
+}
+
+function isConcreteNoblePhantasm(
+  noblePhantasm: NoblePhantasm,
+): noblePhantasm is NoblePhantasm & { rank: FateRank } {
+  return noblePhantasm.status !== "hidden" && noblePhantasm.rank !== "none";
+}
+
+function formatAvailableNoblePhantasms(
+  noblePhantasms: ReadonlyArray<{ name: string; rank: FateRank }>,
+): string {
+  if (noblePhantasms.length === 0) {
+    return "无";
+  }
+  return noblePhantasms
+    .map((noblePhantasm) => `「${noblePhantasm.name}」(${noblePhantasm.rank})`)
+    .join("、");
+}
+
+function buildCombatProfile(
+  actor: PublicActorState,
+  parameter: CombatParameter,
+  tactic: CombatExchangeTactic,
+  noblePhantasmName: string | undefined,
+  noblePhantasmFieldName: string,
+): CombatProfile {
   if (actor.servantForm !== null) {
+    if (shouldUseConcreteNoblePhantasm(parameter, tactic, noblePhantasmName)) {
+      const noblePhantasm = selectConcreteNoblePhantasm(
+        actor,
+        noblePhantasmName,
+        noblePhantasmFieldName,
+      );
+      return {
+        scale: "servant",
+        rank: noblePhantasm.rank,
+        label: `${actor.presentation.displayName}/${actor.servantForm.identity.className}.宝具「${noblePhantasm.name}」`,
+      };
+    }
     return {
       scale: "servant",
       rank: actor.servantForm.parameters.base[parameter],

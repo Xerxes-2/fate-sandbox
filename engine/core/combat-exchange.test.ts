@@ -1,4 +1,4 @@
-import type { FateParams, PublicActorState } from "./state";
+import type { FateParams, NoblePhantasm, PublicActorState } from "./state";
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -28,6 +28,102 @@ void test("resolveCombatExchange gives a superior servant local advantage withou
   assert.equal(result.outcome, "clean-advantage");
   assert.match(result.rankCheck, /两级以上参数压制/u);
   assert.match(result.forbiddenNarration.join("\n"), /禁止输出 HP/u);
+});
+
+void test("resolveCombatExchange uses concrete noble phantasm rank for true-name releases", () => {
+  resetState();
+  insertActor(
+    servantActor("saber", "Saber", weakParams(), [
+      {
+        name: "无垢识·空之境界 (Mukushiki Kara no Kyoukai)",
+        rank: "EX",
+        kind: "对人宝具",
+        status: "revealed",
+        summary: "切断对象死线的真名解放。",
+      },
+    ]),
+  );
+  insertActor(
+    servantActor("rider", "Rider", { ...strongParams(), noblePhantasm: "A+" }, [
+      {
+        name: "黄金鹿与暴风夜 (Golden Wild Hunt)",
+        rank: "A+",
+        kind: "对军宝具",
+        status: "revealed",
+        summary: "舰队级炮火压制。",
+      },
+    ]),
+  );
+
+  const result = resolveCombatExchange({
+    actorId: "saber",
+    opponentId: "rider",
+    intent: "真名解放，以无垢识·空之境界切开 Rider 的舰队级炮火",
+    tactic: "noble-phantasm",
+    actorParameter: "noblePhantasm",
+    opponentParameter: "noblePhantasm",
+    targetObjective: "切开 Rider 的舰队级炮火",
+    committedResources: ["真名解放「无垢识·空之境界」"],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "high",
+  });
+
+  assert.match(result.rankCheck, /无垢识·空之境界.*EX/u);
+  assert.doesNotMatch(result.rankCheck, /Saber\/Saber\.noblePhantasm C/u);
+});
+
+void test("resolveCombatExchange requires explicit public noble phantasm names for multi-NP releases", () => {
+  resetState();
+  insertActor(
+    servantActor("saber", "Saber", weakParams(), [
+      {
+        name: "第一宝具",
+        rank: "EX",
+        kind: "对界宝具",
+        status: "revealed",
+        summary: "测试用高阶宝具。",
+      },
+      {
+        name: "第二宝具",
+        rank: "B",
+        kind: "对人宝具",
+        status: "revealed",
+        summary: "测试用指定宝具。",
+      },
+    ]),
+  );
+  insertActor(
+    servantActor("rider", "Rider", { ...strongParams(), noblePhantasm: "A+" }, [
+      {
+        name: "黄金鹿与暴风夜 (Golden Wild Hunt)",
+        rank: "A+",
+        kind: "对军宝具",
+        status: "revealed",
+        summary: "舰队级炮火压制。",
+      },
+    ]),
+  );
+
+  const input = {
+    actorId: "saber",
+    opponentId: "rider",
+    intent: "指定第二宝具切开 Rider 的舰队级炮火",
+    tactic: "noble-phantasm" as const,
+    actorParameter: "noblePhantasm" as const,
+    opponentParameter: "noblePhantasm" as const,
+    committedResources: ["真名解放"],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "high" as const,
+  };
+
+  assert.throws(() => resolveCombatExchange(input), /actorNoblePhantasmName/u);
+
+  const result = resolveCombatExchange({ ...input, actorNoblePhantasmName: "第二宝具" });
+
+  assert.match(result.rankCheck, /第二宝具.*B/u);
+  assert.doesNotMatch(result.rankCheck, /第一宝具.*EX/u);
 });
 
 void test("resolveCombatExchange blocks clean wins under servant-scale suppression", () => {
@@ -99,7 +195,12 @@ function insertActor(actor: PublicActorState): void {
   });
 }
 
-function servantActor(id: string, displayName: string, parameters: FateParams): PublicActorState {
+function servantActor(
+  id: string,
+  displayName: string,
+  parameters: FateParams,
+  noblePhantasms: NoblePhantasm[] = [],
+): PublicActorState {
   return {
     id,
     kind: "spirit",
@@ -126,7 +227,7 @@ function servantActor(id: string, displayName: string, parameters: FateParams): 
       },
       parameters: { base: parameters, modifiers: [], baseLocked: true },
       skills: { classSkills: [], personalSkills: [] },
-      noblePhantasms: [],
+      noblePhantasms,
       currentOrder: "测试交锋",
     },
     identity: { publicIdentity: displayName, background: "测试 actor", lockedFacts: [] },
