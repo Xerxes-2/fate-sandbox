@@ -3,17 +3,18 @@ import type { FateParams, FateRank, NoblePhantasm, PublicActorState } from "./st
 import { compareFateRanks, type FateRankComparison } from "./fate-rank";
 import { getState } from "./state";
 
-export type CombatExchangeTactic =
-  | "direct-attack"
-  | "defense"
-  | "escape"
-  | "protect"
-  | "probe"
-  | "break-restraint"
-  | "noble-phantasm"
-  | "support";
-export type CombatRiskTolerance = "low" | "medium" | "high" | "desperate";
-export type CombatSwing = "bad-break" | "pressure" | "neutral" | "opening" | "turnabout";
+import type {
+  CombatExchangeTactic,
+  CombatRiskTolerance,
+  CombatSwing,
+} from "./combat-exchange-schema";
+
+export type {
+  CombatExchangeTactic,
+  CombatRiskTolerance,
+  CombatSwing,
+} from "./combat-exchange-schema";
+
 export type CombatOutcomeBand =
   | "clean-advantage"
   | "advantage-with-cost"
@@ -75,68 +76,6 @@ interface CombatProfile {
   scale: CombatScale;
   rank: FateRank | null;
   label: string;
-}
-
-const COMBAT_TACTICS = [
-  "direct-attack",
-  "defense",
-  "escape",
-  "protect",
-  "probe",
-  "break-restraint",
-  "noble-phantasm",
-  "support",
-] as const satisfies readonly CombatExchangeTactic[];
-const RISK_TOLERANCES = [
-  "low",
-  "medium",
-  "high",
-  "desperate",
-] as const satisfies readonly CombatRiskTolerance[];
-const COMBAT_PARAMETERS = [
-  "strength",
-  "endurance",
-  "agility",
-  "mana",
-  "luck",
-  "noblePhantasm",
-] as const satisfies readonly CombatParameter[];
-const COMBAT_SWINGS = [
-  "bad-break",
-  "pressure",
-  "neutral",
-  "opening",
-  "turnabout",
-] as const satisfies readonly CombatSwing[];
-const EMPTY_MARKERS = new Set(["none", "无", "n/a", "null"]);
-
-export function assertCombatExchangeInput(raw: RawCombatExchangeInput): CombatExchangeInput {
-  return {
-    actorId: assertString(raw["actorId"], "actorId"),
-    opponentId: assertString(raw["opponentId"], "opponentId"),
-    intent: assertString(raw["intent"], "intent"),
-    tactic: assertOneOf(raw["tactic"], "tactic", COMBAT_TACTICS),
-    actorParameter: assertOneOf(raw["actorParameter"], "actorParameter", COMBAT_PARAMETERS),
-    opponentParameter: assertOneOf(
-      raw["opponentParameter"],
-      "opponentParameter",
-      COMBAT_PARAMETERS,
-    ),
-    actorNoblePhantasmName: assertOptionalString(
-      raw["actorNoblePhantasmName"],
-      "actorNoblePhantasmName",
-    ),
-    opponentNoblePhantasmName: assertOptionalString(
-      raw["opponentNoblePhantasmName"],
-      "opponentNoblePhantasmName",
-    ),
-    targetObjective: assertOptionalString(raw["targetObjective"], "targetObjective"),
-    committedResources: normalizeStringArray(raw["committedResources"], "committedResources"),
-    knownAdvantages: normalizeStringArray(raw["knownAdvantages"], "knownAdvantages"),
-    knownDisadvantages: normalizeStringArray(raw["knownDisadvantages"], "knownDisadvantages"),
-    riskTolerance: assertOneOf(raw["riskTolerance"], "riskTolerance", RISK_TOLERANCES),
-    swing: assertOptionalOneOf(raw["swing"], "swing", COMBAT_SWINGS) ?? "neutral",
-  };
 }
 
 export function resolveCombatExchange(input: CombatExchangeInput): CombatExchangeResult {
@@ -670,65 +609,6 @@ function buildNextActionWindow(input: CombatExchangeInput, outcome: CombatOutcom
     default:
       throw new Error("unreachable combat outcome");
   }
-}
-
-function normalizeStringArray(value: unknown, fieldName: string): string[] {
-  if (value === undefined) {
-    return [];
-  }
-  if (!Array.isArray(value)) {
-    throw new Error(`${fieldName} 必须是数组。`);
-  }
-  return value
-    .map((entry, index) => assertString(entry, `${fieldName}[${index}]`))
-    .filter(isMeaningfulFactor);
-}
-
-function isMeaningfulFactor(value: string): boolean {
-  return !EMPTY_MARKERS.has(value.toLowerCase());
-}
-
-function assertOptionalString(value: unknown, fieldName: string): string | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  return assertString(value, fieldName);
-}
-
-function assertOptionalOneOf<const T extends readonly string[]>(
-  value: unknown,
-  fieldName: string,
-  allowed: T,
-): T[number] | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-  return assertOneOf(value, fieldName, allowed);
-}
-
-function assertString(value: unknown, fieldName: string): string {
-  if (typeof value !== "string") {
-    throw new Error(`${fieldName} 必须是字符串。`);
-  }
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    throw new Error(`${fieldName} 必须是非空字符串。`);
-  }
-  return trimmed;
-}
-
-function assertOneOf<const T extends readonly string[]>(
-  value: unknown,
-  fieldName: string,
-  allowed: T,
-): T[number] {
-  const text = assertString(value, fieldName);
-  for (const candidate of allowed) {
-    if (text === candidate) {
-      return candidate;
-    }
-  }
-  throw new Error(`非法 ${fieldName}: ${text}。允许值: ${allowed.join(", ")}。`);
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {

@@ -3,7 +3,8 @@ import type { FateParams, NoblePhantasm, PublicActorState } from "./state";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { assertCombatExchangeInput, resolveCombatExchange } from "./combat-exchange";
+import { resolveCombatExchange } from "./combat-exchange";
+import { parseCombatExchangeInput } from "./combat-exchange-schema";
 import { resetState, updateState } from "./state";
 
 void test("resolveCombatExchange gives a superior servant local advantage without HP math", () => {
@@ -249,10 +250,10 @@ void test("resolveCombatExchange does not force wounds or hard stops for costly 
   assert.doesNotMatch(result.nextActionWindow, /停在/u);
 });
 
-void test("assertCombatExchangeInput rejects model-authored difficulty language", () => {
+void test("parseCombatExchangeInput rejects model-authored difficulty language", () => {
   assert.throws(
     () =>
-      assertCombatExchangeInput({
+      parseCombatExchangeInput({
         actorId: "saber",
         opponentId: "rider",
         intent: "攻击",
@@ -260,8 +261,8 @@ void test("assertCombatExchangeInput rejects model-authored difficulty language"
         actorParameter: "strength",
         opponentParameter: "endurance",
         riskTolerance: "medium",
-      }),
-    /非法 tactic/u,
+      }, "resolve_combat_exchange 参数"),
+    /tactic 必须是允许值之一: direct-attack/u,
   );
 });
 

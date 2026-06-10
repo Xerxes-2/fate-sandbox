@@ -1,7 +1,6 @@
 import { randomInt } from "node:crypto";
 
 import {
-  assertCombatExchangeInput,
   formatCombatSwing,
   resolveCombatExchange,
   type CombatExchangeResult,
@@ -9,6 +8,7 @@ import {
   type CombatSwing,
   type RawCombatExchangeInput,
 } from "../../engine/core/combat-exchange";
+import { parseCombatExchangeInput } from "../../engine/core/combat-exchange-schema";
 import { writeStateToDetails } from "../../engine/core/state";
 import { noNumberNarrativeHint } from "../runtime/narrative-hints";
 import { textResult, type ToolResult } from "../runtime/tool-result";
@@ -17,7 +17,7 @@ export function resolveCombatExchangeTool(
   params: RawCombatExchangeInput,
   _sessionManager: unknown,
 ): ToolResult {
-  const input = assertCombatExchangeInput(params);
+  const input = parseCombatExchangeInput(params, "resolve_combat_exchange 参数");
   const result = resolveCombatExchange({ ...input, swing: input.swing ?? rollCombatSwing() });
   const details: Record<string, unknown> = { result };
   writeStateToDetails(details);
