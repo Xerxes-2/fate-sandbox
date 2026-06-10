@@ -59,7 +59,7 @@ export function buildInventoryMarkdown(publicState: PublicGameState): string {
   ].join("\n");
 }
 
-export function formatPublicLocation(
+function formatPublicLocation(
   location: PublicGameState["scene"]["location"],
   options: { includeBoundary?: boolean } = {},
 ): string {
@@ -72,7 +72,7 @@ export function formatPublicLocation(
   return `${base}（${location.boundary}）`;
 }
 
-export function formatActiveObjectives(
+function formatActiveObjectives(
   publicState: PublicGameState,
   options: { separator: string },
 ): string {
@@ -97,7 +97,7 @@ function formatObjectiveRouting(publicState: PublicGameState): string {
   return "active beat 收口用 progress_scene_beat complete；仅在 commit_turn 局部解决目标且不收口 beat 时，scene event 使用 resolve-objective，并用 objectiveSummary 逐字复制上方 summary。";
 }
 
-export function formatSceneThreats(
+function formatSceneThreats(
   publicState: PublicGameState,
   options: { separator: string; colon: string },
 ): string {
@@ -108,7 +108,7 @@ export function formatSceneThreats(
         .join(options.separator);
 }
 
-export function actorDisplayName(publicState: PublicGameState, actorId: string): string {
+function actorDisplayName(publicState: PublicGameState, actorId: string): string {
   return publicState.actors[actorId]?.presentation.displayName ?? actorId;
 }
 

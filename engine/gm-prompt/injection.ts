@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildGmBrief } from "../core/gm-brief";
+import { buildGmBrief } from "../core/public-projection";
 import { getPublicState } from "../core/state-store";
 import { isRecord } from "../core/typebox-validation";
 import {

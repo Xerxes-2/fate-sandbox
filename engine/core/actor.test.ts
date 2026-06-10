@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { retireActor, setScenePresence, upsertActor } from "./actor";
-import { buildGmBrief } from "./gm-brief";
+import { buildGmBrief } from "./public-projection";
 import {
   configureActorSecrets,
   configureServantSecrets,

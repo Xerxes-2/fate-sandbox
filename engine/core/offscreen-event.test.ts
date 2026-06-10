@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildGmBrief } from "./gm-brief";
+import { buildGmBrief } from "./public-projection";
 import { recordOffscreenEvent } from "./offscreen-event";
 import { getOffscreenEventsForDebug } from "./secrets";
 import { createInitialState } from "./state-store";

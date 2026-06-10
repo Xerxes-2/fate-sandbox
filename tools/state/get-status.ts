@@ -1,4 +1,4 @@
-import { buildGmBrief } from "../../engine/core/gm-brief";
+import { buildGmBrief } from "../../engine/core/public-projection";
 import { hydrateStateFromSessionManager } from "../../engine/core/session-hydration";
 import { getState } from "../../engine/core/state-store";
 import { textResult, type ToolResult } from "../runtime/tool-result";

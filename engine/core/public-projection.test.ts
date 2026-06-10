@@ -3,15 +3,7 @@ import type { TrackedItemState } from "./state";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  actorDisplayName,
-  buildGmBrief,
-  buildInventoryMarkdown,
-  buildStatusMarkdown,
-  formatActiveObjectives,
-  formatPublicLocation,
-  formatSceneThreats,
-} from "./public-projection";
+import { buildGmBrief, buildInventoryMarkdown, buildStatusMarkdown } from "./public-projection";
 import { createInitialState } from "./state-store";
 
 void test("buildGmBrief throws when protagonist is missing", () => {
@@ -24,19 +16,27 @@ void test("buildGmBrief throws when protagonist is missing", () => {
   );
 });
 
-void test("formatPublicLocation hides normal boundary and shows special boundaries", () => {
-  const base = { region: "冬木市", site: "深山镇", detail: "卫宫邸", boundary: "normal" } as const;
+void test("GM brief shows special boundaries; status markdown hides them", () => {
+  const draft = createInitialState();
+  const publicState = draft.public;
+  publicState.scene.location = {
+    region: "冬木市",
+    site: "深山镇",
+    detail: "卫宫邸",
+    boundary: "bounded-field",
+  };
 
-  assert.equal(formatPublicLocation(base), "冬木市 · 深山镇 · 卫宫邸");
-  assert.equal(formatPublicLocation(base, { includeBoundary: true }), "冬木市 · 深山镇 · 卫宫邸");
-  assert.equal(
-    formatPublicLocation({ ...base, boundary: "bounded-field" }, { includeBoundary: true }),
-    "冬木市 · 深山镇 · 卫宫邸（bounded-field）",
-  );
-  assert.equal(formatPublicLocation({ ...base, detail: "" }), "冬木市 · 深山镇");
+  assert.match(buildGmBrief(publicState), /地点：冬木市 · 深山镇 · 卫宫邸（bounded-field）/);
+  assert.match(buildStatusMarkdown(publicState), /- 地点：冬木市 · 深山镇 · 卫宫邸\n/);
+
+  publicState.scene.location.boundary = "normal";
+  assert.match(buildGmBrief(publicState), /地点：冬木市 · 深山镇 · 卫宫邸\n/);
+
+  publicState.scene.location.detail = "";
+  assert.match(buildGmBrief(publicState), /地点：冬木市 · 深山镇\n/);
 });
 
-void test("formatActiveObjectives filters resolved objectives", () => {
+void test("GM brief lists only unresolved objectives", () => {
   const draft = createInitialState();
   const publicState = draft.public;
   publicState.scene.objectives = [
@@ -45,32 +45,29 @@ void test("formatActiveObjectives filters resolved objectives", () => {
     { id: "obj-3", summary: "受阻的调查", status: "blocked" },
   ];
 
-  assert.equal(
-    formatActiveObjectives(publicState, { separator: "；" }),
-    "obj-1: 确认教会的中立立场；obj-3: 受阻的调查",
-  );
+  assert.match(buildGmBrief(publicState), /当前目标：obj-1: 确认教会的中立立场；obj-3: 受阻的调查/);
+  assert.doesNotMatch(buildGmBrief(publicState), /已完成的旧目标/);
 
   publicState.scene.objectives = publicState.scene.objectives.map((objective) => ({
     ...objective,
     status: "resolved" as const,
   }));
-  assert.equal(formatActiveObjectives(publicState, { separator: "；" }), "无");
+  assert.match(buildGmBrief(publicState), /当前目标：无/);
 });
 
-void test("formatSceneThreats formats severity-prefixed entries", () => {
+void test("scene threats render severity-prefixed in brief and status markdown", () => {
   const draft = createInitialState();
   const publicState = draft.public;
 
-  assert.equal(formatSceneThreats(publicState, { separator: "；", colon: ":" }), "无");
+  assert.match(buildGmBrief(publicState), /当前威胁：无/);
+  assert.match(buildStatusMarkdown(publicState), /- 威胁：无/);
 
   publicState.scene.threats = [
     { id: "threat-1", summary: "影子在街区徘徊", severity: "high" },
     { id: "threat-2", summary: "魔力反应残留", severity: "low" },
   ];
-  assert.equal(
-    formatSceneThreats(publicState, { separator: "；", colon: ": " }),
-    "high: 影子在街区徘徊；low: 魔力反应残留",
-  );
+  assert.match(buildGmBrief(publicState), /当前威胁：high:影子在街区徘徊；low:魔力反应残留/);
+  assert.match(buildStatusMarkdown(publicState), /- 威胁：high: 影子在街区徘徊；low: 魔力反应残留/);
 });
 
 void test("GM brief objective routing covers all three branches", () => {
@@ -151,26 +148,14 @@ void test("inventory markdown reports placeholders for empty funds and items", (
 void test("buildStatusMarkdown lists scene summary with present actor display names", () => {
   const draft = createInitialState();
   const publicState = draft.public;
-  publicState.scene.presentActorIds = ["protagonist"];
+  publicState.scene.presentActorIds = ["protagonist", "no-such-actor"];
 
   const markdown = buildStatusMarkdown(publicState);
   assert.match(markdown, /## 当前状态/);
-  assert.match(
-    markdown,
-    new RegExp(`- 在场：${publicState.actors["protagonist"]?.presentation.displayName ?? ""}`),
-  );
+  const protagonistName = publicState.actors["protagonist"]?.presentation.displayName ?? "";
+  // 未知 actor 回退为 actor id，已知 actor 用 displayName。
+  assert.match(markdown, new RegExp(`- 在场：${protagonistName}、no-such-actor`));
   assert.match(markdown, /## 资源与物品/);
-});
-
-void test("actorDisplayName falls back to the actor id for unknown actors", () => {
-  const draft = createInitialState();
-  const publicState = draft.public;
-
-  assert.equal(actorDisplayName(publicState, "no-such-actor"), "no-such-actor");
-  assert.equal(
-    actorDisplayName(publicState, "protagonist"),
-    publicState.actors["protagonist"]?.presentation.displayName,
-  );
 });
 
 function buildTrackedItem(
@@ -185,7 +170,7 @@ function buildTrackedItem(
   };
 }
 
-void test("public projection helpers never mutate their input", () => {
+void test("public projection builders never mutate their input", () => {
   const draft = createInitialState();
   const publicState = draft.public;
   const snapshot = JSON.stringify(publicState);
@@ -193,8 +178,6 @@ void test("public projection helpers never mutate their input", () => {
   buildGmBrief(publicState);
   buildStatusMarkdown(publicState);
   buildInventoryMarkdown(publicState);
-  formatActiveObjectives(publicState, { separator: "；" });
-  formatSceneThreats(publicState, { separator: "；", colon: ":" });
 
   assert.equal(JSON.stringify(publicState), snapshot);
   assert.equal(JSON.stringify(draft.public), snapshot);
