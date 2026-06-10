@@ -89,7 +89,7 @@ void test("normalizeActorConditionEvent reports invalid condition enums clearly"
         source: "玻璃碎片",
         recoverable: true,
       }),
-    /非法 severity.*minor, moderate, severe, critical/,
+    /severity 必须是允许值之一: minor, moderate, severe, critical/,
   );
 
   assert.throws(
@@ -105,7 +105,7 @@ void test("normalizeActorConditionEvent reports invalid condition enums clearly"
         notes: [],
         reason: "模型误填物品类型",
       }),
-    /非法 itemKind.*mundane, weapon, mystic-code, document, key-item, other/,
+    /itemKind 必须是允许值之一: mundane, weapon, mystic-code, document, key-item, other/,
   );
 });
 

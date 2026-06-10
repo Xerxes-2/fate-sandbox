@@ -101,6 +101,33 @@ export const MANA_SUPPLIES = ["sufficient", "strained", "starved"] as const;
 export const MANA_SUPPLY_SCHEMA = stringEnumSchema(MANA_SUPPLIES);
 export type ManaSupply = Static<typeof MANA_SUPPLY_SCHEMA>;
 
+export const WOUND_SEVERITIES = ["minor", "moderate", "severe", "critical"] as const;
+export const WOUND_SEVERITY_SCHEMA = stringEnumSchema(WOUND_SEVERITIES);
+export type WoundSeverity = Static<typeof WOUND_SEVERITY_SCHEMA>;
+
+export const CIRCUIT_STATUSES = ["normal", "overheated", "depleted", "dormant", "damaged"] as const;
+export const CIRCUIT_STATUS_SCHEMA = stringEnumSchema(CIRCUIT_STATUSES);
+export type CircuitStatus = Static<typeof CIRCUIT_STATUS_SCHEMA>;
+
+export const TRACKED_ITEM_KINDS = [
+  "mundane",
+  "weapon",
+  "mystic-code",
+  "document",
+  "key-item",
+  "other",
+] as const;
+export const TRACKED_ITEM_KIND_SCHEMA = stringEnumSchema(TRACKED_ITEM_KINDS);
+export type TrackedItemKind = Static<typeof TRACKED_ITEM_KIND_SCHEMA>;
+
+export const TRACKED_ITEM_CONDITIONS = ["intact", "damaged", "broken", "spent", "unknown"] as const;
+export const TRACKED_ITEM_CONDITION_SCHEMA = stringEnumSchema(TRACKED_ITEM_CONDITIONS);
+export type TrackedItemCondition = Static<typeof TRACKED_ITEM_CONDITION_SCHEMA>;
+
+export const TRACKED_ITEM_VISIBILITIES = ["player-known", "suspected"] as const;
+export const TRACKED_ITEM_VISIBILITY_SCHEMA = stringEnumSchema(TRACKED_ITEM_VISIBILITIES);
+export type TrackedItemVisibility = Static<typeof TRACKED_ITEM_VISIBILITY_SCHEMA>;
+
 export const SCENE_THREAT_SEVERITIES = ["low", "medium", "high", "lethal"] as const;
 export const SCENE_THREAT_SEVERITY_SCHEMA = stringEnumSchema(SCENE_THREAT_SEVERITIES);
 export type SceneThreatSeverity = Static<typeof SCENE_THREAT_SEVERITY_SCHEMA>;

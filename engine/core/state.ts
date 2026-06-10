@@ -2,6 +2,7 @@ import type { NoblePhantasm } from "./actor-schema";
 import type { OffscreenEvent } from "./parallel-line";
 import type {
   BoundaryKind,
+  CircuitStatus,
   ContractStatus,
   CurrencyCode,
   ManaSupply,
@@ -14,6 +15,10 @@ import type {
   SituationKind,
   TimelineId,
   TimeZoneId,
+  TrackedItemCondition,
+  TrackedItemKind,
+  TrackedItemVisibility,
+  WoundSeverity,
 } from "./state-enum-schemas";
 
 export type { NoblePhantasm } from "./actor-schema";
@@ -33,8 +38,13 @@ import {
   SCENE_THREAT_SEVERITIES as THREAT_SEVERITIES,
   OFFSCREEN_EVENT_VISIBILITIES,
   OPENING_MODES,
+  CIRCUIT_STATUSES,
   PURSE_ACCESSES,
   REVEAL_STATUSES as TRUE_NAME_STATUSES,
+  TRACKED_ITEM_CONDITIONS as ITEM_CONDITIONS,
+  TRACKED_ITEM_KINDS as ITEM_KINDS,
+  TRACKED_ITEM_VISIBILITIES as ITEM_VISIBILITIES,
+  WOUND_SEVERITIES,
   RULE_SET_IDS,
   SITUATION_KINDS as SITUATIONS,
   TIMELINE_IDS as TIMELINES,
@@ -44,6 +54,7 @@ import { parseTurnTimePolicySchema } from "./turn-time-schema";
 
 export type {
   BoundaryKind,
+  CircuitStatus,
   ContractStatus,
   CurrencyCode,
   ManaSupply,
@@ -56,6 +67,10 @@ export type {
   SituationKind,
   TimelineId,
   TimeZoneId,
+  TrackedItemCondition,
+  TrackedItemKind,
+  TrackedItemVisibility,
+  WoundSeverity,
 } from "./state-enum-schemas";
 
 export type {
@@ -104,7 +119,6 @@ export type ServantClass =
   | "MoonCancer"
   | "Pretender"
   | "Custom";
-export type WoundSeverity = "minor" | "moderate" | "severe" | "critical";
 
 export interface GameState {
   meta: StateMeta;
@@ -304,7 +318,7 @@ export interface MagecraftCircuitState {
   count: string;
   quality: FateRank | "none";
   od: Percent;
-  status: "normal" | "overheated" | "depleted" | "dormant" | "damaged";
+  status: CircuitStatus;
   traits: string[];
 }
 
@@ -368,12 +382,12 @@ export interface AbilityState {
 export interface TrackedItemState {
   id: ItemId;
   label: string;
-  kind: "mundane" | "weapon" | "mystic-code" | "document" | "key-item" | "other";
+  kind: TrackedItemKind;
   ownerActorId: ActorId | null;
   holderActorId: ActorId | null;
   location: LocationState | null;
-  condition: "intact" | "damaged" | "broken" | "spent" | "unknown";
-  visibility: "player-known" | "suspected";
+  condition: TrackedItemCondition;
+  visibility: TrackedItemVisibility;
   notes: string[];
 }
 
@@ -2043,11 +2057,7 @@ const FATE_RANKS = [
   "EX+++",
   "EX-",
 ] as const;
-const CIRCUIT_STATUSES = ["normal", "overheated", "depleted", "dormant", "damaged"] as const;
-const WOUND_SEVERITIES = ["minor", "moderate", "severe", "critical"] as const;
-const ITEM_KINDS = ["mundane", "weapon", "mystic-code", "document", "key-item", "other"] as const;
-const ITEM_CONDITIONS = ["intact", "damaged", "broken", "spent", "unknown"] as const;
-const ITEM_VISIBILITIES = ["player-known", "suspected"] as const;
+
 const SERVANT_CLASSES = [
   "Saber",
   "Archer",

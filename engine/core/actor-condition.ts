@@ -1,89 +1,9 @@
-import type {
-  ActorId,
-  ItemId,
-  MagecraftCircuitState,
-  OutfitState,
-  PermanentEffect,
-  PublicActorState,
-  WoundSeverity,
-} from "./state";
+import type { ActorConditionEvent } from "./actor-condition-schema";
+import type { ActorId, PermanentEffect, PublicActorState } from "./state";
 
 import { assertNonEmptyString, createId, updateState } from "./state";
 
-export type ActorConditionEvent =
-  | {
-      kind: "add-wound";
-      actorId: ActorId;
-      severity: WoundSeverity;
-      text: string;
-      source: string;
-      recoverable: boolean;
-    }
-  | {
-      kind: "update-wound";
-      actorId: ActorId;
-      conditionId: string;
-      severity?: WoundSeverity;
-      text?: string;
-      treatment?: string;
-      recoverable?: boolean;
-      reason: string;
-    }
-  | {
-      kind: "add-affliction";
-      actorId: ActorId;
-      text: string;
-      source: string;
-      expectedDuration: string | null;
-    }
-  | {
-      kind: "add-permanent-effect";
-      actorId: ActorId;
-      text: string;
-      source: string;
-      mechanicalEffect: string;
-    }
-  | {
-      kind: "update-magecraft-circuits";
-      actorId: ActorId;
-      circuits: MagecraftCircuitState;
-      reason: string;
-    }
-  | {
-      kind: "resolve-condition";
-      actorId: ActorId;
-      conditionKind: "wound" | "affliction";
-      conditionId: string;
-      outcome: "recovered" | "stabilized";
-      reason: string;
-    }
-  | { kind: "change-outfit"; actorId: ActorId; outfit: OutfitState; reason: string }
-  | {
-      kind: "transfer-tracked-item";
-      itemId: ItemId;
-      holderActorId: ActorId | null;
-      reason: string;
-    }
-  | {
-      kind: "update-tracked-item";
-      itemId: ItemId;
-      condition?: "intact" | "damaged" | "broken" | "spent" | "unknown";
-      holderActorId?: ActorId | null;
-      ownerActorId?: ActorId | null;
-      notes?: string[];
-      reason: string;
-    }
-  | {
-      kind: "add-tracked-item";
-      label: string;
-      itemKind: "mundane" | "weapon" | "mystic-code" | "document" | "key-item" | "other";
-      holderActorId: ActorId | null;
-      ownerActorId: ActorId | null;
-      condition: "intact" | "damaged" | "broken" | "spent" | "unknown";
-      visibility: "player-known" | "suspected";
-      notes: string[];
-      reason: string;
-    };
+export type { ActorConditionEvent } from "./actor-condition-schema";
 
 export interface ActorConditionEventResult {
   message: string;

@@ -54,3 +54,8 @@ export const NOBLE_PHANTASM_SCHEMA = Type.Object({
 });
 
 export type NoblePhantasm = Static<typeof NOBLE_PHANTASM_SCHEMA>;
+
+export const OUTFIT_STATE_SCHEMA = Type.Object({
+  label: Type.String({ minLength: 1 }),
+  details: Type.String({ minLength: 1 }),
+});

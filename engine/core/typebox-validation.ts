@@ -2,6 +2,8 @@ import type { TLocalizedValidationError } from "typebox/error";
 
 export interface TypeBoxValidator<T> {
   Convert(value: unknown): unknown;
+  /** 剔除 schema 未声明的多余字段，对齐旧手写 normalizer 重建对象的 strip 语义。 */
+  Clean(value: unknown): unknown;
   Check(value: unknown): value is T;
   Errors(value: unknown): TLocalizedValidationError[];
 }
@@ -23,7 +25,7 @@ export function parseTypeBoxValue<T>(
   fieldName: string,
   validator: TypeBoxValidator<T>,
 ): T {
-  const converted = validator.Convert(cloneValidationInput(value, fieldName));
+  const converted = validator.Clean(validator.Convert(cloneValidationInput(value, fieldName)));
   if (validator.Check(converted)) {
     return converted;
   }
