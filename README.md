@@ -1,6 +1,16 @@
 # fate-sandbox
 
-Fate sandbox for pi coding agent. 当前大量测试集中在 Fate/strange Fake 斯诺菲尔德的绫香线。
+型月世界观沙盒 for pi coding agent。当前大量测试集中在 Fate/strange Fake 斯诺菲尔德的绫香线。
+
+## Worldlines
+
+开局可选 13 条世界线（`/skill:start-game` 会引导选择）：
+
+- **Fate 系**：FSN 冬木（第五次）、Fate/Zero（第四次）、hollow ataraxia（五战半年后）、strange Fake 斯诺菲尔德、Apocrypha 大圣杯战争、EXTRA / EXTRA CCC、二世事件簿（时钟塔，无圣杯战争）
+- **非 Fate 型月**：月姬（原作/重制两版）、空之境界、魔法使之夜
+- **自定义**：年代、城市、战争规模由开局问答确认
+
+所有世界线都是沙盒：只提供世界结构与原作设定底盘，不锁原作剧情；玩家身份、原作主线是否发生由开局确认。
 
 ## Requirements
 
