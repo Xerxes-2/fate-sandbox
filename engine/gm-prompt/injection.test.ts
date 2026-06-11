@@ -34,20 +34,21 @@ void test("injectGmPromptMessages inserts slot-based prompt stack", () => {
   const injected = injectGmPromptMessages<UserMessage>(messages);
   const texts = injected.map((message) => textOf(message));
 
-  assert.equal(injected.length, 10);
-  assert.match(texts[0] ?? "", /<creative_constitution>/);
+  assert.equal(injected.length, 11);
+  assert.match(texts[0] ?? "", /<settlement_principles>/);
   assert.match(texts[1] ?? "", /<world_context>/);
   assert.match(texts[2] ?? "", /<input_guide>/);
   assert.match(texts[3] ?? "", /<social_guide>/);
-  assert.equal(texts[4], "继续。");
-  assert.match(texts[5] ?? "", /<tool_policy>/);
-  assert.match(texts[6] ?? "", /<hard_rules>/);
-  assert.match(texts[7] ?? "", /<story_driver>/);
+  assert.match(texts[4] ?? "", /<tool_policy>/);
+  assert.match(texts[5] ?? "", /<hard_rules>/);
+  assert.match(texts[6] ?? "", /<story_driver>/);
+  assert.equal(texts[7], "继续。");
   assert.match(texts[8] ?? "", /<mechanical_state>/);
   assert.match(texts[8] ?? "", /目标推进规则/);
   assert.match(texts[8] ?? "", /当前没有可 resolve 的目标/);
   assert.doesNotMatch(texts[8] ?? "", /active beat 收口/);
-  assert.match(texts[9] ?? "", /<direction_contract>/);
+  assert.match(texts[9] ?? "", /<turn_reminder>/);
+  assert.match(texts[10] ?? "", /<direction_contract>/);
   // 结算投影零 style/render 模块
   for (const text of texts) {
     assert.doesNotMatch(
@@ -102,9 +103,9 @@ void test("injectGmPromptMessages keeps conversation history contiguous before r
   const injected = injectGmPromptMessages<UserMessage>(messages);
   const texts = injected.map((message) => textOf(message));
 
-  assert.equal(texts[4], "第一句。");
-  assert.equal(texts[5], "第二句。");
-  assert.match(texts[6] ?? "", /<tool_policy>/);
+  assert.equal(texts[7], "第一句。");
+  assert.equal(texts[8], "第二句。");
+  assert.match(texts[9] ?? "", /<mechanical_state>/);
 });
 
 function createUserMessage(text: string): UserMessage {

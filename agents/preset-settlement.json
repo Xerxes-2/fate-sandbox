@@ -2,12 +2,12 @@
   "version": 1,
   "modules": [
     {
-      "id": "creative-constitution",
+      "id": "settlement-principles",
       "enabled": true,
       "slot": "pre-history",
       "priority": 10,
-      "header": "creative_constitution",
-      "source": "agents/gm-creative-constitution.md"
+      "header": "settlement_principles",
+      "source": "agents/gm-settlement-principles.md"
     },
     {
       "id": "world-context",
@@ -36,24 +36,24 @@
     {
       "id": "tool-policy",
       "enabled": true,
-      "slot": "pre-response",
-      "priority": 20,
+      "slot": "pre-history",
+      "priority": 80,
       "header": "tool_policy",
       "source": "agents/gm-tool-policy.md"
     },
     {
       "id": "hard-rules",
       "enabled": true,
-      "slot": "pre-response",
-      "priority": 30,
+      "slot": "pre-history",
+      "priority": 90,
       "header": "hard_rules",
       "source": "agents/gm-rules.md"
     },
     {
       "id": "story-driver",
       "enabled": true,
-      "slot": "pre-response",
-      "priority": 40,
+      "slot": "pre-history",
+      "priority": 100,
       "header": "story_driver",
       "source": "agents/gm-story-driver.md"
     },
@@ -61,9 +61,17 @@
       "id": "mechanical-state",
       "enabled": true,
       "slot": "pre-response",
-      "priority": 50,
+      "priority": 10,
       "header": "mechanical_state",
       "source": "runtime:state-brief"
+    },
+    {
+      "id": "turn-reminder",
+      "enabled": true,
+      "slot": "pre-response",
+      "priority": 20,
+      "header": "turn_reminder",
+      "source": "agents/gm-turn-reminder.md"
     },
     {
       "id": "direction-contract",

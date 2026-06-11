@@ -4,8 +4,6 @@ This Module only decides whether to call tools and which tool has priority. Fina
 
 ## Read state first
 
-- Call `get_status` only when this turn has no current GM Brief/tool result, when the player explicitly asks for status, or once after a tool failure to resynchronise player-visible state.
-- Do not call `get_status` again if no domain tool has changed state since the last status read; reuse the current brief.
 - Tool returns override the GM Brief. The GM Brief only constrains narrative tendency; it does not replace current-turn tool resolution.
 - Ordinary passerby details, short dialogue, and a few minutes of everyday action do not require tools.
 - Narration must not claim that time, location, resources, wounds, contracts, memory, or secret revelation changed before the corresponding tool succeeded. Resolve the tool first, then write the change.
@@ -27,12 +25,7 @@ This Module only decides whether to call tools and which tool has priority. Fina
 
 ## Scene Beat lifecycle
 
-- Entering complex investigation, infiltration, confrontation, retreat, or battle preparation: prefer `progress_scene_beat kind=begin`.
-- When the current beat objective is satisfied and needs closure, consequence recording, or transition to the next beat: prefer `progress_scene_beat kind=complete`.
-- In a complex beat, use `progress_scene_beat`; its top-level `time` is mandatory.
-- Outside beat lifecycle, use `commit_turn`; its top-level `time` is mandatory.
-- Use `time.kind=elapsed` for waiting, rest, sleep, watchkeeping, treatment, investigation, or any non-travel time passage.
-- Use `time.kind=travel` when the player changes location through the fiction.
+- Entering complex investigation, infiltration, confrontation, retreat, or battle preparation: prefer `progress_scene_beat kind=begin`; close it with `kind=complete`. Outside beat lifecycle, use `commit_turn`. Top-level `time` is mandatory either way.
 
 ## Turn pacing boundary
 
@@ -43,15 +36,9 @@ This Module only decides whether to call tools and which tool has priority. Fina
 
 ## Domain Event Tool routing
 
+Per-tool usage rules live in each tool's schema description; follow them. Cross-tool routing:
+
 - If one reply changes scene / condition / servant / economy / memory, and Scene Beat lifecycle cannot cover it: aggregate with `commit_turn` inside the current player action window.
-- Actor entrance, exit, and companion changes: use `set_scene_presence`. `upsert_actor` writes the Public Actor Registry only; it does not mean the actor is present.
-- Wounds, curses, outfit presentation, and key Tracked Item changes: use `update_actor_condition`.
-- Servant mana supply, spiritual-core injury, contracts, and parameter modifiers: use `update_servant_form`.
-- Spending, receiving funds, services, and information trades: use `update_economy`.
-- Long-term Player-Known Facts such as origin, contract, death, true name, Noble Phantasm, faction, or time jump: use `record_memory`.
-- When true name, Noble Phantasm, or hidden identity moves from clue to public fact: use `reveal_secret`.
-- For NPC hidden reactions and hidden compatibility: use `private_resolve`; only write the player-safe result into narration.
-- For offscreen events and parallel-line results: after review, use `record_offscreen_event` to write into Secret Game State / foreshadowing.
 - Before pressure enters narration, decide whether it needs state landing: wounds/fatigue use `update_actor_condition`; mana/Saint Graph loss use `update_servant_form`; money/resources use `update_economy`; lasting hostility or missed windows use `record_memory`; offscreen hostile progress uses `record_offscreen_event`.
 
 ## Project subagent routing
