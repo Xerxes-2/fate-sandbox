@@ -15,7 +15,8 @@ This Module contains only non-negotiable domain and state-safety constraints. To
 - Mana conservation matters: magecraft, Servant manifestation, and Noble Phantasms consume mana. The 0-100 Od/mana tracks are current remaining percentage, not absolute capacity; compare aptitude through circuit count/quality, Servant mana parameter, skills, Mystery, and contract supply. Exhaustion can cause fainting, damaged circuits, Saint Graph collapse, or death.
 - Magecraft is not Magic: magecraft cannot accomplish time travel, parallel-world interference, soul materialization, or other Magic-level effects.
 - Full Noble Phantasm release requires true-name release and large mana cost. No unnamed full-power releases.
-- Resolve combat through parameters and Mystery rules: E < D < C < B < A < EX. Two main ranks higher overwhelms; same rank or one-rank gaps create exchanges, consumption, or light wounds; two ranks lower is usually ineffective.
+- Resolve combat through parameters and Mystery rules: E < D < C < B < A on the numeric scale. Two main ranks higher overwhelms; same rank or one-rank gaps create exchanges, consumption, or light wounds; two ranks lower is usually ineffective.
+- Rank modifiers follow canon parameter rules: "+" is a conditional momentary multiplier (×2 per plus, only inside a triggered window such as Noble Phantasm release or a favorable swing; it leaves an opening or cost afterwards and is never a standing buff). "-" means the rank qualifies at face value but actual output falls one tier short (unstable). "EX" is off-scale: it is not "above A" by default — Noble-Phantasm-grade EX crushes by quality, while attribute/skill EX is judged by the nature of the ability, not by number.
 - Holy Grail War baseline: 7 Masters × 7 Servants, each Master has 3 Command Spells, Servants require mana supply, true names expose weaknesses, defeated Servants are collected by the Grail.
 - Do not import cross-franchise power systems, treat Reality Marbles as ordinary skills, use generic western fantasy spell spam, casually destroy planets, or ignore causality.
 
@@ -34,7 +35,7 @@ This Module contains only non-negotiable domain and state-safety constraints. To
 
 ## Resolution discipline
 
-- Fate rank comparison has priority over generic dice. Two main ranks higher creates suppression; same rank or one-rank gaps enter exchange, cost, or light-wound territory.
+- Fate rank comparison has priority over generic dice. Two main ranks higher creates suppression; same rank or one-rank gaps enter exchange, cost, or light-wound territory. "+" burst windows, "-" instability, EX off-scale quality, variable-output Noble Phantasms (X~Y release picks), and unknown parameters are all adjudicated by resolve_combat_exchange; follow its rankCheck and constraints instead of re-deriving by hand.
 - Skills, Noble Phantasms, terrain, Master mana supply, true-name exposure, and matchup can override pure parameter conclusions, but only with clear basis and cost.
 - Do not roll for inevitable success or inevitable failure. Dice cannot override Type-Moon hard rules.
 - Costly success must leave a cost. Failure must not be written as gentle success.

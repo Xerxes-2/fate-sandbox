@@ -256,6 +256,180 @@ void test("resolveCombatExchange does not force wounds or hard stops for costly 
   assert.doesNotMatch(result.nextActionWindow, /停在/u);
 });
 
+void test("plus burst only fires inside a triggered window and demands a cost landing", () => {
+  const draft = createInitialState();
+  insertActor(draft, servantActor("lancer", "Lancer", { ...weakParams(), strength: "B+" }));
+  insertActor(draft, servantActor("saber", "Saber", { ...weakParams(), strength: "A" }));
+
+  const baseInput = {
+    actorId: "lancer",
+    opponentId: "saber",
+    intent: "以全力一击压过 Saber 的防线",
+    tactic: "direct-attack" as const,
+    actorParameter: "strength" as const,
+    opponentParameter: "strength" as const,
+    committedResources: [],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "medium" as const,
+  };
+
+  const neutral = resolveCombatExchange(draft, { ...baseInput, swing: "neutral" });
+  assert.doesNotMatch(neutral.rankCheck, /触发瞬间倍化/u);
+  assert.match(neutral.rankCheck, /倍化窗口/u);
+
+  const burst = resolveCombatExchange(draft, { ...baseInput, swing: "opening" });
+  assert.match(burst.rankCheck, /触发瞬间倍化/u);
+  assert.match(burst.rankCheck, /80/u);
+  assert.ok(
+    burst.stateLandings.some(
+      (landing) => landing.kind === "servant-form" && /瞬间倍化/u.test(landing.reason),
+    ),
+  );
+  assert.match(burst.narrativeConstraints.join("\n"), /不是常驻强化/u);
+  assert.ok(burst.score > neutral.score);
+});
+
+void test("parameter EX is off-scale neutral while noble phantasm EX crushes", () => {
+  const draft = createInitialState();
+  insertActor(draft, servantActor("berserker", "Berserker", { ...weakParams(), strength: "EX" }));
+  insertActor(draft, servantActor("saber", "Saber", { ...weakParams(), strength: "B" }));
+
+  const parameterClash = resolveCombatExchange(draft, {
+    actorId: "berserker",
+    opponentId: "saber",
+    intent: "以蛮力碎墕压倒 Saber",
+    tactic: "direct-attack",
+    actorParameter: "strength",
+    opponentParameter: "strength",
+    committedResources: [],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "medium",
+    swing: "neutral",
+  });
+  assert.match(parameterClash.rankCheck, /规格外/u);
+  assert.match(parameterClash.narrativeConstraints.join("\n"), /不默认强于 A/u);
+  assert.doesNotMatch(parameterClash.rankCheck, /两级以上参数压制/u);
+
+  const draft2 = createInitialState();
+  insertActor(
+    draft2,
+    servantActor("archer", "Archer", { ...weakParams(), noblePhantasm: "EX" }, [
+      {
+        name: "乃央得天之剑",
+        rank: "EX",
+        kind: "对界宝具",
+        status: "revealed",
+        summary: "规格外的对界宝具。",
+      },
+    ]),
+  );
+  insertActor(
+    draft2,
+    servantActor("saber", "Saber", { ...weakParams(), noblePhantasm: "B" }, [
+      {
+        name: "风王结界",
+        rank: "B",
+        kind: "对人宝具",
+        status: "revealed",
+        summary: "风压防幕。",
+      },
+    ]),
+  );
+
+  const noblePhantasmClash = resolveCombatExchange(draft2, {
+    actorId: "archer",
+    opponentId: "saber",
+    intent: "真名解放，以对界宝具碾压战场",
+    tactic: "noble-phantasm",
+    actorParameter: "noblePhantasm",
+    opponentParameter: "noblePhantasm",
+    committedResources: ["真名解放"],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "medium",
+    swing: "neutral",
+  });
+  assert.match(noblePhantasmClash.rankCheck, /按质性压制计分/u);
+  assert.ok(noblePhantasmClash.score > parameterClash.score);
+});
+
+void test("unknown parameters fall back to the no-rank comparison path", () => {
+  const draft = createInitialState();
+  insertActor(
+    draft,
+    servantActor("arcueid", "Berserker", { ...weakParams(), strength: "unknown" }),
+  );
+  insertActor(draft, servantActor("saber", "Saber", { ...weakParams(), strength: "B" }));
+
+  const result = resolveCombatExchange(draft, {
+    actorId: "arcueid",
+    opponentId: "saber",
+    intent: "以未知的腕力直接压制",
+    tactic: "direct-attack",
+    actorParameter: "strength",
+    opponentParameter: "strength",
+    committedResources: [],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "medium",
+  });
+
+  assert.match(result.rankCheck, /未知/u);
+  assert.match(result.rankCheck, /缺少可比较 Fate rank/u);
+});
+
+void test("variable noble phantasm ranks require an in-range release pick", () => {
+  const draft = createInitialState();
+  insertActor(
+    draft,
+    servantActor("archer", "Archer", weakParams(), [
+      {
+        name: "无限剑制",
+        rank: "E~A++",
+        kind: "固有结界",
+        status: "revealed",
+        summary: "可变输出的固有结界。",
+      },
+    ]),
+  );
+  insertActor(
+    draft,
+    servantActor("lancer", "Lancer", { ...weakParams(), noblePhantasm: "B" }, [
+      {
+        name: "刺穿死棘之枪",
+        rank: "B",
+        kind: "对人宝具",
+        status: "revealed",
+        summary: "因果逆转的魔枪。",
+      },
+    ]),
+  );
+
+  const input = {
+    actorId: "archer",
+    opponentId: "lancer",
+    intent: "展开固有结界压制 Lancer",
+    tactic: "noble-phantasm" as const,
+    actorParameter: "noblePhantasm" as const,
+    opponentParameter: "noblePhantasm" as const,
+    committedResources: ["固有结界展开"],
+    knownAdvantages: [],
+    knownDisadvantages: [],
+    riskTolerance: "high" as const,
+  };
+
+  assert.throws(() => resolveCombatExchange(draft, input), /actorNoblePhantasmRelease/u);
+  assert.throws(
+    () => resolveCombatExchange(draft, { ...input, actorNoblePhantasmRelease: "EX" }),
+    /不在宝具/u,
+  );
+
+  const result = resolveCombatExchange(draft, { ...input, actorNoblePhantasmRelease: "A" });
+  assert.match(result.rankCheck, /无限剑制.*A vs/u);
+});
+
 void test("parseCombatExchangeInput rejects model-authored difficulty language", () => {
   assert.throws(
     () =>

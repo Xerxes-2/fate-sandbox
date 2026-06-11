@@ -77,6 +77,10 @@ export type FateRank =
   | `${FateRankBase}++`
   | `${FateRankBase}+++`
   | `${FateRankBase}-`;
+/** 可变输出宝具（如无限剑制 E~A++）的范围评级。 */
+export type FateRankRange = `${FateRank}~${FateRank}`;
+/** 未知参数：对手尚未被观测/拍板时的占位；战斗比较时走中性路径。 */
+export type FateRankOrUnknown = FateRank | "unknown";
 export type Percent = number;
 
 export interface GameState {
@@ -395,12 +399,12 @@ export interface ServantParameterState {
 }
 
 export interface FateParams {
-  strength: FateRank;
-  endurance: FateRank;
-  agility: FateRank;
-  mana: FateRank;
-  luck: FateRank;
-  noblePhantasm: FateRank;
+  strength: FateRankOrUnknown;
+  endurance: FateRankOrUnknown;
+  agility: FateRankOrUnknown;
+  mana: FateRankOrUnknown;
+  luck: FateRankOrUnknown;
+  noblePhantasm: FateRankOrUnknown;
 }
 
 export interface ParamModifier {

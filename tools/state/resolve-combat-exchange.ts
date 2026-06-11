@@ -81,7 +81,9 @@ export const resolveCombatExchangeToolDefinition: FsnToolDefinition = {
     "- 双方有从者参数、魔术资质、伤势、地形、情报或资源投入差异，不能只靠 GM 口胡胜负\n" +
     "- 玩家行动试图争取局部目标：挡下一击、逼退、撤离、保护 NPC、打断术式、识破能力或创造出手机会\n" +
     "- 工具会自动加入战场变数，等级压制不是静态锁死；变数只能兑现为局部窗口、资源交换或后果扩大\n" +
-    "- tactic=noble-phantasm 且比较 noblePhantasm 时，具体宝具 rank 与面板宝具参数分开；多宝具必须指定公开宝具名\n\n" +
+    "- tactic=noble-phantasm 且比较 noblePhantasm 时，具体宝具 rank 与面板宝具参数分开；多宝具必须指定公开宝具名\n" +
+    "- canon 参数语义由引擎自动处理：「+」只在触发窗口（宝具释放/有利变数）瞬间倍化且必须留代价；「-」按不安定低一级计；EX 规格外不按数值压制（宝具栏 EX 除外）；unknown 参数走中性裁决\n" +
+    "- 可变评级宝具（rank 为 X~Y）必须用 actorNoblePhantasmRelease / opponentNoblePhantasmRelease 指定本次释放档位\n\n" +
     "【严禁的行为】\n" +
     "- 用它一次结算完整战斗或跳过玩家可回应窗口\n" +
     "- 把交锋结果写成原地僵持；每次结果都必须改变位置、距离、资源、情报、阵型或目标进度\n" +
@@ -112,6 +114,17 @@ export const resolveCombatExchangeToolDefinition: FsnToolDefinition = {
     opponentNoblePhantasmName: Type.Optional(
       Type.String({
         description: "对手明确使用具体宝具时，逐字复制公开宝具名；若只有一个公开宝具可省略。",
+      }),
+    ),
+    actorNoblePhantasmRelease: Type.Optional(
+      Type.String({
+        description:
+          "本方宝具为可变评级（如 E~A++）时必填：本次释放的实际档位（单一 Fate rank，须在范围内）；档位越高魔力代价越重。",
+      }),
+    ),
+    opponentNoblePhantasmRelease: Type.Optional(
+      Type.String({
+        description: "对手宝具为可变评级时必填：对手本次释放的实际档位。",
       }),
     ),
     targetObjective: Type.Optional(

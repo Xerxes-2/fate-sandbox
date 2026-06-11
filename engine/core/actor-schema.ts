@@ -1,6 +1,6 @@
 import type { Static } from "typebox";
 
-import type { FateRank, PublicActorState } from "./state.ts";
+import type { FateRank, FateRankOrUnknown, FateRankRange, PublicActorState } from "./state.ts";
 import type { TypeBoxValidator } from "./typebox-validation.ts";
 
 import { Type } from "typebox";
@@ -51,14 +51,22 @@ export function parseRetireActorInput(value: unknown, fieldName: string): Retire
 }
 
 /** Fate rank 文法与 engine/core/fate-rank.ts 保持一致。 */
+const FATE_RANK_PATTERN_FRAGMENT = "(?:E|D|C|B|A|EX)(?:\\+{1,3}|-)?";
+
 export const FATE_RANK_OR_NONE_SCHEMA = Type.Unsafe<FateRank | "none">({
   type: "string",
-  pattern: "^(?:(?:E|D|C|B|A|EX)(?:\\+{1,3}|-)?|none)$",
+  pattern: `^(?:${FATE_RANK_PATTERN_FRAGMENT}|none)$`,
+});
+
+/** 宝具评级：单值、可变范围（如 E~A++）或 none（无宝具）。 */
+export const NOBLE_PHANTASM_RANK_SCHEMA = Type.Unsafe<FateRank | FateRankRange | "none">({
+  type: "string",
+  pattern: `^(?:${FATE_RANK_PATTERN_FRAGMENT}(?:~${FATE_RANK_PATTERN_FRAGMENT})?|none)$`,
 });
 
 export const NOBLE_PHANTASM_SCHEMA = Type.Object({
   name: Type.String({ minLength: 1 }),
-  rank: FATE_RANK_OR_NONE_SCHEMA,
+  rank: NOBLE_PHANTASM_RANK_SCHEMA,
   kind: Type.String({ minLength: 1 }),
   status: REVEAL_STATUS_SCHEMA,
   summary: Type.String({ minLength: 1 }),
@@ -73,16 +81,22 @@ export const OUTFIT_STATE_SCHEMA = Type.Object({
 
 export const FATE_RANK_SCHEMA = Type.Unsafe<FateRank>({
   type: "string",
-  pattern: "^(?:E|D|C|B|A|EX)(?:\\+{1,3}|-)?$",
+  pattern: `^${FATE_RANK_PATTERN_FRAGMENT}$`,
+});
+
+/** 参数允许 unknown：未被观测/拍板的对手参数走中性比较路径。 */
+export const FATE_RANK_OR_UNKNOWN_SCHEMA = Type.Unsafe<FateRankOrUnknown>({
+  type: "string",
+  pattern: `^(?:${FATE_RANK_PATTERN_FRAGMENT}|unknown)$`,
 });
 
 export const FATE_PARAMS_SCHEMA = Type.Object({
-  strength: FATE_RANK_SCHEMA,
-  endurance: FATE_RANK_SCHEMA,
-  agility: FATE_RANK_SCHEMA,
-  mana: FATE_RANK_SCHEMA,
-  luck: FATE_RANK_SCHEMA,
-  noblePhantasm: FATE_RANK_SCHEMA,
+  strength: FATE_RANK_OR_UNKNOWN_SCHEMA,
+  endurance: FATE_RANK_OR_UNKNOWN_SCHEMA,
+  agility: FATE_RANK_OR_UNKNOWN_SCHEMA,
+  mana: FATE_RANK_OR_UNKNOWN_SCHEMA,
+  luck: FATE_RANK_OR_UNKNOWN_SCHEMA,
+  noblePhantasm: FATE_RANK_OR_UNKNOWN_SCHEMA,
 });
 
 export const SERVANT_SKILL_SCHEMA = Type.Object({

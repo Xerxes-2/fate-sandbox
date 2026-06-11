@@ -250,6 +250,181 @@
         "监测结果应是范围、波形、阈值和误判，不是即时 GPS 锁定。",
         "公开高强度魔力释放、令咒级输出或重复波形会提高被标记风险。"
       ]
+    },
+    {
+      "id": "tsukimihara-academy",
+      "name": "月海原学园",
+      "category": "地点",
+      "summary": "SE.RA.PH 内再现的二十一世纪学园外壳，月之圣杯战争的主舞台；御主们在此获得私室并以周制回战推进淘汰赛。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 全域",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "一回战时七座校舍同时运营，二回战缩减为两座，四回战幸存御主集中到最后一座校舍。",
+        "校舍如浮在 SE.RA.PH 之海上的船，随回战推进不断下沉，最终抵达 Moon Cell 中枢。",
+        "表层维持学园日常规则；校内表层区域原则上禁止御主间私斗，违规由 Moon Cell 处置。"
+      ]
+    },
+    {
+      "id": "tsukimihara-my-room",
+      "name": "私室（My Room）",
+      "category": "地点",
+      "summary": "每名御主分配到的单人房间，漫长圣杯战争中唯一可以安心休息的完全私人空间。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 私室（My Room）",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "房内对话与发生的事原则上不会外泄；Moon Cell 虽有记录，仅特例事项时才会调阅。",
+        "适合作为整理情报、主从密谈、夜间休整的安全场景。"
+      ]
+    },
+    {
+      "id": "tsukimihara-school-building",
+      "name": "月海原学园 主教学楼",
+      "category": "地点",
+      "summary": "教室、走廊、布告栏等学园日常空间；对战发表与大量 NPC 事件在此发生。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 主教学楼",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "二楼布告栏在每回战开始时公布对战表（对手御主姓名公开，从者真名不公开）。",
+        "一楼用具室等处常有言峰绮礼（EXTRA）出没，决战前确认意志。",
+        "走廊是与其他御主、学园 NPC 相遇的高频地点。"
+      ]
+    },
+    {
+      "id": "tsukimihara-nurse-office",
+      "name": "保健室",
+      "category": "地点",
+      "summary": "学园保健室，间桐樱（EXTRA）作为保健委员常驻，提供回复与照料。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 保健室",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "可作为主角受伤、消耗后的回复点与樱的事件场景。",
+        "樱的真实性质属于后期揭示内容，不得提前公开。"
+      ]
+    },
+    {
+      "id": "tsukimihara-library",
+      "name": "图书室",
+      "category": "地点",
+      "summary": "学园图书室，可检索学园规则、参赛者公开档案与魔术相关资料的情报窗口。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 图书室",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "适合放置对手情报、世界观说明与关键伏笔文献。",
+        "部分深层资料会被 Moon Cell 权限封锁。"
+      ]
+    },
+    {
+      "id": "tsukimihara-commissary",
+      "name": "购买部",
+      "category": "地点",
+      "summary": "学园购买部，消耗 PP（Prize Points）购入道具、礼装与补给的经济节点。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 购买部",
+        "boundary": "reality-marble"
+      },
+      "notes": ["商品随回战推进更新。", "PP 主要来自 Arena 战斗与委托报酬；与现实货币无关。"]
+    },
+    {
+      "id": "tsukimihara-rooftop",
+      "name": "学园屋顶",
+      "category": "地点",
+      "summary": "主教学楼屋顶，视野开阔的半私密空间，重要角色谈话事件的高频地点。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 屋顶",
+        "boundary": "reality-marble"
+      },
+      "notes": ["适合凛、拉妮、雷欧等关键 NPC 的非正式接触。"]
+    },
+    {
+      "id": "tsukimihara-chapel",
+      "name": "校内教堂",
+      "category": "地点",
+      "summary": "Moon Cell 教会系统管辖外的特殊区域，可对从者进行灵魂篡改（强化/灵格取回）。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "月海原学园 教堂",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "EXTRA 本篇中由苍崎橙子方面掌管灵魂篡改业务。",
+        "违法篡改不被 Moon Cell 允许；建议只进行基础灵格取回级别的强化。",
+        "是否引入苍崎姐妹由 campaign 实际状态决定，不要无故触发跨作品角色。"
+      ]
+    },
+    {
+      "id": "seraph-arena",
+      "name": "Arena（月想海）",
+      "category": "地点",
+      "summary": "每回战开放的霊子战斗领域，按回战命名（一之月想海～七之月想海），分第一层与第二层。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH",
+        "detail": "Arena 月想海",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "每回战需在期限内于两层各取得一枚暗号键（Trigger），集齐后回战末日在决战场进行淘汰决战。",
+        "层内有程序化敌人（Effigy 等）、稀有敌、封锁通路与对手主从遭遇事件；Arena 内遭遇敌方主从可以交战。",
+        "决战日的正式对决在专用决战场进行，败者连同从者被 Moon Cell 删除。"
+      ]
+    },
+    {
+      "id": "ccc-old-school-building",
+      "name": "旧校舍（月之里侧）",
+      "category": "地点",
+      "summary": "CCC 舞台：月之里侧唯一的安全地带，远古圣杯战争遗留的废弃校舍，被修复用作主角一行的据点。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH 月之里侧",
+        "detail": "旧校舍",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "校舍残留可维持数十骑从者的霊子资源；保健室的樱以此为电源展开屏障，维持校舍内实数空间规则。",
+        "仅 CCC 线使用；EXTRA 本篇不要引入月之里侧。"
+      ]
+    },
+    {
+      "id": "ccc-sakura-labyrinth",
+      "name": "Sakura 迷宫（月之里侧）",
+      "category": "地点",
+      "summary": "CCC 舞台：取代表侧 Arena 的少女心象迷宫，楼层推进制的探索与压力来源。",
+      "stateLocation": {
+        "region": "Moon Cell",
+        "site": "SE.RA.PH 月之里侧",
+        "detail": "Sakura 迷宫",
+        "boundary": "reality-marble"
+      },
+      "notes": [
+        "各层尽头有少女像（Sentinel 核心），常规物理干涉无法破坏。",
+        "迷宫地形反映心象与欲望，可探索但绝不安全。",
+        "仅 CCC 线使用。"
+      ]
     }
   ]
 }

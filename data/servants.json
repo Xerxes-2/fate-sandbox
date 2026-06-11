@@ -46,7 +46,7 @@
         "agility": "C",
         "mana": "B",
         "luck": "E",
-        "noblePhantasm": "?"
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
@@ -195,7 +195,7 @@
       "noblePhantasms": [
         {
           "name": "Tsubame Gaeshi",
-          "rank": "-",
+          "rank": "none",
           "kind": "对人魔剑",
           "summary": "燕返。以纯剑技抵达近似第二魔法的多重斩击，不是宝具真名解放。"
         }
@@ -408,11 +408,11 @@
       "className": "Lancer",
       "trueName": "恩奇都",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
         "noblePhantasm": "A++"
       },
       "noblePhantasms": [
@@ -432,17 +432,17 @@
       "className": "Berserker",
       "trueName": "杰克开膛手",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "From Hell",
-          "rank": "?",
+          "rank": "none",
           "kind": "特殊宝具",
           "summary": "与“杰克开膛手”传说的不定形身份相关，具体表现需按 FSF 情境处理。"
         }
@@ -456,17 +456,17 @@
       "className": "Rider",
       "trueName": "苍白骑手",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "传染/梦境系表现",
-          "rank": "?",
+          "rank": "none",
           "kind": "灾害型",
           "summary": "以疾病、梦境和城市规模异常体现存在；不适合用普通单挑参数处理。"
         }
@@ -531,17 +531,17 @@
       "className": "Caster",
       "trueName": "弗朗索瓦·普雷拉蒂",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
         "mana": "A",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "螺湮城教本相关魔术",
-          "rank": "?",
+          "rank": "none",
           "kind": "召唤/异端魔术",
           "summary": "与吉尔·德·雷、异端魔术和观察娱乐相关；具体表现按剧情证据推进。"
         }
@@ -555,17 +555,17 @@
       "className": "Watcher",
       "trueName": "未公开",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "影法师群像",
-          "rank": "?",
+          "rank": "none",
           "kind": "特殊职阶能力",
           "summary": "通过多个影子引导西格玛走向真 Lancer 路径；不按常规七职阶处理。"
         }
@@ -587,26 +587,26 @@
       "className": "Saber",
       "trueName": "尼禄·克劳狄乌斯",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "D",
+        "endurance": "D",
+        "agility": "A",
+        "mana": "B",
+        "luck": "A",
+        "noblePhantasm": "B"
       },
       "noblePhantasms": [
         {
-          "name": "Aestus Domus Aurea",
-          "rank": "?",
-          "kind": "剧场型宝具",
-          "summary": "黄金剧场。具体展开条件、效果和限制需外部检索确认。"
+          "name": "招き蕩う黄金剧场（Aestus Domus Aurea）",
+          "rank": "B",
+          "kind": "对阵宝具",
+          "summary": "具现罗马黄金剧场的固有结界级舞台，场内由尼禄制定法则、压制对手发挥。"
         }
       ],
       "notes": [
         "Fate/EXTRA 主角可选三骑之一。",
         "不要和阿尔托莉雅 Saber 混同；“赤 Saber”只是辨识称呼。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。",
-        "Fate/EXTRA CCC 中可继续作为主人公候选从者；新衣装、个人结局和 CCC route 表现需按 CCC 资料检索。"
+        "代表技能：皇帝特权 EX、头痛持有 B、对魔力 C。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -616,26 +616,26 @@
       "className": "Archer",
       "trueName": "无铭",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "D",
+        "endurance": "C",
+        "agility": "C",
+        "mana": "B",
+        "luck": "E",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
-          "name": "Unlimited Blade Works",
-          "rank": "?",
+          "name": "无限剑制（Unlimited Blade Works）",
+          "rank": "E~A++",
           "kind": "固有结界",
-          "summary": "与投影/剑制相关；EXTRA 版本身份和表现不要直接等同 FSN Archer。"
+          "summary": "无名英灵的剑丘固有结界；投影武装与连射宝具级礼装是其主战手段。"
         }
       ],
       "notes": [
         "Fate/EXTRA 主角可选三骑之一。",
         "和 FSN 的 Archer 高度相似但作品语境不同；具体身份边界需查源。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。",
-        "Fate/EXTRA CCC 中可继续作为主人公候选从者；新衣装、个人结局和 CCC route 表现需按 CCC 资料检索。"
+        "代表技能：千里眼、投影魔术、心眼系战斗续行。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -645,26 +645,26 @@
       "className": "Caster",
       "trueName": "玉藻前",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "E",
+        "endurance": "E",
+        "agility": "B",
+        "mana": "A",
+        "luck": "D",
+        "noblePhantasm": "B"
       },
       "noblePhantasms": [
         {
           "name": "水天日光天照八野镇石",
-          "rank": "?",
-          "kind": "支援/咒术宝具",
-          "summary": "具体效果随作品和场景差异很大，使用前查源。"
+          "rank": "B",
+          "kind": "对人宝具",
+          "summary": "以玉藻镜为核心的大幅强化／反射结界，解放需要灵格取回进度。"
         }
       ],
       "notes": [
         "Fate/EXTRA 主角可选三骑之一。",
         "咒术、变化和献身/毒舌并存是角色核心。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。",
-        "Fate/EXTRA CCC 中可继续作为主人公候选从者；新衣装、个人结局和 CCC route 表现需按 CCC 资料检索。"
+        "代表技能：咒术 EX、变化 A、阵地作成 C；初期灵格受限时全参数可压到 E。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -674,25 +674,25 @@
       "className": "Rider",
       "trueName": "弗朗西斯·德雷克",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "D",
+        "endurance": "C",
+        "agility": "B",
+        "mana": "E",
+        "luck": "EX",
+        "noblePhantasm": "A+"
       },
       "noblePhantasms": [
         {
-          "name": "Golden Wild Hunt",
-          "rank": "?",
-          "kind": "舰队/炮击系宝具",
-          "summary": "与航海、舰队、黄金鹿号/野猎形象相关；细节需查源。"
+          "name": "黄金鹿与暴风夜（Golden Wild Hunt）",
+          "rank": "A+",
+          "kind": "对军宝具",
+          "summary": "召唤黄金鹿号舰队与暴风之夜的大规模炮击；幸运 EX 支撑的豪运型压制。"
         }
       ],
       "notes": [
         "EXTRA 中间桐慎二（EXTRA）的 Rider。",
         "不要和普通海盗 NPC 模板混同；她是从者级航海/火力压力。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -702,25 +702,26 @@
       "className": "Archer",
       "trueName": "罗宾汉",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "C",
+        "endurance": "C",
+        "agility": "B",
+        "mana": "B",
+        "luck": "B",
+        "noblePhantasm": "D"
       },
       "noblePhantasms": [
         {
-          "name": "Yew Bow",
-          "rank": "?",
-          "kind": "毒/伏击宝具",
-          "summary": "以毒、陷阱、潜伏和条件杀伤为核心；具体机制需查源。"
+          "name": "祈愿之弓（Yew Bow）",
+          "rank": "D",
+          "kind": "对人宝具",
+          "summary": "以毒、陷阱等事前布置为引信的必杀一矢；布置越充分威力越高。"
         }
       ],
       "notes": [
         "EXTRA 中丹·布莱克莫尔的 Archer。",
         "优势不是堂堂正面对决，而是侦察、暗杀、毒和 Arena 条件。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "代表技能：破坏工作 A、气息遮断系隐匿。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -730,25 +731,25 @@
       "className": "Caster",
       "trueName": "童谣",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "C",
+        "endurance": "C",
+        "agility": "C",
+        "mana": "B",
+        "luck": "B",
+        "noblePhantasm": "C"
       },
       "noblePhantasms": [
         {
-          "name": "Nursery Rhyme",
-          "rank": "?",
-          "kind": "固有结界/童话具现",
-          "summary": "童话与读者内心相关的异常表现；不要写成普通魔术少女。"
+          "name": "献给谁人的物语（Nursery Rhyme）",
+          "rank": "C",
+          "kind": "对人宝具",
+          "summary": "绘本型固有结界，随御主心象改写领域规则；本体即是“绘本”这一概念的具现。"
         }
       ],
       "notes": [
-        "EXTRA 中与ありす紧密相关。",
-        "其外观和能力与 Master/童话世界关系强，具体边界需查源。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "EXTRA 中与爱丽丝（EXTRA）紧密相关。",
+        "参数与外观随御主资质浮动，上表为通行参考值。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -758,25 +759,31 @@
       "className": "Lancer",
       "trueName": "弗拉德三世",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "B",
+        "endurance": "A",
+        "agility": "C",
+        "mana": "C",
+        "luck": "D",
+        "noblePhantasm": "A"
       },
       "noblePhantasms": [
         {
-          "name": "Kazikli Bey",
-          "rank": "?",
-          "kind": "穿刺/刑罚系宝具",
-          "summary": "EXTRA 版本表现和信仰/吸血鬼形象边界需查源。"
+          "name": "串刺地狱（Kazikli Bey）",
+          "rank": "C",
+          "kind": "对人宝具",
+          "summary": "以无数桩刺贯穿对手的处刑宝具。"
+        },
+        {
+          "name": "鲜血的传承（Legend of Dracula）",
+          "rank": "A",
+          "kind": "变身宝具",
+          "summary": "接受吸血鬼传说污名而变身的强化形态；解放伴随灵基与心性的代价。"
         }
       ],
       "notes": [
         "EXTRA 中兰路君的 Lancer。",
         "不要自动套用 Apocrypha/FGO 的其它 Vlad 版本。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -791,25 +798,26 @@
       "className": "Berserker",
       "trueName": "阿尔奎德·布伦史塔德",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
-          "name": "空想具现化相关表现",
-          "rank": "?",
-          "kind": "真祖能力/职阶限制",
-          "summary": "EXTRA 中被 Berserker 容器和 Master 误认显著限制，不能按月姬本体全开。"
+          "name": "（真名相关宝具未公开）",
+          "rank": "none",
+          "kind": "未公开",
+          "summary": "原作未给出常规参数表；按“被狂化职阶外壳压制的真祖级存在”处理。"
         }
       ],
       "notes": [
         "EXTRA 中卧藤门司的 Berserker。",
         "这是高危跨作品条目；必须防止把月姬本体强度直接搬进 Extra 战斗。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "GM 裁定基准：单项压制可达从者最上位，但受 Moon Cell 数据化与狂化限制，强度服务于剧情压力而非数值碾压。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -819,25 +827,25 @@
       "className": "Berserker",
       "trueName": "吕布奉先",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "A",
+        "endurance": "B",
+        "agility": "C",
+        "mana": "E",
+        "luck": "D",
+        "noblePhantasm": "B"
       },
       "noblePhantasms": [
         {
-          "name": "God Force",
-          "rank": "?",
-          "kind": "方天画戟/军神五兵",
-          "summary": "具体形态、火力和限制需查源。"
+          "name": "军神五兵（God Force）",
+          "rank": "B",
+          "kind": "对军宝具",
+          "summary": "五种形态切换的方天画戟型机构兵装，含射击与轰击形态。"
         }
       ],
       "notes": [
         "EXTRA 中拉妮＝Ⅷ的 Berserker。",
         "核心是高武力、狂化沟通限制与拉妮的解析/控制。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -847,25 +855,26 @@
       "className": "Assassin",
       "trueName": "李书文",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "B",
+        "endurance": "C",
+        "agility": "A",
+        "mana": "E",
+        "luck": "E",
+        "noblePhantasm": "-"
       },
       "noblePhantasms": [
         {
-          "name": "无二打",
-          "rank": "?",
-          "kind": "武术/对人奥义",
-          "summary": "以中国武术、气息遮断和近身必杀为核心；数值和条件需查源。"
+          "name": "无二打（概念技）",
+          "rank": "none",
+          "kind": "至近必杀",
+          "summary": "“不需要第二击”——以中国武术 A+++ 与圈境抵达的必杀之拳；严格说并非宝具而是技的极致。"
         }
       ],
       "notes": [
         "EXTRA 中尤里乌斯的 Assassin。",
-        "常时不可见/暗杀压力需要按场景规则处理。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "常时不可见/暗杀压力需要按场景规则处理；圈境 A 期间气配完全消失。",
+        "无常规宝具；威胁全部来自体术与隐匿。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -875,25 +884,26 @@
       "className": "Saber",
       "trueName": "高文",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "B+",
+        "endurance": "B+",
+        "agility": "B",
+        "mana": "A",
+        "luck": "A",
+        "noblePhantasm": "A+"
       },
       "noblePhantasms": [
         {
-          "name": "Excalibur Galatine",
-          "rank": "?",
-          "kind": "对军/太阳圣剑",
-          "summary": "太阳、圣者数字和圣剑火力相关；具体条件必须查源。"
+          "name": "转轮胜利之剑（Excalibur Galatine）",
+          "rank": "A+",
+          "kind": "对军宝具",
+          "summary": "宿有太阳热量的圣剑；齐射级的光热斩击。"
         }
       ],
       "notes": [
         "EXTRA 中雷欧的 Saber。",
+        "代表技能：圣者的数字 EX——日照时间带（午前9-12/午后3-6）全参数强化，是其“无敌时间”来源，也是攻略突破口。",
         "雷欧/高文组合是月之圣杯战争强力候补；不要提前公开全部弱点。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -903,25 +913,25 @@
       "className": "Lancer",
       "trueName": "库丘林",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "B",
+        "endurance": "C",
+        "agility": "A",
+        "mana": "C",
+        "luck": "E",
+        "noblePhantasm": "B"
       },
       "noblePhantasms": [
         {
-          "name": "Gae Bolg",
-          "rank": "?",
+          "name": "刺穿死棘之枪（Gae Bolg）",
+          "rank": "B",
           "kind": "对人宝具",
-          "summary": "Extra 中与凛阵营相关；具体参数和场景表现需查源。"
+          "summary": "因果逆转、必中心脏的魔枪。"
         }
       ],
       "notes": [
         "EXTRA 中远坂凛（EXTRA）的 Lancer。",
         "不要直接复用 FSN Lancer 的御主限制、经历和状态。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -931,25 +941,26 @@
       "className": "Saver",
       "trueName": "觉者",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "EX"
       },
       "noblePhantasms": [
         {
-          "name": "一に還る転生",
-          "rank": "?",
-          "kind": "救世/轮回系宝具",
-          "summary": "极高危后期资料；具体能力、限制和揭示条件必须查源。"
+          "name": "转生回廊（Amita Amitābha）",
+          "rank": "EX",
+          "kind": "对人理宝具",
+          "summary": "最终战级别的规格外宝具；细节属于终盘揭示内容，不得提前展开。"
         }
       ],
       "notes": [
         "EXTRA 中特维斯·H·皮斯曼相关的特殊从者。",
         "Saver 不是常规七职阶；不得在前期随意揭示或当普通 Boss 工具。",
-        "本地条目只作 Extra 索引；精确参数、技能、宝具效果和回合表现需要外部检索 TYPE-MOON Wiki JP / TMdict / 官方资料。"
+        "常规参数对其无意义；按人理级最终关卡处理。",
+        "参数来源：TYPE-MOON Wiki / Fate/EXTRA material 通行资料；逐回合技能表现仍需查源。"
       ]
     },
     {
@@ -965,17 +976,17 @@
       "className": "Custom",
       "trueName": "吉尔伽美什",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "Gate of Babylon / Enuma Elish",
-          "rank": "?",
+          "rank": "none",
           "kind": "王之财宝/乖离剑相关",
           "summary": "CCC 主人公新增候选从者；宝具解禁、弱体和剧情限制必须按 CCC 资料确认。"
         }
@@ -993,17 +1004,17 @@
       "className": "Custom",
       "trueName": "迦尔纳",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "Vasavi Shakti",
-          "rank": "?",
+          "rank": "none",
           "kind": "神枪/对神宝具",
           "summary": "迦尔纳代表性宝具之一；CCC 中职阶和释放条件需外部检索确认。"
         }
@@ -1027,17 +1038,17 @@
       "className": "Caster",
       "trueName": "汉斯·克里斯蒂安·安徒生",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "Märchen Meines Lebens",
-          "rank": "?",
+          "rank": "none",
           "kind": "创作/人生改稿系宝具",
           "summary": "与书写、评价、改稿和人物完成相关；具体条件需查源。"
         }
@@ -1061,17 +1072,17 @@
       "className": "Lancer",
       "trueName": "伊丽莎白·巴托里",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "Báthory Erzsébet",
-          "rank": "?",
+          "rank": "none",
           "kind": "音波/城塞/拷问系表现",
           "summary": "CCC/FGO 等版本表现差异大，使用前查源确认。"
         }
@@ -1096,17 +1107,17 @@
       "className": "AlterEgo",
       "trueName": "帕ッションリップ",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "Brynhildr Romantia / Trash & Crush",
-          "rank": "?",
+          "rank": "none",
           "kind": "Alter Ego 能力/压缩系表现",
           "summary": "CCC 与后续作品表现差异大；具体能力、女神复合来源和限制必须查源。"
         }
@@ -1131,17 +1142,17 @@
       "className": "AlterEgo",
       "trueName": "梅尔特莉莉丝",
       "parameters": {
-        "strength": "?",
-        "endurance": "?",
-        "agility": "?",
-        "mana": "?",
-        "luck": "?",
-        "noblePhantasm": "?"
+        "strength": "unknown",
+        "endurance": "unknown",
+        "agility": "unknown",
+        "mana": "unknown",
+        "luck": "unknown",
+        "noblePhantasm": "unknown"
       },
       "noblePhantasms": [
         {
           "name": "Sarasvati Meltout",
-          "rank": "?",
+          "rank": "none",
           "kind": "Alter Ego 能力/溶解吸收系表现",
           "summary": "CCC 与后续作品表现差异大；具体能力、女神复合来源和限制必须查源。"
         }

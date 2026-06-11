@@ -5,6 +5,7 @@ import type { CombatExchangeInput } from "./combat-exchange.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
+import { FATE_RANK_SCHEMA } from "./actor-schema.ts";
 import { FATE_PARAM_KEY_SCHEMA, stringEnumSchema } from "./state-enum-schemas.ts";
 import { parseTypeBoxValue, trimStringsDeep } from "./typebox-validation.ts";
 
@@ -45,6 +46,9 @@ export const COMBAT_EXCHANGE_INPUT_SCHEMA = Type.Object({
   opponentParameter: FATE_PARAM_KEY_SCHEMA,
   actorNoblePhantasmName: Type.Optional(Type.String({ minLength: 1 })),
   opponentNoblePhantasmName: Type.Optional(Type.String({ minLength: 1 })),
+  /** 可变宝具（rank 为 X~Y 范围）本次释放的实际评级；必须落在范围内。 */
+  actorNoblePhantasmRelease: Type.Optional(FATE_RANK_SCHEMA),
+  opponentNoblePhantasmRelease: Type.Optional(FATE_RANK_SCHEMA),
   targetObjective: Type.Optional(Type.String({ minLength: 1 })),
   committedResources: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
   knownAdvantages: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
