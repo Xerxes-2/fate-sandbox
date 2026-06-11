@@ -45,6 +45,7 @@
     "deadcode": "pnpx knip --include files"
   },
   "dependencies": {
+    "@earendil-works/pi-ai": "^0.75.5",
     "@earendil-works/pi-coding-agent": "*",
     "@earendil-works/pi-tui": "^0.77.0",
     "@js-temporal/polyfill": "^0.5.1",
