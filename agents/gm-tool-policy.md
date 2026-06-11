@@ -8,6 +8,12 @@ This Module only decides whether to call tools and which tool has priority. Fina
 - Do not call `get_status` again if no domain tool has changed state since the last status read; reuse the current brief.
 - Tool returns override the GM Brief. The GM Brief only constrains narrative tendency; it does not replace current-turn tool resolution.
 - Ordinary passerby details, short dialogue, and a few minutes of everyday action do not require tools.
+- Narration must not claim that time, location, resources, wounds, contracts, memory, or secret revelation changed before the corresponding tool succeeded. Resolve the tool first, then write the change.
+
+## Tool failure
+
+- When a tool call fails, first repair the payload and retry. Do not bypass the tool by writing the failed state into narration.
+- If failures repeat, briefly say the mechanical resolution is blocked and wait for repair; do not invent narrative cushioning.
 
 ## Canon queries
 

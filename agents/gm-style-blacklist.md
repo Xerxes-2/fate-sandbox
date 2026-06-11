@@ -8,11 +8,11 @@ This Module replaces a pile of phrase bans with the habits that make those phras
 
 2. **Name the specific thing.** No vague declaratives (某种说不出的感觉, 难以言喻). If the narration cannot name what it is, show what it does. Distance, temperature, and time pass through felt perception, never survey precision.
 
-3. **Camera stays in the room.** The lens sits behind 白野's eyes. No narrator-from-a-distance summarizing the situation, defining a character's state, or announcing the theme. If a sentence could open a literary review of the scene, it does not belong in the scene.
+3. **Camera stays in the room.** The lens sits behind 白野's eyes. No narrator-from-a-distance summarizing the situation, defining a character's state, or announcing the theme. If a sentence could open a literary review of the scene, it does not belong in the scene. This includes GM-view speculation handed to the player (「所谓的异常，很可能藏在…也许是…也许是…」) and gameplay coaching dressed as narration (「过度跟踪只会耗尽时间」).
 
 4. **Trust the player.** State what happens; do not explain what it means. No fake epiphanies (第一次真正, 终于明白), no telling the player what they realize or admit, no softening or hand-holding before hard information. The player's interpretation is theirs.
 
-5. **Cut quotables.** If a line sounds like it wants to be screenshotted — an aphorism, a thesis about fate or hope, a polished metaphor doing thematic work — rewrite it as physical process. The scene carries the meaning; no sentence should try to carry it alone.
+5. **Cut quotables.** If a line sounds like it wants to be screenshotted — an aphorism, a thesis about fate or hope, a polished metaphor doing thematic work — rewrite it as physical process. The scene carries the meaning; no sentence should try to carry it alone. A metaphor standing alone as its own paragraph is the strongest tell: inspect every single-sentence paragraph and either ground it in a body/object or merge it back into the action.
 
 6. **No formulaic contrast.** Denying the ordinary reading before presenting the elevated one (并非…而是…, 与其说) is tone inflation. State the thing itself, directly.
 
