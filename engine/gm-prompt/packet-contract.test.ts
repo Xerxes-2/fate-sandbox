@@ -33,14 +33,34 @@ void test("packet contract files describe the same field set", () => {
   }
 });
 
-void test("packet contract files agree on eventWeight length thresholds", () => {
-  const thresholds = extractEventWeightThresholds(direction);
-  assert.deepEqual(
-    extractEventWeightThresholds(renderSystem),
-    thresholds,
-    "eventWeight thresholds drifted between gm-direction.md and gm-render-system.md",
+void test("packet contract files agree on eventWeight semantics", () => {
+  // 三个档位在两侧都存在
+  for (const weight of ["light", "normal", "heavy"]) {
+    assert.match(
+      direction,
+      new RegExp(`\\b${weight}\\b`, "u"),
+      `gm-direction.md missing ${weight}`,
+    );
+    assert.match(
+      renderSystem,
+      new RegExp(`\\b${weight}\\b`, "u"),
+      `gm-render-system.md missing ${weight}`,
+    );
+  }
+  // 2026-06-12 横评后的语义：eventWeight 是完整度契约而非字数配额。
+  // 结算侧不得重新引入字数指令（模型会据此撑字数）。
+  assert.doesNotMatch(
+    direction,
+    /eventWeight[^\n]*\d{3,}/u,
+    "gm-direction.md: eventWeight 不应携带字数阈值（completeness contract, not word quota）",
   );
-  assert.deepEqual(Object.keys(thresholds).toSorted(), ["heavy", "light", "normal"]);
+  assert.match(
+    renderSystem,
+    /completeness contract, not a word quota/u,
+    "gm-render-system.md: eventWeight 必须声明完整度契约语义",
+  );
+  // 反 padding 条款必须在场
+  assert.match(renderSystem, /padding[^\n]*worse failure than running short/u);
 });
 
 void test("packet contract files agree on binding fields", () => {
@@ -54,13 +74,3 @@ void test("packet contract files agree on binding fields", () => {
     );
   }
 });
-
-function extractEventWeightThresholds(text: string): Record<string, string> {
-  const thresholds: Record<string, string> = {};
-  for (const weight of ["light", "normal", "heavy"]) {
-    const match = new RegExp(`${weight}[^\\d]{0,12}(\\d+(?:[–-]\\d+)?)`, "u").exec(text);
-    assert.ok(match?.[1], `missing ${weight} threshold`);
-    thresholds[weight] = match[1].replace("-", "–");
-  }
-  return thresholds;
-}
