@@ -118,7 +118,7 @@ void test("buildRendererMessages prefers writer digests and falls back to packet
     ["tc-99", "不存在的轮次"],
   ]);
   const messages = buildRendererMessages(
-    turnsFixture(13),
+    turnsFixture(17),
     parseDirectionPacket(PACKET_ARGS, "packet"),
     overrides,
   );
@@ -132,41 +132,41 @@ void test("buildRendererMessages prefers writer digests and falls back to packet
 
 void test("buildRendererMessages keeps all turns full below the high-water mark", () => {
   const messages = buildRendererMessages(
-    turnsFixture(12),
+    turnsFixture(16),
     parseDirectionPacket(PACKET_ARGS, "packet"),
   );
-  // 12 轮全文（每轮 user+assistant）+ 末尾 user，无摘要层
-  assert.equal(messages.length, 25);
+  // 16 轮全文（每轮 user+assistant）+ 末尾 user，无摘要层
+  assert.equal(messages.length, 33);
   assert.equal(messages[0]?.text, "输入 1");
 });
 
 void test("buildRendererMessages cuts to the low-water mark with a digest layer", () => {
   const messages = buildRendererMessages(
-    turnsFixture(13),
+    turnsFixture(17),
     parseDirectionPacket(PACKET_ARGS, "packet"),
   );
-  // 越过高水位：边界跳到 6，全文层 = 第 7-13 轮（7 轮），前 6 轮进摘要层
+  // 越过高水位：边界跳到 6，全文层 = 第 7-17 轮（11 轮），前 6 轮进摘要层
   const digest = messages[0]?.text ?? "";
   assert.equal(messages[0]?.role, "user");
-  assert.match(digest, /# 早期轮次摘要/);
+  assert.match(digest, /# 前情提要/);
   assert.match(digest, /第1轮：行动 1/);
   assert.match(digest, /第6轮：行动 6/);
   assert.doesNotMatch(digest, /第7轮/);
-  // 摘要 1 + 全文 7×2 + 末尾 1
-  assert.equal(messages.length, 16);
+  // 摘要 1 + 全文 11×2 + 末尾 1
+  assert.equal(messages.length, 24);
   assert.equal(messages[1]?.text, "输入 7");
-  // 再涨到 18 轮：边界不动（滞回），全文层 12 轮
+  // 再涨到 22 轮：边界不动（滞回），全文层 16 轮
   const grown = buildRendererMessages(
-    turnsFixture(18),
+    turnsFixture(22),
     parseDirectionPacket(PACKET_ARGS, "packet"),
   );
   assert.equal(grown[1]?.text, "输入 7");
-  assert.equal(grown.length, 1 + 12 * 2 + 1);
+  assert.equal(grown.length, 1 + 16 * 2 + 1);
 });
 
 void test("buildRendererMessages demotes turns to digest when prose exceeds the char budget", () => {
   const messages: Record<string, unknown>[] = [];
-  for (let turn = 1; turn <= 10; turn++) {
+  for (let turn = 1; turn <= 12; turn++) {
     messages.push(
       userMessage(`输入 ${turn}`),
       packetCallMessage({ ...PACKET_ARGS, playerAction: `行动 ${turn}` }),
@@ -175,10 +175,10 @@ void test("buildRendererMessages demotes turns to digest when prose exceeds the 
   }
   messages.push(userMessage("最新输入"));
   const result = buildRendererMessages(messages, parseDirectionPacket(PACKET_ARGS, "packet"));
-  // 10×5000 字超 30k 预算：前 4 轮降级进摘要，全文层保留 6 轮
+  // 12×5000 字超 45k 预算：前 2 轮降级进摘要，全文层保留 10 轮
   const digest = result[0]?.text ?? "";
-  assert.match(digest, /第4轮：行动 4/);
-  assert.equal(result[1]?.text, "输入 5");
+  assert.match(digest, /第2轮：行动 2/);
+  assert.equal(result[1]?.text, "输入 3");
 });
 
 void test("lintRenderedProse flags secret leaks as block findings", () => {

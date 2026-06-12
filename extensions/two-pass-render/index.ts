@@ -275,8 +275,8 @@ async function writeTurnDigest(
     }
     const { packet } = pending;
     const prompt = [
-      "用一行中文（≤80 字，不换行）概括这一轮：发生的关键事件、人物关系/态度的变化、新出现或收束的悬念。",
-      "这行摘要供后续渲染做事件连续性参考，只要事实不要文采，不要前缀标号。",
+      "用一行中文（≤80 字，不换行）写这一轮的前情提要，像小说卷首的上轮回顾：谁做了什么、关系/态度怎么变了、留下了什么悬念。",
+      "写成自然叙述的一句话，不用箭头、不用分号堆砌、不列术语清单；只要事实准确，不要报告腔，不要前缀标号。",
       "",
       `玩家行动：${packet.needsRender ? packet.playerAction : "（meta 轮）"}`,
       `已结算事实：${packet.needsRender ? packet.resolvedChanges.join("；") : "无"}`,
@@ -287,7 +287,7 @@ async function writeTurnDigest(
     const events = stream(
       model,
       {
-        systemPrompt: "你是叙事存档员，只输出一行事实摘要。",
+        systemPrompt: "你是叙事存档员，只输出一行自然叙述的前情提要。",
         messages: [{ role: "user", content: [{ type: "text", text: prompt }], timestamp: 0 }],
       },
       { apiKey: auth.apiKey, headers: auth.headers, maxTokens: DIGEST_MAX_TOKENS },

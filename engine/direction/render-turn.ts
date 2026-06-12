@@ -16,10 +16,10 @@ export const SUBMIT_DIRECTION_PACKET_TOOL = "submit_direction_packet";
  * - 全文层：最近 FULL_LOW..FULL_HIGH 轮的完整正文，语感连续性载体。
  * - 摘要层：更早轮次每轮一行，从该轮 direction packet 提取（零 LLM 成本）。
  */
-const FULL_TURNS_HIGH = 12;
-const FULL_TURNS_LOW = 6;
+const FULL_TURNS_HIGH = 16;
+const FULL_TURNS_LOW = 10;
 /** 全文层字符预算；heavy 轮堆积时按步长提前把旧转降级进摘要层。 */
-const FULL_LAYER_CHAR_BUDGET = 30_000;
+const FULL_LAYER_CHAR_BUDGET = 45_000;
 const DIGEST_TURNS_HIGH = 32;
 const DIGEST_TURNS_LOW = 16;
 
@@ -91,7 +91,7 @@ export function buildRendererMessages(
     result.push({
       role: "user",
       text: [
-        "# 早期轮次摘要（事件连续性参考，非文风样本）",
+        "# 前情提要（早期轮次，仅供事件连续性参考）",
         "",
         ...digestTurns.map((turn) => turn.digest),
       ].join("\n"),
@@ -159,14 +159,18 @@ function collectRenderedTurns(
   return { turns, currentInputs };
 }
 
-/** 从该轮 packet 参数提取一行摘要；旧 packet 不重新验证，防御式读取。 */
+/**
+ * 从该轮 packet 参数提取一行摘要；旧 packet 不重新验证，防御式读取。
+ * 格式刻意避开箭头/分号的报告体：摘要层是渲染器上下文的第一段文本，
+ * 机械调性会污染整轮文风（见 06-12 反模式回归复盘）。
+ */
 function buildTurnDigest(turn: number, args: Record<string, unknown> | undefined): string {
   const playerAction =
     typeof args?.["playerAction"] === "string" ? args["playerAction"] : "（未知行动）";
   const changes = Array.isArray(args?.["resolvedChanges"])
     ? args["resolvedChanges"].filter((entry): entry is string => typeof entry === "string")
     : [];
-  const changeText = changes.length > 0 ? `→ ${changes.join("；")}` : "";
+  const changeText = changes.length > 0 ? `。${changes.join("，")}` : "";
   return `第${turn}轮：${playerAction}${changeText}`;
 }
 

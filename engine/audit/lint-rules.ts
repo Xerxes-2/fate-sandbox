@@ -68,6 +68,13 @@ const PROSE_RULES: readonly ProseRule[] = [
     pattern: /并非[^。！？\n]{0,40}而是|与其说/g,
   },
   {
+    // 口语变体：旁白中的「不是A，(而)是B」抬升句式。
+    // 仅匹配不含对话引号的行，避免误伤角色台词里正常的纠正句。
+    id: "negation-reversal-colloquial",
+    scope: "per-line",
+    pattern: /^(?!.*[「『"])[^\n]*?不是[^。！？，,\n]{1,20}[，,]\s*而?是/g,
+  },
+  {
     id: "empty-atmosphere",
     scope: "anywhere",
     pattern: /空气中弥漫|显得格外|某种说不出的|难以言喻/g,
