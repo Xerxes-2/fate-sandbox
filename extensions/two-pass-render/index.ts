@@ -8,7 +8,7 @@ import type { RenderDirectionPacket } from "../../engine/direction/packet-schema
 
 import { stream, streamSimple } from "@earendil-works/pi-ai";
 import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
-import { Markdown } from "@earendil-works/pi-tui";
+import { Markdown, Text } from "@earendil-works/pi-tui";
 
 import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts";
 import { syncStateFromSessionManager } from "../../engine/core/session-hydration.ts";
@@ -271,8 +271,11 @@ function captureUsage(ctx: ExtensionContext, kind: RenderCallKind, usage: DoneUs
       `Pass B 用量 · 本轮 ${usageTotals.lastTurnTokens} tok · 累计 ${usageTotals.totalTokens} tok` +
       `（in ${usageTotals.input} / out ${usageTotals.output} / cache ${usageTotals.cacheRead}）` +
       ` · ${usageTotals.calls} 次调用${cost}`;
-    // dim + 暗灰：用量是背景信息，不该和正文争视线。
-    ctx.ui.setWidget(USAGE_WIDGET_KEY, [`\u001B[2;90m${line}\u001B[0m`]);
+    // 与内置状态提示（如 Navigated to selected point）同源的质感：
+    // 主题 dim 色 + 斜体，随主题切换，不和正文争视线。
+    ctx.ui.setWidget(USAGE_WIDGET_KEY, (_tui, theme) =>
+      new Text(theme.italic(theme.fg("dim", line)), 1, 0),
+    );
   } catch {
     // 静默：widget 展示问题不阻塞渲染。
   }
