@@ -6,9 +6,9 @@
 
 优先级总览（2026-06-14 更新：#12 已验收；#1/#5/#15/#16/#17 已落地）：
 
-1. 已完成地基：#8 JSONL 审计脚本、#12 双 pass、#1 输出契约机械执法、#15 NPC agenda/knowledge lens、#16 关系信号账本、#17 pressure palette、#18 Windows 启动 parity、#5 parallel-line 调用工具化、#6 上下文经济、#9 Seeded RNG
-2. 建议下一批：#10 玩家侧小件（/relations → /hooks → /journal → /recap）
-3. 后置增强：#14 heavy 轮并行渲染选优、#7 canon 研究缓存
+1. 已完成地基：#8 JSONL 审计脚本、#12 双 pass、#1 输出契约机械执法、#15 NPC agenda/knowledge lens、#16 关系信号账本、#17 pressure palette、#18 Windows 启动 parity、#5 parallel-line 调用工具化、#6 上下文经济、#9 Seeded RNG、#10 玩家侧小件（/relations /hooks /journal /recap）
+2. 建议下一批：#14 heavy 轮并行渲染选优、#7 canon 研究缓存
+3. 待定增强：#10 分支书签 / 成书导出
 
 ---
 
@@ -170,19 +170,24 @@ AGENTS.md 说「先写 JSONL 统计复现」，但没有现成统计工具。建
 
 落地清单：
 
-- `engine/core/seeded-rng.ts`：xoshiro128** 算法，`seededRandomInt(state, bound)` 和 `seededRandomFloat(state)`。seed 存在 `state.meta.rngSeed`，每次消耗推进 `state.meta.rngCounter`。counter fast-forward 保证 rewind 后重放行为一致。
+- `engine/core/seeded-rng.ts`：xoshiro128\*\* 算法，`seededRandomInt(state, bound)` 和 `seededRandomFloat(state)`。seed 存在 `state.meta.rngSeed`，每次消耗推进 `state.meta.rngCounter`。counter fast-forward 保证 rewind 后重放行为一致。
 - `resolve_combat_exchange` 内部战场变数 roll 已改用 seeded RNG（原 `randomInt(100)` from `node:crypto` → `seededRandomInt(draft, 100)`）。
 - schema v9→10 迁移（rngSeed + rngCounter）。
 - 9 新测试（确定性、序列范围、边界、fast-forward、差异性）。
 
 ## 10. 玩家侧小件
 
-- [ ] `/recap`：从 Campaign Memory（player-safe）生成前情提要，不进上下文
-- [ ] `/journal`：turnLog + eventLog 渲染时间线（审计账本是现成数据）
-- [ ] `/relations`：展示玩家可见关系摘要与最近关系信号，不展示 NPC 内心独白或 secret motive
-- [ ] `/hooks`：展示 player-safe 悬念账本；active/parked/paid/escalated/retired 转成自然语言，不暴露 hidden-canonical
+- [x] `/relations`：展示玩家可见关系概览（同行者、在场 NPC、印象卡、最近关系信号）。已完成（2026-06-14）。
+- [x] `/hooks`：展示 player-safe 悬念账本；active/parked/paid/escalated/retired 分组显示，带表情标签。已完成（2026-06-14）。
+- [x] `/journal`：turnLog + eventLog + dailySummaries 渲染时间线。已完成（2026-06-14）。
+- [x] `/recap`：从 Campaign Memory（player-safe）生成前情提要（战役、主角、关键事实、最近事件、悬念、当前场景）。已完成（2026-06-14）。
 - [ ] 分支书签：session tree 已支持分叉，加 `/bookmark` 命名存档点，配合 `/fuck` 形成 what-if 工作流
 - [ ] 成书导出：session → 去掉工具调用的纯正文 HTML/EPUB
+
+落地清单（2026-06-14）：
+- 投影函数在 `engine/core/player-widgets.ts`（纯 PublicGameState → Markdown，不泄露 secrets）。
+- 四个 `/` 命令注册在 `extensions/player-panel/index.ts`（复用已有 `showPanel` TUI 框架）。
+- 7 新测试覆盖四个投影函数。
 
 ## 11. preset 注入顺序微优化（KV cache）
 

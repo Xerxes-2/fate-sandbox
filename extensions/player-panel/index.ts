@@ -6,6 +6,12 @@ import { DynamicBorder, getMarkdownTheme } from "@earendil-works/pi-coding-agent
 import { Container, Markdown, matchesKey, Text } from "@earendil-works/pi-tui";
 
 import {
+  buildHooksMarkdown,
+  buildJournalMarkdown,
+  buildRecapMarkdown,
+  buildRelationsMarkdown,
+} from "../../engine/core/player-widgets.ts";
+import {
   buildInventoryMarkdown,
   buildStatusMarkdown,
 } from "../../engine/core/public-projection.ts";
@@ -16,14 +22,42 @@ export default function playerPanelExtension(pi: ExtensionAPI): void {
   pi.registerCommand("status", {
     description: "Show player-visible Fate sandbox status without adding chat context",
     handler: async (_args, ctx) => {
-      await showPanel(ctx, buildStatusMarkdown(readPublicState(ctx)));
+      await showPanel(ctx, "Fate Sandbox Status", buildStatusMarkdown(readPublicState(ctx)));
     },
   });
 
   pi.registerCommand("inventory", {
     description: "Show player-visible money and inventory without adding chat context",
     handler: async (_args, ctx) => {
-      await showPanel(ctx, buildInventoryMarkdown(readPublicState(ctx)));
+      await showPanel(ctx, "Fate Sandbox Inventory", buildInventoryMarkdown(readPublicState(ctx)));
+    },
+  });
+
+  pi.registerCommand("relations", {
+    description: "Show player-visible relationship map and recent signals",
+    handler: async (_args, ctx) => {
+      await showPanel(ctx, "Relations", buildRelationsMarkdown(readPublicState(ctx)));
+    },
+  });
+
+  pi.registerCommand("hooks", {
+    description: "Show player-visible mystery hook ledger",
+    handler: async (_args, ctx) => {
+      await showPanel(ctx, "Hook Ledger", buildHooksMarkdown(readPublicState(ctx)));
+    },
+  });
+
+  pi.registerCommand("journal", {
+    description: "Show event timeline and turn log",
+    handler: async (_args, ctx) => {
+      await showPanel(ctx, "Journal", buildJournalMarkdown(readPublicState(ctx)));
+    },
+  });
+
+  pi.registerCommand("recap", {
+    description: "Show story recap from campaign memory (player-safe)",
+    handler: async (_args, ctx) => {
+      await showPanel(ctx, "Recap", buildRecapMarkdown(readPublicState(ctx)));
     },
   });
 }
@@ -33,7 +67,7 @@ function readPublicState(ctx: ExtensionContext): PublicGameState {
   return getPublicState();
 }
 
-async function showPanel(ctx: ExtensionContext, markdown: string): Promise<void> {
+async function showPanel(ctx: ExtensionContext, title: string, markdown: string): Promise<void> {
   if (!ctx.hasUI) {
     ctx.ui.notify(markdown, "info");
     return;
@@ -45,7 +79,7 @@ async function showPanel(ctx: ExtensionContext, markdown: string): Promise<void>
     const markdownTheme = getMarkdownTheme();
 
     container.addChild(border);
-    container.addChild(new Text(theme.fg("accent", theme.bold("Fate Sandbox Status")), 1, 0));
+    container.addChild(new Text(theme.fg("accent", theme.bold(title)), 1, 0));
     container.addChild(new Markdown(markdown, 1, 1, markdownTheme));
     container.addChild(new Text(theme.fg("dim", "Press Enter or Esc to close"), 1, 0));
     container.addChild(border);
