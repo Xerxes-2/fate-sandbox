@@ -57,6 +57,7 @@ export type {
   ParallelLineInput,
   ParallelLineOutput,
   ParallelLineOutcome,
+  ParallelLinePressureSlotHint,
   ParallelLineTimeWindow,
 } from "./parallel-line.ts";
 
@@ -90,7 +91,7 @@ export interface GameState {
 }
 
 export interface StateMeta {
-  schemaVersion: 6;
+  schemaVersion: 7;
   createdAt: string;
   updatedAt: string;
 }
@@ -152,6 +153,26 @@ export interface SecretGameState {
   factionClocks: FactionClock[];
   /** 到期义务：越过 dueAt 后 canonical commit 会在返回值里催账 */
   scheduledEvents: ScheduledEvent[];
+  /** NPC 主动性账本：目标、恐惧、当前指令与最近自主行动 */
+  actorAgendas: ActorAgendaState[];
+  /** NPC 认知边界账本：已知、猜测、误信与禁止知道的事实 */
+  actorKnowledgeLenses: ActorKnowledgeLens[];
+}
+
+export interface ActorAgendaState {
+  actorId: ActorId;
+  goal: string;
+  fear: string;
+  currentOrder: string | null;
+  lastIndependentActionAt: string | null;
+}
+
+export interface ActorKnowledgeLens {
+  actorId: ActorId;
+  knows: string[];
+  suspects: string[];
+  falseBeliefs: string[];
+  forbiddenKnowledge: string[];
 }
 
 export interface FactionClock {
@@ -577,4 +598,4 @@ export interface StateExport extends Omit<GameState, "public"> {
 
 export type State = GameState;
 
-export const CURRENT_STATE_SCHEMA_VERSION = 6;
+export const CURRENT_STATE_SCHEMA_VERSION = 7;

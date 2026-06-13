@@ -60,6 +60,12 @@ if ($DevMode) {
   Write-Host "Dev mode: set `$env:TAVERN2AGENT_DEV='1'; then run .\start.ps1"
 }
 
+if ($env:FATE_RENDER_MODEL) {
+  Write-Host "Render pass model override: FATE_RENDER_MODEL=$env:FATE_RENDER_MODEL"
+} else {
+  Write-Host "Render pass reuses the settlement model."
+}
+
 $env:PI_CODING_AGENT_DIR = ".\.pi\agent"
 $env:PI_CLAUDE_OAUTH_REINJECT_SCOPE = "never"
 
@@ -70,6 +76,7 @@ $env:PI_CLAUDE_OAUTH_REINJECT_SCOPE = "never"
   -e ".\extensions\compaction-policy\index.ts" `
   -e ".\extensions\player-panel\index.ts" `
   -e ".\extensions\rewind\index.ts" `
+  -e ".\extensions\two-pass-render\index.ts" `
   --session-dir ".\sessions" `
   --no-context-files `
   @args

@@ -1,4 +1,8 @@
-import type { OffscreenEventSource, OffscreenEventVisibility } from "./state-enum-schemas.ts";
+import type {
+  OffscreenEventSource,
+  OffscreenEventVisibility,
+  TimelineId,
+} from "./state-enum-schemas.ts";
 
 export type { OffscreenEventSource, OffscreenEventVisibility } from "./state-enum-schemas.ts";
 
@@ -9,8 +13,23 @@ export interface ParallelLineTimeWindow {
   end: string;
 }
 
+export interface ParallelLinePressureSlotHint {
+  id: string;
+  label: string;
+  pressureType: string;
+  actorOrFactionHints: string[];
+  playerSafeProjectionKinds: string[];
+  cooldownTurns: number;
+  recentUses?: number;
+  coolingDown?: boolean;
+  forbiddenWhen: string[];
+}
+
 export interface ParallelLineInput {
   lineId: string;
+  timelineId: TimelineId;
+  genreContract: string;
+  activePressurePalette: ParallelLinePressureSlotHint[];
   timeWindow: ParallelLineTimeWindow;
   currentArc: string;
   currentBeat: string;

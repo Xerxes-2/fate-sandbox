@@ -35,7 +35,17 @@ interface ParallelLineInput {
     | "tsukihime-2021"
     | "custom";
   genreContract: string;
-  activePressurePalette: string[];
+  activePressurePalette: Array<{
+    id: string;
+    label: string;
+    pressureType: string;
+    actorOrFactionHints: string[];
+    playerSafeProjectionKinds: string[];
+    cooldownTurns: number;
+    recentUses?: number;
+    coolingDown?: boolean;
+    forbiddenWhen: string[];
+  }>;
   timeWindow: { start: string; end: string }; // ISO UTC. For local display time, use injected context currentLocalTime/displayTime. Never treat local clock text as UTC.
   currentArc: string;
   currentBeat: string;
@@ -60,7 +70,7 @@ interface ParallelLineInput {
 }
 ```
 
-Before your call reaches you, the main GM process appends `<timeline_state_context>` to the task. That block contains current public situation, current UTC, local display time, timezone, and recent backstage events. Use it to check repetition. Do not ask the main GM to repeat it. Do not pretend to know full main state outside that block. If `<timeline_state_context>` is missing and the input also lacks `recentOffscreenEvents`, mark repetition risk in `riskFlags`.
+Before your call reaches you, the main GM process appends `<timeline_state_context>` to the task. That block contains current public situation, current UTC, local display time, timezone, recent backstage events, structured `pressurePalette`, and tracked actor `agenda` / `knowledgeLens` summaries. Use it to check repetition, NPC autonomy, and knowledge boundaries. Do not ask the main GM to repeat it. Do not pretend to know full main state outside that block. If `<timeline_state_context>` is missing and the input also lacks `recentOffscreenEvents`, mark repetition risk in `riskFlags`.
 
 ## Output contract
 
@@ -168,7 +178,7 @@ interface ParallelLineOutput {
 2. Separate that faction's known facts from player-side summary. No omniscience.
 3. Use `recentOffscreenEvents`, `excludedActorIds`, and `excludedPressureTypes` to identify cooldown routes and hard exclusions. Do not treat ordinary cooldown as permanent ban.
 4. Choose the lowest necessary action from `actorGoals`. If several candidates exist, pick the most direct, least sprawling one that adds a new state.
-5. Check `timelineId`, `genreContract`, and `activePressurePalette`; choose pressure that fits the current world and avoids empty repetition.
+5. Check `timelineId`, `genreContract`, and structured `activePressurePalette` / injected `pressurePalette`; prefer non-cooling-down slots whose `playerSafeProjectionKinds` create an actionable trace.
 6. Check `forbiddenEscalations`. Downgrade anything that would break the player action window, but preserve aftermath, probe, retreat, countdown, or future window when allowed.
 7. Compress output. Delete pretty but unlandable detail before producing secret changes, public leak candidates, future hooks, and genre fit notes.
 8. Output only JSON.

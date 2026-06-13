@@ -88,6 +88,86 @@ void test("parseStateSchema rejects orphan actorSecrets without a matching actor
   assert.throws(() => parseStateSchema(raw), /非法actorSecrets key: actor ghost 不存在/);
 });
 
+void test("parseStateSchema validates actor agenda actor refs and uniqueness", () => {
+  const raw = rawState();
+  section(raw, "secrets")["actorAgendas"] = [
+    {
+      actorId: "protagonist",
+      goal: "leave the school gate",
+      fear: "being watched",
+      currentOrder: null,
+      lastIndependentActionAt: null,
+    },
+    {
+      actorId: "protagonist",
+      goal: "duplicate",
+      fear: "duplicate",
+      currentOrder: null,
+      lastIndependentActionAt: null,
+    },
+  ];
+
+  assert.throws(() => parseStateSchema(raw), /重复 actor agenda: protagonist/);
+
+  section(raw, "secrets")["actorAgendas"] = [
+    {
+      actorId: "ghost",
+      goal: "watch",
+      fear: "light",
+      currentOrder: null,
+      lastIndependentActionAt: null,
+    },
+  ];
+  assert.throws(() => parseStateSchema(raw), /非法actorAgendas\[\]\.actorId: actor ghost 不存在/);
+});
+
+void test("parseStateSchema validates actor knowledge lens actor refs and uniqueness", () => {
+  const raw = rawState();
+  section(raw, "secrets")["actorKnowledgeLenses"] = [
+    {
+      actorId: "protagonist",
+      knows: ["A"],
+      suspects: [],
+      falseBeliefs: [],
+      forbiddenKnowledge: [],
+    },
+    {
+      actorId: "protagonist",
+      knows: ["B"],
+      suspects: [],
+      falseBeliefs: [],
+      forbiddenKnowledge: [],
+    },
+  ];
+
+  assert.throws(() => parseStateSchema(raw), /重复 actor knowledge lens: protagonist/);
+
+  section(raw, "secrets")["actorKnowledgeLenses"] = [
+    { actorId: "ghost", knows: [], suspects: [], falseBeliefs: [], forbiddenKnowledge: [] },
+  ];
+  assert.throws(
+    () => parseStateSchema(raw),
+    /非法actorKnowledgeLenses\[\]\.actorId: actor ghost 不存在/,
+  );
+});
+
+void test("parseStateSchema normalizes actor agenda independent-action time", () => {
+  const raw = rawState();
+  section(raw, "secrets")["actorAgendas"] = [
+    {
+      actorId: "protagonist",
+      goal: "cross the gate",
+      fear: "being noticed",
+      currentOrder: "move",
+      lastIndependentActionAt: "2004-01-30T16:00:00+09:00",
+    },
+  ];
+
+  const parsed = parseStateSchema(raw);
+
+  assert.equal(parsed.secrets.actorAgendas[0]?.lastIndependentActionAt, "2004-01-30T07:00:00.000Z");
+});
+
 void test("parseStateSchema rejects dangling contractedServantIds", () => {
   const raw = rawState();
   const protagonist = section(section(section(raw, "public"), "actors"), "protagonist");

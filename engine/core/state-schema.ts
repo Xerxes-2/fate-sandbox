@@ -65,7 +65,7 @@ function nullable<T extends TSchema>(schema: T) {
 }
 
 export const STATE_META_SCHEMA = Type.Object({
-  schemaVersion: Type.Literal(6),
+  schemaVersion: Type.Literal(7),
   createdAt: ISO_INSTANT_SCHEMA,
   updatedAt: ISO_INSTANT_SCHEMA,
 });
@@ -484,6 +484,22 @@ const SCHEDULED_EVENT_SCHEMA = Type.Object({
   summary: NON_EMPTY_STRING_SCHEMA,
 });
 
+const ACTOR_AGENDA_STATE_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  goal: NON_EMPTY_STRING_SCHEMA,
+  fear: NON_EMPTY_STRING_SCHEMA,
+  currentOrder: nullable(NON_EMPTY_STRING_SCHEMA),
+  lastIndependentActionAt: nullable(ISO_INSTANT_SCHEMA),
+});
+
+const ACTOR_KNOWLEDGE_LENS_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  knows: Type.Array(NON_EMPTY_STRING_SCHEMA),
+  suspects: Type.Array(NON_EMPTY_STRING_SCHEMA),
+  falseBeliefs: Type.Array(NON_EMPTY_STRING_SCHEMA),
+  forbiddenKnowledge: Type.Array(NON_EMPTY_STRING_SCHEMA),
+});
+
 export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   actorSecrets: Type.Record(Type.String(), ACTOR_SECRET_SLOTS_SCHEMA),
   campaignSecrets: Type.Array(SECRET_CAMPAIGN_FACT_SCHEMA),
@@ -491,6 +507,8 @@ export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   offscreenEventLog: Type.Array(OFFSCREEN_EVENT_SCHEMA),
   factionClocks: Type.Array(FACTION_CLOCK_SCHEMA),
   scheduledEvents: Type.Array(SCHEDULED_EVENT_SCHEMA),
+  actorAgendas: Type.Array(ACTOR_AGENDA_STATE_SCHEMA),
+  actorKnowledgeLenses: Type.Array(ACTOR_KNOWLEDGE_LENS_SCHEMA),
 });
 
 export const STATE_SCHEMA = Type.Object({
@@ -590,6 +608,15 @@ function normalizeStateDatesInPlace(state: State): void {
     );
     event.timeRange.end = normalizeIsoInstant(event.timeRange.end, "offscreenEvent.timeRange.end");
   }
+
+  for (const agenda of state.secrets.actorAgendas) {
+    if (agenda.lastIndependentActionAt !== null) {
+      agenda.lastIndependentActionAt = normalizeIsoInstant(
+        agenda.lastIndependentActionAt,
+        "actorAgenda.lastIndependentActionAt",
+      );
+    }
+  }
 }
 
 type ActorRegistry = State["public"]["actors"];
@@ -602,6 +629,8 @@ function assertStateInvariants(state: State): void {
   assertTrackedItemInvariants(state, actors);
   assertEconomyActorReferences(state, actors);
   assertActorSecretsInvariants(state, actors);
+  assertActorAgendaInvariants(state, actors);
+  assertActorKnowledgeLensInvariants(state, actors);
   assertFactionClockInvariants(state);
 }
 
@@ -680,6 +709,28 @@ function assertActorSecretsInvariants(state: State, actors: ActorRegistry): void
       throw new Error(`actorSecrets key ${actorId} 与 actorId ${slots.actorId} 不一致。`);
     }
     assertActorExists(actorId, actors, "actorSecrets key");
+  }
+}
+
+function assertActorAgendaInvariants(state: State, actors: ActorRegistry): void {
+  const seen = new Set<string>();
+  for (const agenda of state.secrets.actorAgendas) {
+    assertActorExists(agenda.actorId, actors, "actorAgendas[].actorId");
+    if (seen.has(agenda.actorId)) {
+      throw new Error(`重复 actor agenda: ${agenda.actorId}。`);
+    }
+    seen.add(agenda.actorId);
+  }
+}
+
+function assertActorKnowledgeLensInvariants(state: State, actors: ActorRegistry): void {
+  const seen = new Set<string>();
+  for (const lens of state.secrets.actorKnowledgeLenses) {
+    assertActorExists(lens.actorId, actors, "actorKnowledgeLenses[].actorId");
+    if (seen.has(lens.actorId)) {
+      throw new Error(`重复 actor knowledge lens: ${lens.actorId}。`);
+    }
+    seen.add(lens.actorId);
   }
 }
 

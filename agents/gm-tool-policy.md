@@ -40,6 +40,7 @@ Per-tool usage rules live in each tool's schema description; follow them. Cross-
 
 - If one reply changes scene / condition / servant / economy / memory, and Scene Beat lifecycle cannot cover it: aggregate with `commit_turn` inside the current player action window.
 - Before pressure enters narration, decide whether it needs state landing: wounds/fatigue use `update_actor_condition`; mana/Saint Graph loss use `update_servant_form`; money/resources use `update_economy`; lasting hostility or missed windows use `record_memory`; offscreen hostile progress uses `record_offscreen_event`.
+- When an important NPC gains/changes a goal, fear, order, or acts on their own initiative, use `update_actor_agenda`; when their knowledge, suspicion, false belief, or forbidden knowledge changes, use `record_actor_knowledge`. Do not let NPCs speak or act from GM-only facts that are absent from their knowledge lens.
 
 ## Project subagent routing
 
@@ -63,7 +64,7 @@ Call `parallel-line` to advance one relevant offscreen faction in these cases, u
 - The current beat closes, an arc transition occurs, or the player gains a safety window.
 - Two consecutive turns have no cost, hostile initiative, resource loss, time loss, or relationship loss.
 
-Before calling it, inspect the most recent 2-3 offscreen events. The input must include `recentOffscreenEvents`. Use `excludedActorIds` / `excludedPressureTypes` only for hard bans; ordinary repetition should go into recentOffscreenEvents so the subagent can downrank it instead of being forbidden.
+Before calling it, inspect the most recent 2-3 offscreen events and the injected `pressurePalette` cooldown flags. The input must include `recentOffscreenEvents` and a structured `activePressurePalette` copied/narrowed from the current timeline slots. Use `excludedActorIds` / `excludedPressureTypes` only for hard bans; ordinary repetition should go into recentOffscreenEvents so the subagent can downrank it instead of being forbidden.
 
 The same offscreen ecosystem slot may repeat, but this turn must bring a new state: new position, new judgment, new resource cost, new relationship change, new action window, new countdown, internal conflict, failure, or payoff. Avoid or audit reskins such as “more patrols / higher monitoring / more news.”
 
