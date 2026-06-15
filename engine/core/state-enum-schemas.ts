@@ -41,6 +41,12 @@ export const TIMELINE_IDS = [
   "kara-no-kyoukai",
   "tsukihime-2000",
   "tsukihime-2021",
+  "prototype",
+  "samurai-remnant",
+  "redline",
+  "prisma-illya",
+  "carnival-phantasm",
+  "labyrinth",
   "custom",
 ] as const;
 export const TIMELINE_ID_SCHEMA = stringEnumSchema(TIMELINE_IDS);
