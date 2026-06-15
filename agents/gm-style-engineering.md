@@ -32,11 +32,11 @@ Violation list: 那一刻他/她…; 他/她终于明白…; 他/她这才意识
 
 Core objects (objects that carry emotion) must echo in one of three forms after first appearance:
 
-| Form | Mechanic | Example |
-|---|---|---|
-| A. Time-advanced re-appearance | Object returns later in the scene with elapsed time visible | Orange peel appears → later gets knocked to the carpet by an elbow |
-| B. State change | Object re-appears in a different state | Black sweater on rack → later its cuff has a loose thread sticking up |
-| C. Absence noted | Object disappears and the absence is explicitly mentioned | 衣柜里那床蓝格子被子没了 |
+| Form                           | Mechanic                                                    | Example                                                               |
+| ------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| A. Time-advanced re-appearance | Object returns later in the scene with elapsed time visible | Orange peel appears → later gets knocked to the carpet by an elbow    |
+| B. State change                | Object re-appears in a different state                      | Black sweater on rack → later its cuff has a loose thread sticking up |
+| C. Absence noted               | Object disappears and the absence is explicitly mentioned   | 衣柜里那床蓝格子被子没了                                              |
 
 Background objects (lamp, clock, furniture without emotional load) are exempt. But if narration assigns emotion to a background object, it upgrades to core and must echo.
 
@@ -54,35 +54,36 @@ Detection formula: does the X in "X道/说" exist as an independent verb or stat
 
 Run this checklist on every paragraph before delivery. Any hit requires in-place rewrite.
 
-| # | Variant | Detection signal | Fix direction |
-|---|---|---|---|
-| 1 | Empty action | 没+verb / 不+monosyllabic verb as predicate | Replace with visible posture or object-contact |
-| 2 | Exclusionary filler | 不X只是Y / 没X却Y where negation deletes cleanly | Delete negation half; keep affirmative |
-| 3 | Frame-splitting | ≥2 same-subject micro-frames | Merge to single whole-action |
-| 4 | Decorative end-scenery | Paragraph-final imagery failing the 3-question test | Delete or make the image trigger next action |
-| 5 | Abstract-judgment monologue | Inner thought without concrete evidence (*他不简单*) | Ground in specific object or event |
-| 6 | Emotion-echo monologue | Inner thought repeating what narration already told | Delete the redundant monologue |
-| 7 | Negative-definition persona | ≥2 negation-actions defining character trait in one paragraph | Rewrite as positive-action scenes |
-| 8 | Pseudo-precision restatement | Second clause adds no new object/space/time, only restates first clause with degree-adverb or negation-patch | Single-clause closure if first clause is complete |
-| 9 | Translationese relation-judgment | "对X的Y都Z了" / "X与Y的Z是A的" / "他的X是Y的" / "在某种意义上" / passive-float | Unpack into verb + scene + action |
+| #   | Variant                          | Detection signal                                                                                             | Fix direction                                     |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| 1   | Empty action                     | 没+verb / 不+monosyllabic verb as predicate                                                                  | Replace with visible posture or object-contact    |
+| 2   | Exclusionary filler              | 不X只是Y / 没X却Y where negation deletes cleanly                                                             | Delete negation half; keep affirmative            |
+| 3   | Frame-splitting                  | ≥2 same-subject micro-frames                                                                                 | Merge to single whole-action                      |
+| 4   | Decorative end-scenery           | Paragraph-final imagery failing the 3-question test                                                          | Delete or make the image trigger next action      |
+| 5   | Abstract-judgment monologue      | Inner thought without concrete evidence (_他不简单_)                                                         | Ground in specific object or event                |
+| 6   | Emotion-echo monologue           | Inner thought repeating what narration already told                                                          | Delete the redundant monologue                    |
+| 7   | Negative-definition persona      | ≥2 negation-actions defining character trait in one paragraph                                                | Rewrite as positive-action scenes                 |
+| 8   | Pseudo-precision restatement     | Second clause adds no new object/space/time, only restates first clause with degree-adverb or negation-patch | Single-clause closure if first clause is complete |
+| 9   | Translationese relation-judgment | "对X的Y都Z了" / "X与Y的Z是A的" / "他的X是Y的" / "在某种意义上" / passive-float                               | Unpack into verb + scene + action                 |
 
 Scenery 3-question test: (1) Delete it — does the next action still work? (2) Does it trigger any action, dialogue, monologue, or hook? (3) Does it repeat an atmosphere the previous paragraph already set? All three "yes" = delete.
 
 ## 5. Negative-definition persona — 5 pattern signatures
 
-| # | Pattern | Example | Fix |
-|---|---|---|---|
-| 1 | "X这事他不做" | 挂断这事他不做 | Positive action showing what he does instead |
-| 2 | "没X也没Y" double-neg | 他没接也没甩 | Single positive action (闪开半边身子让人进屋) |
-| 3 | "会X但Y他不做" | 会接电话但不主动挂断 | Rephrase as habitual positive (电话会接起来听上两句，听筒就搁回茶几上了) |
-| 4 | "对A他X对B他不X" | 对外人客气对家人不寒暄 | Two positive scenes (跟外人寒暄几句 / 跟家人坐一块也不必开口) |
-| 5 | Same-subject ≥2 negation-actions carrying personality | 连续"不挂""没接""没甩" | Full paragraph rewrite to positive habitual-layer narration |
+| #   | Pattern                                               | Example                | Fix                                                                      |
+| --- | ----------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------ |
+| 1   | "X这事他不做"                                         | 挂断这事他不做         | Positive action showing what he does instead                             |
+| 2   | "没X也没Y" double-neg                                 | 他没接也没甩           | Single positive action (闪开半边身子让人进屋)                            |
+| 3   | "会X但Y他不做"                                        | 会接电话但不主动挂断   | Rephrase as habitual positive (电话会接起来听上两句，听筒就搁回茶几上了) |
+| 4   | "对A他X对B他不X"                                      | 对外人客气对家人不寒暄 | Two positive scenes (跟外人寒暄几句 / 跟家人坐一块也不必开口)            |
+| 5   | Same-subject ≥2 negation-actions carrying personality | 连续"不挂""没接""没甩" | Full paragraph rewrite to positive habitual-layer narration              |
 
 Rewrite constraints: (a) every negation-action → positive visible action; (b) no 虽然/但/反而/不仅 smuggling negation back; (c) use 会/总是/如果…就… for habitual layer consistency.
 
 ## 6. Pseudo-precision — second-clause test
 
 Detection: delete the second clause. Does the first clause still deliver a complete image?
+
 - Yes, and second clause adds a new object/space/time → both clauses compliant.
 - Yes, and second clause only restates via degree-adverb / negation-patch / comparison → delete second clause.
 

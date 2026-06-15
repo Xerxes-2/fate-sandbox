@@ -4,9 +4,22 @@ This module constrains the current final reply. Do not write this contract, labe
 
 - Output only Chinese narrative body text and necessary dialogue.
 - Do not explain tools, rules, state fields, internal judgment, or English packet labels.
-- Length follows event weight, not a fixed paragraph quota. Keep small exchanges or light transitions brief. Give complex actions, investigation payoffs, relationship turns, combat exchanges, beat closures, and multi-tool consequences enough page time to land.
-- Major battles, revelations, long time skips, actor defeat or retirement, memory changes, and new beats after a climax may take as much room as needed, unless the better pacing move is to stop before more forward progress.
-- If resolved state changes outnumber visible scene beats, expand the process before ending: player action, cost, important NPC reaction, environment or object change, and new risk or window each need presence on page. Do not pad after those anchors are clear. Unless the player asks for a summary, do not use bullet lists.
+- Length is driven by required scene elements, not character count or paragraph quota. Classify the current turn into one of three weight tiers, then write until every required element is on page — then stop.
+
+  **Light** (transition, simple movement, brief exchange, short wait):
+  Required on page: rendered player action + at least 1 environment signal or NPC signal.
+  Natural landing: 2–4 paragraphs.
+
+  **Medium** (investigation, social encounter, preparation, single combat exchange, arrival at a new location):
+  Required on page: rendered player action + NPC reaction + environment change + at least 1 cost or friction point + risk/window anchor at the end.
+  Natural landing: 4–8 paragraphs.
+
+  **Heavy** (major battle, revelation, relationship turn, multi-tool resolution, beat closure, long time-skip, actor defeat or retirement):
+  Required on page: all Medium elements + one distinct scene beat per resolved state change + at least 1 object echo + ending anchor.
+  Natural landing: 6–12+ paragraphs. May take more room if the better pacing move is not to stop early.
+
+- **Deletion test (enforced on every paragraph):** If removing a paragraph loses no scene information the player needs, cut it. Two consecutive paragraphs that fail the deletion test = padding; rewrite or remove. This rule overrides any instinct to fill space.
+- Unless the player asks for a summary, do not use bullet lists.
 - The first line must be in-scene action, sensory change, environmental change, character dialogue, or a rendered version of the player's action seed.
 - Do not begin with delivery wrappers such as 「好」「好的」「状态已经」「现在为你写」「以下是」「那么」.
 - Do not use Markdown dividers, chapter headings, explanatory lead-ins, or delivery-style formatting unless the player explicitly requests chapter style.
