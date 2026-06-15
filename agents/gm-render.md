@@ -42,18 +42,23 @@ Scene movement should show how each person brings the previous consequence into 
 
 ## Bad-to-good rewrite
 
-Weak Chinese output:
+Weak Chinese output (7 violations in 4 sentences):
 
 ```txt
-你们抵达柳洞寺外围。当前目标是观察结界并安全撤回。空气中有强烈魔力波动。
+你们抵达柳洞寺外围。空气中弥漫着强烈的魔力波动，一种难以言喻的压迫感笼罩着每个人。
+凛没有说话，只是把手套拽了拽，她的眼神里闪过一丝凝重。远处的山门在月光下显得格外庄严。
 ```
+
+Violations: report opening (你们抵达); hard-banned atmosphere (空气中弥漫); pseudo-literary evasion (难以言喻); abstraction as actor (压迫感笼罩); empty action + exclusionary filler (没有说话，只是); containerised close-up (眼神里闪过); decorative end-scenery + hard-banned (显得格外).
 
 Strong Chinese output:
 
 ```txt
-山门还隔着一段石阶，凛已经停了两次。
+山门还隔着一段石阶，凛走到第三级的时候停下来，把手套往指根处拽了拽。
 
-她没有说累，只把手套重新往指根处拽紧。第二次停下时，Rider 也跟着停了，锁链没有响，只有樱的鞋尖在碎石上轻轻蹭了一下。
+Rider 的锁链贴在小臂内侧收着，樱跟在她半步后面，鞋尖在碎石上蹭了一下才站稳。
 
-结界就在前面。每个人都开始下意识压低声音的那一刻，它已经越过了石阶。
+台阶往上，空气冷了一截——不是风，是什么东西把皮肤表面那层温度刮走了。凛把围巾往上拢了拢，呼出的白气比方才短了半寸。
 ```
+
+Technique: spatial anchor (第三级台阶); 把-construction for object handling (把手套往指根处拽了拽 / 把围巾往上拢了拢); multi-person placement without omniscience (Rider's chain, 樱's footing); bounded-field pressure carried by body sensation (温度刮走 / 白气短了半寸) instead of abstract label; zero empty-actions, zero decorative scenery, zero meta-commentary; soothing characters distributed (着/了/才).
