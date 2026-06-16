@@ -104,6 +104,7 @@ void test("buildRendererMessages builds an append-only conversation shape", () =
   assert.match(final, /贴上去！/);
   assert.match(final, /# Direction Packet/);
   assert.match(final, /Saber 突进受阻/);
+  assert.match(final, /First turn # Current Player Input into in-scene action or speech/);
   assert.match(final, /Output only Chinese body prose/);
 });
 

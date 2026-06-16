@@ -114,7 +114,7 @@ export function buildRendererMessages(
     JSON.stringify(packet, null, 2),
     "```",
     "",
-    "Render this turn under the system-prompt contract. Output only Chinese body prose.",
+    "Render this turn under the system-prompt contract. First turn # Current Player Input into in-scene action or speech, then render consequences under the Direction Packet constraints. Output only Chinese body prose.",
   );
   result.push({ role: "user", text: finalSections.join("\n") });
   return result;

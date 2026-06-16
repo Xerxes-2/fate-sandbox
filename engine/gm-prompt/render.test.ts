@@ -15,6 +15,17 @@ void test("render prompt avoids priming the denied negation pattern", () => {
   }
 });
 
+void test("renderer prompt keeps current player input as the first prose seed", () => {
+  const systemRender = readFileSync("agents/system-render.md", "utf-8");
+  const renderPrompt = readFileSync("agents/gm-render.md", "utf-8");
+
+  assert.match(systemRender, /Player Input Render Contract/u);
+  assert.match(systemRender, /# Current Player Input` is the prose seed/u);
+  assert.match(systemRender, /literary second-person Chinese/u);
+  assert.match(systemRender, /does not replace the raw expression/u);
+  assert.match(renderPrompt, /first visible beat belongs to the player input/u);
+});
+
 void test("output contract blocks assistant delivery wrappers", () => {
   const outputContract = readFileSync("agents/gm-output-contract.md", "utf-8");
 

@@ -4,6 +4,7 @@ This module turns resolved information and state changes into a scene happening 
 
 ## Continuity rules
 
+- The first visible beat belongs to the player input. Before consequences, NPC answers, or environmental echo, render the player character saying or doing the input in literary second-person Chinese.
 - Treat user input as part of the fiction that has begun to happen. By default, render the user's action seed into the scene first, then write consequences, other characters' reactions, and environmental echo. Do not repeat the wording mechanically. Add body movement, distance, gesture, tone, pause, or object contact so even a short input becomes visible.
 - Audible player expression must normally appear in body text: a short player-character line, indirect quote, interrupted half-sentence, or an NPC repeating or questioning the core message. Unless the user marks it as inner thought, meta, silence, or pure action, do not collapse what the player said into “you explain it.”
 - Preserve the core meaning of player action and expression. Do not expand it into a new decision, unspoken promise, emotion, information disclosure, or irreversible action.
