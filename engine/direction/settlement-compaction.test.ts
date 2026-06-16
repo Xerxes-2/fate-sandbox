@@ -95,10 +95,7 @@ void test("buildSettlementCompactionSummary includes prose excerpt when prose me
 
 void test("buildSettlementCompactionSummary omits prose marker when no prose message", () => {
   const summary = buildSettlementCompactionSummary(
-    [
-      userMessage("行动"),
-      packetCallMessage({ needsRender: true, playerAction: "行动落地" }),
-    ],
+    [userMessage("行动"), packetCallMessage({ needsRender: true, playerAction: "行动落地" })],
     undefined,
   );
 

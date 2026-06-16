@@ -285,6 +285,7 @@ const INJECTED_PROMPT_HEADERS = [
   "hard_rules",
   "story_driver",
   "mechanical_state",
+  "prose_continuity",
   "turn_reminder",
   "direction_contract",
 ] as const;

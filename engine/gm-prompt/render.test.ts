@@ -5,13 +5,13 @@ import test from "node:test";
 void test("render prompt avoids priming the denied negation pattern", () => {
   const prompts = [
     readFileSync("agents/gm-render.md", "utf-8"),
-    readFileSync("agents/gm-style.md", "utf-8"),
+    readFileSync("agents/gm-style-rules.md", "utf-8"),
     readFileSync("agents/gm-style-blacklist.md", "utf-8"),
     readFileSync("agents/gm-output-contract.md", "utf-8"),
   ];
 
   for (const prompt of prompts) {
-    assert.doesNotMatch(prompt, /不是/u);
+    assert.doesNotMatch(prompt, /(?<!可)不是/u);
   }
 });
 

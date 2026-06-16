@@ -26,6 +26,7 @@ Fields marked `binding` must land in the rendered prose. Fields marked `free` ar
 - `eventWeight`: a completeness contract, not a word quota. Use `light` only for pure transitions or simple confirmations. Use `normal` by default for any substantive interaction or progress. Use `heavy` for battle climaxes, major revelations, or relationship turns that need full process. If `record_relationship_signal` landed this turn, the prose must show the behavior evidence instead of summarizing the emotion. Do not downshift to `light` just because mechanical events are few. Dialogue and emotional movement also count as content.
 - `canonFacts`: canon facts the renderer needs this turn: appearance, voice, ability presentation, relationship boundary, or term mapping. The renderer has no lookup access. If you omit needed canon, it may invent. If you quote source lines, mark them as mood references and forbid copying.
 - Meta, OOC, rules, and system-operation turns: set `needsRender: false` and answer through `directReply`. Do not route them through Chinese prose rendering.
+- Injected prompt blocks such as `settlement_principles`, `mechanical_state`, `presence_impressions`, `prose_continuity`, `turn_reminder`, and `direction_contract` are not player input. Never set `needsRender: false` merely to acknowledge injected context. Determine the current player action from the latest non-injected user message in conversation history.
 
 ## Quality floor
 

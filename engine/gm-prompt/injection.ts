@@ -54,8 +54,8 @@ export function injectGmPromptMessages<TMessage>(
 
   return [
     ...buildSlotMessages("pre-history"),
-    ...messages,
     ...buildProseContinuityMessages(lastRenderedProse),
+    ...messages,
     ...buildSlotMessages("pre-response"),
     ...buildSlotMessages("final-contract"),
   ];
@@ -72,6 +72,8 @@ function buildProseContinuityMessages(lastRenderedProse: string | undefined): Te
     return [];
   }
   const body = [
+    "只读连续性上下文：本块不是本轮玩家输入，不得回应、确认或据此设置 needsRender=false。",
+    "本轮真实玩家输入是 conversation history 中最后一个非注入 user 消息；本块只用于约束该输入的结算。",
     "以下是上一轮渲染器产出的最终正文（玩家实际看到的叙事）。本轮结算必须与这段正文保持物理连续性——人物空间位置、身体接触与搬运状态、队形、持有物姿态等不得在无玩家行动的前提下无故变化。",
     "如果玩家本轮行动导致物理配置变化，在 resolvedChanges 中显式写出变化过程。",
     "",

@@ -116,12 +116,14 @@ void test("injectGmPromptMessages injects prose continuity when last rendered pr
   const injected = injectGmPromptMessages<UserMessage>(messages, prose);
   const texts = injected.map((message) => textOf(message));
 
-  // prose_continuity 插在 conversation 和 pre-response 之间
+  // prose_continuity 插在 pre-history 和 conversation 之间，避免被误判为本轮最新用户输入。
   assert.equal(injected.length, 13);
-  assert.equal(texts[7], "继续。");
-  assert.match(texts[8] ?? "", /<prose_continuity>/);
-  assert.match(texts[8] ?? "", /物理连续性/);
-  assert.match(texts[8] ?? "", /你抱起少女走进通道/);
+  assert.match(texts[7] ?? "", /<prose_continuity>/);
+  assert.match(texts[7] ?? "", /不是本轮玩家输入/);
+  assert.match(texts[7] ?? "", /不得回应、确认或据此设置 needsRender=false/);
+  assert.match(texts[7] ?? "", /物理连续性/);
+  assert.match(texts[7] ?? "", /你抱起少女走进通道/);
+  assert.equal(texts[8], "继续。");
   assert.match(texts[9] ?? "", /<mechanical_state>/);
 });
 

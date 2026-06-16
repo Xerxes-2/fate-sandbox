@@ -111,6 +111,7 @@ void test("buildRendererMessages keeps player input and filters injected settlem
   const messages = buildRendererMessages(
     [
       injectedPromptMessage("settlement_principles"),
+      injectedPromptMessage("prose_continuity"),
       userMessage("这是玩家真实输入。"),
       injectedPromptMessage("mechanical_state"),
       packetCallMessage(PACKET_ARGS),
@@ -122,6 +123,7 @@ void test("buildRendererMessages keeps player input and filters injected settlem
   assert.match(final, /# Current Player Input/);
   assert.match(final, /这是玩家真实输入。/);
   assert.doesNotMatch(final, /internal prompt/);
+  assert.doesNotMatch(final, /prose_continuity/);
   assert.doesNotMatch(final, /mechanical_state/);
 });
 
