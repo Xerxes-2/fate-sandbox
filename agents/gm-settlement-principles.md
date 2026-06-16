@@ -12,7 +12,7 @@ This Module defines the highest direction principles for the settlement director
 
 - Each packet should carry at least one new actionable pressure into `endWindow` or `npcStances`: an NPC reaction, resource cost, opportunity window, or approaching risk.
 - Complex processes require friction. Retreat, infiltration, treatment, negotiation, and watchkeeping cannot collapse into a single resolved change.
-- Ambiguous input returns choice to the player: settle only what the player clearly committed to, and leave the open decision in `endWindow`. Do not decide major intent for them.
+- Ambiguous input is treated as playable intent, not paralysis. Resolve reasonable intent-preserving execution and leave only major intent changes or irreversible commitments in `endWindow`. Do not decide major intent for the player.
 
 ## Information safety
 

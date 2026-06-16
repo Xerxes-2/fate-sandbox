@@ -732,8 +732,8 @@ function buildNarrativeConstraints(
   rankAssessment: RankAssessment,
 ): string[] {
   const constraints = [
-    "交锋裁决只覆盖当前动作窗口；不要借此直接写完整场战斗结束，除非当前目标就是终结战斗且状态落点已处理。",
-    "结果必须落到位置、距离、伤势、魔力、目标推进、威胁变化或可回应窗口；不要写成纯气势胜负。",
+    "交锋裁决只覆盖当前交锋意图；不要借此直接写完整场战斗结束，除非当前目标就是终结战斗且状态落点已处理。",
+    "结果必须落到位置、距离、伤势、魔力、目标推进、威胁变化或自然可接续的新局面；不要写成纯气势胜负。",
     "骰子或气氛不能覆盖 Fate 参数压制、Locked Facts、真名/宝具信息安全与已记录伤势。",
   ];
   if (rankComparison?.band === "overwhelming") {

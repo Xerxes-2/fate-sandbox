@@ -158,12 +158,12 @@ function collectPacingWarnings(input: TurnCommitInput): string[] {
   const warnings: string[] = [];
   if (input.events.length >= 3) {
     warnings.push(
-      "叙事节奏：本轮已有多个领域事件；请停止继续推进下一前台回合，先把当前动作、代价、NPC 反应和新风险写足。",
+      "叙事节奏：本轮已有多个领域事件；请停止压入下一前台冲突，先把当前意图、代价、NPC 反应和自然可接的新局面写足。",
     );
   }
   if (input.time.elapsedMinutes > 30) {
     warnings.push(
-      "叙事节奏：本轮已推进较长时间；除必要的后台记录外，请不要继续游玩下一个行动窗口。",
+      "叙事节奏：本轮已推进较长时间；除必要的后台记录外，请不要继续游玩下一个前台冲突。",
     );
   }
   return warnings;

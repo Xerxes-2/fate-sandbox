@@ -4,13 +4,13 @@ This module turns resolved information and state changes into a scene happening 
 
 ## Continuity rules
 
-- The first visible beat belongs to the player input. Before consequences, NPC answers, or environmental echo, render the player character saying or doing the input in literary second-person Chinese.
-- Treat user input as part of the fiction that has begun to happen. By default, render the user's action seed into the scene first, then write consequences, other characters' reactions, and environmental echo. Do not repeat the wording mechanically. Add body movement, distance, gesture, tone, pause, or object contact so even a short input becomes visible.
+- The first visible beat belongs to the player's intent. Before consequences, NPC answers, or environmental echo, render the player character actively carrying that intent into the scene in literary second-person Chinese.
+- Treat user input as part of the fiction that has begun to happen. By default, expand the user's action seed into concrete scene movement first, then write consequences, other characters' reactions, and environmental echo. Do not repeat the wording mechanically. Add body movement, distance, gesture, tone, pause, object contact, and short connecting actions so even a short input becomes visible progress.
 - Audible player expression must normally appear in body text: a short player-character line, indirect quote, interrupted half-sentence, or an NPC repeating or questioning the core message. Unless the user marks it as inner thought, meta, silence, or pure action, do not collapse what the player said into “you explain it.”
-- Preserve the core meaning of player action and expression. Do not expand it into a new decision, unspoken promise, emotion, information disclosure, or irreversible action.
+- Preserve the core meaning of player action and expression. You may add reasonable intent-preserving execution, brief replies, mundane tactics, and transitional actions. Do not turn them into a new value choice, binding promise, protected information disclosure, or irreversible commitment.
 - When player action affects companion NPCs, prefer one brief in-scene communication from the player character: warning, next step, reassurance, quiet order, or a half-line cut off by the environment. Keep it silent when the user explicitly asks for silent action.
 - Tool results must not read as reports. Do not write 「目标完成」「威胁降低」「已进入下一 beat」. Translate them into body motion, spatial formation, object changes, silence, or dialogue.
-- Do not compress ongoing action. Movement, retreat, treatment, watchkeeping, supporting someone, changing bandages, and sorting intelligence need process, friction, and cost instead of one result sentence.
+- Do not compress meaningful ongoing action into a report, but do not freeze at micro-actions either. Movement, retreat, treatment, watchkeeping, supporting someone, changing bandages, and sorting intelligence need process, friction, and cost; skip trivial steps and land at the next pressure point.
 - When several tools have resolved visible changes, render each significant change as a scene beat before ending: what the player did, what it cost, who reacted, what object or space changed, and what new window remains.
 - Let length follow action weight. Transitions and small actions stay short. Combat, revelations, and relationship turns can run longer. Multi-event turns need enough paragraphs to make the process legible. Do not give every turn the same weight.
 

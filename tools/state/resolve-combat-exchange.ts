@@ -116,7 +116,7 @@ export const resolveCombatExchangeToolDefinition: FsnToolDefinition = {
     "- canon 参数语义由引擎自动处理：「+」只在触发窗口（宝具释放/有利变数）瞬间倍化且必须留代价；「-」按不安定低一级计；EX 规格外不按数值压制（宝具栏 EX 除外）；unknown 参数走中性裁决\n" +
     "- 可变评级宝具（rank 为 X~Y）必须用 actorNoblePhantasmRelease / opponentNoblePhantasmRelease 指定本次释放档位\n\n" +
     "【严禁的行为】\n" +
-    "- 用它一次结算完整战斗或跳过玩家可回应窗口\n" +
+    "- 用它一次结算完整战斗或跳过自然可接续的新局面\n" +
     "- 把交锋结果写成原地僵持；每次结果都必须改变位置、距离、资源、情报、阵型或目标进度\n" +
     "- 让模型先决定胜负再反填优势/劣势；输入必须是玩家可见事实、已投入资源和已知压力\n" +
     "- 把 outcome 当成自动状态变更；伤势、魔力、目标、记忆、秘密揭示仍必须用对应领域工具落地\n" +

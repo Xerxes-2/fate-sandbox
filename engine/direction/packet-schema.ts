@@ -37,7 +37,7 @@ export const RENDER_DIRECTION_PACKET_SCHEMA = Type.Object({
   npcStances: Type.Array(NPC_STANCE_SCHEMA),
   /** 建议落点意象（free） */
   sensoryAnchors: Type.Array(Type.String({ minLength: 1 })),
-  /** 结尾必须落在的行动窗口/风险锚（binding） */
+  /** 结尾必须落在自然接续点（binding） */
   endWindow: Type.String({ minLength: 1 }),
   eventWeight: stringEnumSchema(EVENT_WEIGHTS),
   /** 渲染所需 canon 预填；渲染器不得超出它编造原作设定 */

@@ -60,7 +60,7 @@ export const submitDirectionPacketToolDefinition: FsnToolDefinition = {
       description: "true=叙事轮（渲染器产出正文）；false=meta/OOC 直答轮",
     }),
     playerAction: Type.Optional(
-      Type.String({ description: "binding：结算后认定的玩家行动（叙事轮必填）" }),
+      Type.String({ description: "binding：结算后认定并主动演出的玩家意图（叙事轮必填）" }),
     ),
     resolvedChanges: Type.Optional(
       Type.Array(Type.String(), {
@@ -85,7 +85,7 @@ export const submitDirectionPacketToolDefinition: FsnToolDefinition = {
       Type.Array(Type.String(), { description: "free：3-5 条建议落点意象，渲染器可取舍" }),
     ),
     endWindow: Type.Optional(
-      Type.String({ description: "binding：结尾必须落在的行动窗口/风险锚（叙事轮必填）" }),
+      Type.String({ description: "binding：结尾必须落在自然接续点（叙事轮必填）" }),
     ),
     eventWeight: Type.Optional(stringEnumSchema(EVENT_WEIGHTS)),
     canonFacts: Type.Optional(
