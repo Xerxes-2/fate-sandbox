@@ -45,7 +45,7 @@ export const initializeNewGameToolDefinition: FsnToolDefinition = {
     }),
     protagonist: Type.Unknown({
       description:
-        "human: displayName/publicIdentity/background/apparentAge/outfit/demeanor；servant additionally className/trueNameDisplay/trueNameStatus(hidden|suspected)。",
+        "human: displayName/renderName/publicIdentity/background/apparentAge/outfit/demeanor；servant additionally className/trueNameDisplay/trueNameStatus(hidden|suspected)。renderName 是正文固定用名，中文名优先。",
     }),
     presence: Type.Optional(
       Type.Object({

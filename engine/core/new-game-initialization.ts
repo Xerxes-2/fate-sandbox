@@ -51,6 +51,7 @@ export interface ServantNewGameInput {
 
 export interface HumanProtagonistOpeningInput {
   displayName: string;
+  renderName?: string;
   publicIdentity: string;
   background: string;
   apparentAge: string;
@@ -64,6 +65,7 @@ export interface HumanProtagonistOpeningInput {
 
 export interface ServantProtagonistOpeningInput {
   displayName: string;
+  renderName?: string;
   publicIdentity: string;
   apparentAge: string;
   outfit: OutfitState;
@@ -205,6 +207,7 @@ function buildHumanProtagonist(input: HumanProtagonistOpeningInput): PublicActor
     },
     presentation: {
       displayName: input.displayName,
+      renderName: input.renderName ?? input.displayName,
       apparentAge: input.apparentAge,
       outfit: input.outfit,
       demeanor: input.demeanor,
@@ -224,6 +227,7 @@ function buildServantProtagonist(input: ServantProtagonistOpeningInput): Servant
   return {
     id: PROTAGONIST_ACTOR_ID,
     displayName: input.displayName,
+    renderName: input.renderName,
     publicIdentity: input.publicIdentity,
     apparentAge: input.apparentAge,
     outfit: input.outfit,

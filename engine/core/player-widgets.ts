@@ -18,7 +18,7 @@ export function buildRelationsMarkdown(publicState: PublicGameState): string {
   // 1. Ally relationships
   const protagonist = publicState.actors[publicState.protagonistActorId];
   if (protagonist !== undefined) {
-    sections.push(`### ${protagonist.presentation.displayName}（你）`, "");
+    sections.push(`### ${protagonist.presentation.renderName}（你）`, "");
   }
 
   const allies = publicState.allyActorIds
@@ -28,7 +28,7 @@ export function buildRelationsMarkdown(publicState: PublicGameState): string {
     sections.push("### 同行者", "");
     for (const ally of allies) {
       sections.push(
-        `- **${ally.presentation.displayName}**：${ally.relationshipToProtagonist.summary}`,
+        `- **${ally.presentation.renderName}**：${ally.relationshipToProtagonist.summary}`,
       );
     }
     sections.push("");
@@ -44,7 +44,7 @@ export function buildRelationsMarkdown(publicState: PublicGameState): string {
     sections.push("### 当前在场", "");
     for (const npc of presentNpcs) {
       sections.push(
-        `- **${npc.presentation.displayName}**：${npc.relationshipToProtagonist.summary}`,
+        `- **${npc.presentation.renderName}**：${npc.relationshipToProtagonist.summary}`,
       );
     }
     sections.push("");
@@ -57,7 +57,7 @@ export function buildRelationsMarkdown(publicState: PublicGameState): string {
   if (presentImpressions.length > 0) {
     sections.push("### 印象", "");
     for (const card of presentImpressions) {
-      const name = publicState.actors[card.actorId]?.presentation.displayName ?? card.actorId;
+      const name = publicState.actors[card.actorId]?.presentation.renderName ?? card.actorId;
       sections.push(`**${name}**`);
       sections.push(`- 气场：${card.presence}`);
       sections.push(`- 行动风格：${card.actionStyle}`);
@@ -74,9 +74,9 @@ export function buildRelationsMarkdown(publicState: PublicGameState): string {
   if (signals.length > 0) {
     sections.push("### 最近关系变化", "");
     for (const signal of signals) {
-      const actor = publicState.actors[signal.actorId]?.presentation.displayName ?? signal.actorId;
+      const actor = publicState.actors[signal.actorId]?.presentation.renderName ?? signal.actorId;
       const target =
-        publicState.actors[signal.targetActorId]?.presentation.displayName ?? signal.targetActorId;
+        publicState.actors[signal.targetActorId]?.presentation.renderName ?? signal.targetActorId;
       sections.push(`- **${actor}** → **${target}**：${signal.signal}`);
       sections.push(`  - 解读：${signal.interpretation}`);
       sections.push(`  - 边界：${signal.boundary}`);
@@ -212,7 +212,7 @@ export function buildRecapMarkdown(publicState: PublicGameState): string {
   // Protagonist
   const protagonist = publicState.actors[publicState.protagonistActorId];
   if (protagonist !== undefined) {
-    sections.push(`**你是**：${protagonist.presentation.displayName}`, "");
+    sections.push(`**你是**：${protagonist.presentation.renderName}`, "");
     sections.push(protagonist.identity.publicIdentity, "");
     if (protagonist.identity.background.length > 0) {
       sections.push(protagonist.identity.background, "");

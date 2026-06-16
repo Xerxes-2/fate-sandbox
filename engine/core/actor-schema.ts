@@ -142,6 +142,7 @@ export const PUBLIC_NPC_INPUT_SCHEMA = Type.Object({
   id: Type.String({ minLength: 1 }),
   kind: ACTOR_KIND_SCHEMA,
   displayName: Type.String({ minLength: 1 }),
+  renderName: Type.Optional(Type.String({ minLength: 1 })),
   publicIdentity: Type.String({ minLength: 1 }),
   apparentAge: Type.String({ minLength: 1 }),
   outfit: OUTFIT_STATE_SCHEMA,
@@ -156,6 +157,7 @@ export const PUBLIC_NPC_SKELETON_INPUT_SCHEMA = Type.Object({
   actorId: Type.String({ minLength: 1 }),
   npcKind: Type.Optional(ACTOR_KIND_SCHEMA),
   displayName: Type.String({ minLength: 1 }),
+  renderName: Type.Optional(Type.String({ minLength: 1 })),
   publicIdentity: Type.String({ minLength: 1 }),
   apparentAge: Type.Optional(Type.String({ minLength: 1 })),
   outfit: Type.Optional(OUTFIT_STATE_SCHEMA),
@@ -169,6 +171,7 @@ export type PublicNpcSkeletonInput = Static<typeof PUBLIC_NPC_SKELETON_INPUT_SCH
 export const SERVANT_INPUT_SCHEMA = Type.Object({
   id: Type.String({ minLength: 1 }),
   displayName: Type.String({ minLength: 1 }),
+  renderName: Type.Optional(Type.String({ minLength: 1 })),
   publicIdentity: Type.String({ minLength: 1 }),
   apparentAge: Type.String({ minLength: 1 }),
   outfit: OUTFIT_STATE_SCHEMA,

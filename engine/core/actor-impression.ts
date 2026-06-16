@@ -58,7 +58,7 @@ export function formatPresenceImpressionCards(state: State): string | null {
   if (cards.length === 0) return null;
   const lines: string[] = [];
   for (const card of cards) {
-    const name = state.public.actors[card.actorId]?.presentation.displayName ?? card.actorId;
+    const name = state.public.actors[card.actorId]?.presentation.renderName ?? card.actorId;
     lines.push(
       `【${name}】`,
       `  气场：${card.presence}`,

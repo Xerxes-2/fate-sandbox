@@ -96,6 +96,10 @@ function normalizeSetupProtagonistActor(actor: unknown): PublicActorState {
   if (normalized["servantForm"] === undefined) {
     normalized["servantForm"] = null;
   }
+  const presentation = normalized["presentation"];
+  if (isRecord(presentation) && presentation["renderName"] === undefined) {
+    presentation["renderName"] = presentation["displayName"];
+  }
   assertPublicActorStateCandidate(normalized);
   return normalized;
 }
@@ -231,7 +235,10 @@ function loosePublicNpcSchema(): ReturnType<typeof Type.Object> {
     npcKind: Type.Optional(
       Type.String({ description: "ensure-public-npc 使用：human / outsider / spirit / other" }),
     ),
-    displayName: Type.String({ description: "玩家可见称呼/姓名" }),
+    displayName: Type.String({ description: "玩家可见称呼/姓名；可保留职阶名或英文名" }),
+    renderName: Type.Optional(
+      Type.String({ description: "正文固定用名；中文名/规范译名优先，如 沙条爱歌" }),
+    ),
     publicIdentity: Type.String({ description: "玩家当前可知身份摘要；不得写隐藏身份" }),
     apparentAge: Type.Optional(Type.String()),
     outfit: Type.Optional(Type.Object({ label: Type.String(), details: Type.String() })),
@@ -261,6 +268,9 @@ function looseServantSchema(): ReturnType<typeof Type.Object> {
   return Type.Object({
     id: Type.String({ description: "从者 actor id，如 caster 或 assassin" }),
     displayName: Type.String({ description: "玩家可见称呼，如 Caster 或 佐佐木小次郎" }),
+    renderName: Type.Optional(
+      Type.String({ description: "正文固定用名；中文名/规范译名优先，如 佐佐木小次郎" }),
+    ),
     publicIdentity: Type.String({ description: "玩家当前可知的公开身份摘要" }),
     apparentAge: Type.String(),
     outfit: Type.Object({ label: Type.String(), details: Type.String() }),
@@ -343,6 +353,7 @@ function publicActorSchema(): ReturnType<typeof Type.Object> {
     }),
     presentation: Type.Object({
       displayName: Type.String(),
+      renderName: Type.Optional(Type.String()),
       apparentAge: Type.String(),
       outfit: Type.Object({ label: Type.String(), details: Type.String() }),
       demeanor: Type.String(),

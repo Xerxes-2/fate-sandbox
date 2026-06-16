@@ -105,6 +105,20 @@ interface RenderedProse {
   lintRuleIds: string[];
 }
 
+function rendererNameEntries(state: ReturnType<typeof getState>): Array<{
+  actorId: string;
+  displayName: string;
+  renderName: string;
+}> {
+  return Object.values(state.public.actors)
+    .map((actor) => ({
+      actorId: actor.id,
+      displayName: actor.presentation.displayName,
+      renderName: actor.presentation.renderName,
+    }))
+    .filter((entry) => entry.renderName !== entry.displayName);
+}
+
 async function renderProse(
   ctx: ExtensionContext,
   loopMessages: ReadonlyArray<unknown>,
@@ -127,7 +141,13 @@ async function renderProse(
   }
 
   const systemPrompt = buildRendererSystemPrompt();
-  const baseMessages = buildRendererMessages(loopMessages, packet, loadProseDigests());
+  const state = getState();
+  const baseMessages = buildRendererMessages(
+    loopMessages,
+    packet,
+    loadProseDigests(),
+    rendererNameEntries(state),
+  );
 
   try {
     setWorking(ctx, "渲染本轮正文…");

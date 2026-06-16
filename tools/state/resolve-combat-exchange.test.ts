@@ -77,6 +77,7 @@ function servantActor(id: string, displayName: string, parameters: FateParams): 
     identity: { publicIdentity: displayName, background: "测试 actor", lockedFacts: [] },
     presentation: {
       displayName,
+      renderName: displayName,
       apparentAge: "未知",
       outfit: { label: "测试服装", details: "测试用。" },
       demeanor: "测试状态",

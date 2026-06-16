@@ -127,7 +127,8 @@ function formatSceneThreats(
 }
 
 function actorDisplayName(publicState: PublicGameState, actorId: string): string {
-  return publicState.actors[actorId]?.presentation.displayName ?? actorId;
+  const actor = publicState.actors[actorId];
+  return actor === undefined ? actorId : actor.presentation.renderName;
 }
 
 function formatStoryWindow(publicState: PublicGameState): string {
@@ -147,12 +148,12 @@ function formatActorLine(actor: NonNullable<PublicGameState["actors"][string]>):
   const servant = actor.servantForm;
   const identity = formatIdentity(actor);
   if (servant === null) {
-    return [actor.presentation.displayName, actor.kind, identity, formatMagecraft(actor)].join(
+    return [actor.presentation.renderName, actor.kind, identity, formatMagecraft(actor)].join(
       " / ",
     );
   }
   return [
-    actor.presentation.displayName,
+    actor.presentation.renderName,
     actor.kind,
     servant.identity.className,
     `真名${servant.identity.trueName.status}:${servant.identity.trueName.display}`,
@@ -175,7 +176,7 @@ function formatAllies(publicState: PublicGameState): string {
     .map((actorId) => publicState.actors[actorId])
     .filter((actor) => actor !== undefined)
     .map(
-      (actor) => `${actor.presentation.displayName}（${actor.relationshipToProtagonist.summary}）`,
+      (actor) => `${actor.presentation.renderName}（${actor.relationshipToProtagonist.summary}）`,
     )
     .join("；");
 }
@@ -261,7 +262,7 @@ function formatOrdinaryItems(publicState: PublicGameState): string {
   const lines = Object.values(publicState.actors)
     .filter((actor) => actor.inventory.ordinaryItems.length > 0)
     .map(
-      (actor) => `- ${actor.presentation.displayName}：${actor.inventory.ordinaryItems.join("、")}`,
+      (actor) => `- ${actor.presentation.renderName}：${actor.inventory.ordinaryItems.join("、")}`,
     );
   return lines.length === 0 ? "- 无记录" : lines.join("\n");
 }

@@ -237,6 +237,7 @@ function createInitialProtagonist(): HumanActorState {
     },
     presentation: {
       displayName: "你",
+      renderName: "你",
       apparentAge: "未确认",
       outfit: { label: "日常服装", details: "开局尚未细化。" },
       demeanor: "由玩家行动定义。",
@@ -293,6 +294,8 @@ function migrateOneSchemaVersion(
       return migrateGameStateV8ToV9(raw);
     case 9:
       return migrateGameStateV9ToV10(raw);
+    case 10:
+      return migrateGameStateV10ToV11(raw);
     default:
       throw new Error(
         `不支持的 state schemaVersion: ${version}。当前支持逐步迁移到 ${CURRENT_STATE_SCHEMA_VERSION}。`,
@@ -385,9 +388,29 @@ function migrateGameStateV8ToV9(raw: Record<string, unknown>): Record<string, un
 function migrateGameStateV9ToV10(raw: Record<string, unknown>): Record<string, unknown> {
   const next = structuredClone(raw);
   const meta = assertRecordForMigration(next["meta"], "meta");
-  meta["schemaVersion"] = CURRENT_STATE_SCHEMA_VERSION;
+  meta["schemaVersion"] = 10;
   meta["rngSeed"] = generateSeed();
   meta["rngCounter"] = 0;
+  return next;
+}
+
+function migrateGameStateV10ToV11(raw: Record<string, unknown>): Record<string, unknown> {
+  const next = structuredClone(raw);
+  const meta = assertRecordForMigration(next["meta"], "meta");
+  meta["schemaVersion"] = CURRENT_STATE_SCHEMA_VERSION;
+  const publicState = assertRecordForMigration(next["public"], "public");
+  const actors = assertRecordForMigration(publicState["actors"], "public.actors");
+  for (const [actorId, actorValue] of Object.entries(actors)) {
+    const actor = assertRecordForMigration(actorValue, `public.actors.${actorId}`);
+    const presentation = assertRecordForMigration(
+      actor["presentation"],
+      `public.actors.${actorId}.presentation`,
+    );
+    presentation["renderName"] = assertStringForMigration(
+      presentation["displayName"],
+      `public.actors.${actorId}.presentation.displayName`,
+    );
+  }
   return next;
 }
 
@@ -405,6 +428,13 @@ function hasAdvancingTurnTime(value: unknown): boolean {
 function assertRecordForMigration(value: unknown, fieldName: string): Record<string, unknown> {
   if (!isRecord(value)) {
     throw new Error(`非法 ${fieldName}: ${formatUnknown(value)}。迁移需要对象。`);
+  }
+  return value;
+}
+
+function assertStringForMigration(value: unknown, fieldName: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`非法 ${fieldName}: ${formatUnknown(value)}。迁移需要非空字符串。`);
   }
   return value;
 }

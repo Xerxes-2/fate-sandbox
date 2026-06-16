@@ -64,6 +64,12 @@ export interface RendererMessage {
   text: string;
 }
 
+export interface RendererNameEntry {
+  actorId: string;
+  displayName: string;
+  renderName: string;
+}
+
 interface RenderedTurn {
   /** 绝对轮号（1 起）；永不重编，保证摘要行字节稳定 */
   turn: number;
@@ -86,6 +92,7 @@ export function buildRendererMessages(
   messages: ReadonlyArray<unknown>,
   packet: DirectionPacket,
   digestOverrides?: ProseDigestOverrides,
+  nameEntries: readonly RendererNameEntry[] = [],
 ): RendererMessage[] {
   const { turns, currentInputs } = collectRenderedTurns(messages, digestOverrides);
   const fullStart = resolveFullLayerStart(turns);
@@ -113,6 +120,7 @@ export function buildRendererMessages(
       ? currentInputs.join("\n\n")
       : "(No current player input was captured. Use packet.playerAction only.)";
   const finalSections: string[] = ["# Current Player Input", "", currentPlayerInput, ""];
+  finalSections.push(...buildRendererNameSection(nameEntries));
   finalSections.push(
     "# Direction Packet",
     "",
@@ -125,6 +133,22 @@ export function buildRendererMessages(
   );
   result.push({ role: "user", text: finalSections.join("\n") });
   return result;
+}
+
+function buildRendererNameSection(nameEntries: readonly RendererNameEntry[]): string[] {
+  if (nameEntries.length === 0) {
+    return [];
+  }
+  return [
+    "# Actor Render Names (binding)",
+    "",
+    "Use renderName exactly for Chinese prose. displayName is only an internal/UI label and must not be transliterated into new Chinese homophones.",
+    ...nameEntries.map(
+      (entry) =>
+        `- ${entry.actorId}: displayName=${entry.displayName}; renderName=${entry.renderName}`,
+    ),
+    "",
+  ];
 }
 
 function buildLengthFloorSection(packet: DirectionPacket): string[] {

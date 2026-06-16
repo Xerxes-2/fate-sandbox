@@ -39,6 +39,7 @@ void test("updateActorCondition updates non-servant magecraft circuits", () => {
       identity: { publicIdentity: "测试魔术师", background: "测试", lockedFacts: [] },
       presentation: {
         displayName: "测试魔术师",
+        renderName: "测试魔术师",
         apparentAge: "17岁",
         outfit: { label: "制服", details: "测试" },
         demeanor: "测试",
@@ -228,6 +229,7 @@ void test("add-tracked-item creates item in trackedItems map", () => {
       },
       presentation: {
         displayName: "测试",
+        renderName: "测试",
         apparentAge: "20",
         outfit: { label: "测试", details: "测试" },
         demeanor: "测试",

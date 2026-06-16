@@ -265,7 +265,7 @@ function buildCombatProfile(
       return {
         scale: "servant",
         rank: noblePhantasm.rank,
-        label: `${actor.presentation.displayName}/${actor.servantForm.identity.className}.宝具「${noblePhantasm.name}」`,
+        label: `${actor.presentation.renderName}/${actor.servantForm.identity.className}.宝具「${noblePhantasm.name}」`,
         source: "noble-phantasm",
       };
     }
@@ -273,7 +273,7 @@ function buildCombatProfile(
     return {
       scale: "servant",
       rank: parameterValue === "unknown" ? null : parameterValue,
-      label: `${actor.presentation.displayName}/${actor.servantForm.identity.className}.${parameter}${parameterValue === "unknown" ? "(未知)" : ""}`,
+      label: `${actor.presentation.renderName}/${actor.servantForm.identity.className}.${parameter}${parameterValue === "unknown" ? "(未知)" : ""}`,
       source,
     };
   }
@@ -281,14 +281,14 @@ function buildCombatProfile(
     return {
       scale: "mage",
       rank: mageRank(actor, parameter),
-      label: `${actor.presentation.displayName}/magecraft.${parameter}`,
+      label: `${actor.presentation.renderName}/magecraft.${parameter}`,
       source,
     };
   }
   return {
     scale: "mundane",
     rank: null,
-    label: `${actor.presentation.displayName}/mundane.${parameter}`,
+    label: `${actor.presentation.renderName}/mundane.${parameter}`,
     source,
   };
 }

@@ -243,7 +243,7 @@ function getConditionsByKind(
 }
 
 function formatActorLabel(actor: PublicActorState): string {
-  return `${actor.id}（${actor.presentation.displayName}）`;
+  return `${actor.id}（${actor.presentation.renderName}）`;
 }
 
 function formatAvailableConditions(conditions: readonly { id: string; text?: string }[]): string {

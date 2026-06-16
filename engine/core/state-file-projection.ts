@@ -158,7 +158,7 @@ function actorContext(
   const parameters = servantForm === null ? null : optionalRecord(servantForm["parameters"]);
   return {
     actorId,
-    displayName: requireString(presentation["displayName"], `actors.${actorId}.displayName`),
+    displayName: requireString(presentation["renderName"], `actors.${actorId}.renderName`),
     kind: requireString(actor["kind"], `actors.${actorId}.kind`),
     stance: requireString(relationship["stance"], `actors.${actorId}.stance`),
     wounds: optionalArray(condition["wounds"]).length,

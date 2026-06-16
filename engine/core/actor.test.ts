@@ -119,6 +119,7 @@ void test("upsertActor rejects non-protagonist setup", () => {
           identity: { publicIdentity: "远坂凛", background: "测试", lockedFacts: [] },
           presentation: {
             displayName: "远坂凛",
+            renderName: "远坂凛",
             apparentAge: "17岁",
             outfit: { label: "制服", details: "测试" },
             demeanor: "测试",
@@ -218,6 +219,7 @@ function upsertShirouProtagonist(draft: State, od: number): void {
       },
       presentation: {
         displayName: "卫宫士郎",
+        renderName: "卫宫士郎",
         apparentAge: "17岁",
         outfit: { label: "穗群原学园制服", details: "冬季制服。" },
         demeanor: "固执且容易主动帮忙。",

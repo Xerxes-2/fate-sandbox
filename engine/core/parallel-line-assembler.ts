@@ -218,9 +218,9 @@ function buildPlayerSideSummary(state: State): string {
   const situation = state.public.scene.situation;
   const wounds = protagonist.condition.wounds.length;
   const allies = state.public.allyActorIds
-    .map((id) => state.public.actors[id]?.presentation.displayName ?? id)
+    .map((id) => state.public.actors[id]?.presentation.renderName ?? id)
     .join(", ");
-  return `${protagonist.presentation.displayName} at ${location} (${situation}). Wounds: ${wounds}. Allies: ${allies.length > 0 ? allies : "none"}.`;
+  return `${protagonist.presentation.renderName} at ${location} (${situation}). Wounds: ${wounds}. Allies: ${allies.length > 0 ? allies : "none"}.`;
 }
 
 function formatLocation(state: State): string {

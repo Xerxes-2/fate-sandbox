@@ -27,7 +27,7 @@ export function updateActorImpressionTool(params: unknown, sessionManager: unkno
   const input = parseToolInput(params);
   const card = upsertActorImpression(state, input);
   commitState(state);
-  const name = state.public.actors[card.actorId]?.presentation.displayName ?? card.actorId;
+  const name = state.public.actors[card.actorId]?.presentation.renderName ?? card.actorId;
   return textResult(
     `${name} 印象卡已更新。卡片将在该 actor 在场时自动注入 pre-response。`,
     { updatedImpression: card },

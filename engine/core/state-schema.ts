@@ -65,7 +65,7 @@ function nullable<T extends TSchema>(schema: T) {
 }
 
 export const STATE_META_SCHEMA = Type.Object({
-  schemaVersion: Type.Literal(10),
+  schemaVersion: Type.Literal(11),
   createdAt: ISO_INSTANT_SCHEMA,
   updatedAt: ISO_INSTANT_SCHEMA,
   rngSeed: Type.Number(),
@@ -142,6 +142,7 @@ const IDENTITY_STATE_SCHEMA = Type.Object({
 
 const PRESENTATION_STATE_SCHEMA = Type.Object({
   displayName: NON_EMPTY_STRING_SCHEMA,
+  renderName: NON_EMPTY_STRING_SCHEMA,
   apparentAge: NON_EMPTY_STRING_SCHEMA,
   outfit: OUTFIT_STATE_SCHEMA,
   demeanor: NON_EMPTY_STRING_SCHEMA,

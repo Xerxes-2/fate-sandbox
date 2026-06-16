@@ -153,6 +153,7 @@ function upsertServant(
     },
     presentation: {
       displayName: sv.displayName,
+      renderName: sv.renderName ?? sv.displayName,
       apparentAge: sv.apparentAge,
       outfit: sv.outfit,
       demeanor: sv.demeanor,
@@ -257,6 +258,7 @@ function toSafePublicActor(npc: PublicNpcInput): PublicActorState {
     },
     presentation: {
       displayName: assertNonEmptyString(npc.displayName, "npc.displayName"),
+      renderName: assertNonEmptyString(npc.renderName ?? npc.displayName, "npc.renderName"),
       apparentAge: assertNonEmptyString(npc.apparentAge, "npc.apparentAge"),
       outfit: npc.outfit,
       demeanor: assertNonEmptyString(npc.demeanor, "npc.demeanor"),

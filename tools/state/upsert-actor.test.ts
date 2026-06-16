@@ -196,6 +196,7 @@ function baseProtagonistActor(): Record<string, unknown> {
     },
     presentation: {
       displayName: "主人公",
+      renderName: "主人公",
       apparentAge: "十几岁",
       outfit: { label: "旧校舍制服", details: "黑色学生制服。" },
       demeanor: "警惕但保持冷静",

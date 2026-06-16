@@ -145,6 +145,20 @@ void test("buildRendererMessages includes persisted custom_message prose history
   assert.match(messages[2]?.text ?? "", /继续。/);
 });
 
+void test("buildRendererMessages injects actor render names", () => {
+  const messages = buildRendererMessages(
+    [userMessage("继续。")],
+    parseDirectionPacket(PACKET_ARGS, "packet"),
+    undefined,
+    [{ actorId: "manaka_sajyou_labyrinth", displayName: "Manaka Sajyou", renderName: "沙条爱歌" }],
+  );
+
+  const final = messages.at(-1)?.text ?? "";
+  assert.match(final, /# Actor Render Names \(binding\)/);
+  assert.match(final, /displayName=Manaka Sajyou; renderName=沙条爱歌/);
+  assert.match(final, /must not be transliterated into new Chinese homophones/);
+});
+
 void test("buildRendererMessages keeps player input and filters injected settlement prompts", () => {
   const messages = buildRendererMessages(
     [
