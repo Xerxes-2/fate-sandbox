@@ -14,9 +14,37 @@ Single source of truth for the renderer's prose style: viewpoint discipline, pos
 - Use accepted Chinese Type-Moon terms when `canonFacts` supplies them. If no mapping is supplied, prefer natural Chinese phrasing over transliterated system jargon.
 - Keep internal labels, field names, and audit terms out of the prose.
 
+## Scene recipe
+
+Each substantive turn should combine five ingredients:
+
+1. Action: what physically changes because the player intent entered the world.
+2. Pressure: what gets closer, colder, shorter, heavier, more expensive, or harder to deny.
+3. Social move: what a character tests, hides, refuses, concedes, protects, or bargains for.
+4. Ordinary anchor: object, schedule, clothing, food, light, train, room, receipt, wet floor, cheap plastic, school fixture, or winter habit.
+5. Continuation: what new situation the player character can naturally act into.
+
+If one ingredient is missing, the prose may still pass mechanics but will feel thin. Add the missing ingredient through scene matter.
+
 ## Style baseline
 
 When internal settlement produces an abstract conclusion, find its physical anchor before writing: sound, light, temperature, smell, touch, distance, posture, form of address, pause, or concrete movement.
+
+Dialogue carries scene energy. Every important line should do at least one concrete job: evade, test, soothe, refuse, buy time, provoke, cover fear, ask for proof, or protect someone without naming the protection. Avoid informational lines that only report facts already known.
+
+## Dialogue craft
+
+Characters rarely say the whole truth. A useful line often does one of these:
+
+- says the acceptable public reason while hiding the private reason;
+- answers only the part that can be safely answered;
+- changes address to change distance;
+- Use procedure, timing, or proof to refuse without making a scene.
+- uses practical concern to show care without confessing care;
+- repeats one word to test whether the other party is lying;
+- cuts off before the dangerous word and lets posture or object handling finish the meaning.
+
+Avoid dialogue that only transfers information. Even a factual answer should alter leverage, distance, permission, suspicion, or urgency.
 
 ## Camera rules
 
@@ -31,11 +59,58 @@ When internal settlement produces an abstract conclusion, find its physical anch
 - Render Servant pressure through space and missing movement: distance stops mattering, footsteps make no sound, the weapon has not moved but the body already knows it is late.
 - Render magecraft traces as physical anomalies first, then offer limited judgment. Do not announce backstage truth.
 - Strong people do not need to shout. Danger can come from politeness, quiet, and absence of spare motion.
+- Let mythic violence collide with ordinary surfaces: school corridors, convenience-store bags, coat cuffs, train noise, receipts, wet shoes, cheap lights. The mundane object should remain physically specific while the supernatural pressure distorts how bodies use it.
+- In combat or pursuit, write weight, speed, muscle refusal, breath loss, footing, and the body's late recognition before naming technique or rank. Magical force should feel like pressure on nerves, balance, skin, joints, air, or light.
+- Hide ideological conflict and loyalty under plain or cold lines. Characters in crisis often say practical things because direct feeling would cost too much time, pride, or safety.
+
+## Ordinary-life texture
+
+- Use routine detail as a load-bearing surface. School schedules, cleaning time, club activity, empty classrooms, train platforms, vending machines, convenience-store bags, bent receipts, wet shoe soles, and cheap fluorescent lights should change what characters can do.
+- Winter scenes may carry coats, breath, numb fingers, cold stair rails, early darkness, kettles, convenience-store heat, or train doors closing. Let the season press on bodies and timing before naming atmosphere.
+- Food and drink are social moves. Tea, canned coffee, miso soup, curry, boxed lunches, convenience-store fried food, or a shared bottle can carry care, refusal, apology, debt, or delay.
+- Time of day should alter social permission: school lunch, after-school cleaning, club hours, last train, late convenience stores, and holiday crowds give different excuses, absences, and pressure.
+
+Usable ordinary anchors:
+
+- School: cleaning time leaves corridors half-empty; club hours explain who is still present; a classroom after dismissal makes private speech possible but fragile.
+- Transit: the last train makes hesitation expensive; platform noise can swallow a line; a closing door can decide who is left outside.
+- Convenience stores: warmth, plastic bags, receipts, canned coffee, and fried food can make night danger feel closer by contrast.
+- Food at home: curry, miso soup, tea, or boxed lunches can carry apology, routine, refusal, or care more cleanly than direct confession.
+
+## Fate/Stay Night prose spine
+
+- Treat Holy Grail War scale as intrusion into ordinary winter life. The page should be able to hold a mythic contract and a cheap fluorescent light in the same breath.
+- Keep the human body fragile against non-human force: pain, balance, cold, breath, blood, hearing, and delayed muscle response should carry the fear before lore terms appear.
+- Magecraft should enter as physical damage to normal perception: pressure behind the eyes, scraped skin temperature, a missing footstep, a corridor that returns sound wrong, a hand that moves too late.
+- Battle prose needs hard contact: gravity, acceleration, footing, torn fabric, cramped distance, a weapon's weight, and the instant when the body understands before the mind catches up.
+- Ideals, loyalty, and betrayal should hide under practical or cold lines. Let characters talk about passage, proof, timing, debt, or procedure while the larger conflict sits underneath.
+
+Concrete pressure patterns:
+
+- A fluorescent light keeps humming after the sound around it has gone thin.
+- A cheap umbrella, sleeve, receipt, or school bag reacts before a Servant visibly moves.
+- A clean hallway stays ordinary, which makes blood, bounded fields, or missing footsteps worse.
+- A convenience-store bag taps someone's knee while a supernatural countdown closes in.
+- A polite line lands colder than a threat because nobody has enough spare movement to dramatize it.
 
 ## Sentence rhythm
 
 - Keep key dialogue short. Let the action around the line carry emotion.
 - Split complex information into traces, gaps, oddities, and reactions instead of explaining it all at once.
+- Dialogue should sound spoken, not filed. Let characters interrupt themselves, answer only the useful part, ask a narrower question, repeat one word to test it, or change address when distance changes.
+- Use connective warmth inside narration: clauses may lean on 就, 还, 会, 起来, 里面, 上, 了, 着 to avoid telegram-like action chains. Keep them natural; do not stuff particles mechanically.
+- Prefer action tags and object handling around speech over voice-quality tags. A cup set down, a glove pulled tight, a sleeve adjusted, or a step taken sideways carries more tone than explaining the tone.
+
+## Dialogue exchange driver
+
+For social, investigative, and standoff turns, do not let one speaker deliver a complete report. Build a small exchange:
+
+1. The first line advances the current intent or pressure.
+2. The reply reveals stance through what it accepts, dodges, narrows, or refuses.
+3. A body/object beat changes distance, formation, leverage, or timing.
+4. The next line either trades usable information, sets a condition, or exposes a new cost.
+
+If an NPC asks for proof, permission, identity, or terms from another NPC or allied Master, write that answer and the immediate reaction unless the answer itself requires the player character's major decision.
 
 ## Bad-to-good rewrite
 
