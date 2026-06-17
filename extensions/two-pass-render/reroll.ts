@@ -107,6 +107,19 @@ export function sessionEntriesToRendererMessages(entries: readonly SessionEntry[
   return messages;
 }
 
+export function isRerollTargetStillCurrent(
+  branch: readonly SessionEntry[],
+  target: ReadyRerollTarget,
+): boolean {
+  const current = findRerollTarget(branch);
+  return (
+    current.kind === "ready" &&
+    current.proseEntry.id === target.proseEntry.id &&
+    current.parentId === target.parentId &&
+    current.pending.toolCallId === target.pending.toolCallId
+  );
+}
+
 async function rerollLastProse(
   pi: ExtensionAPI,
   callbacks: RerollCommandCallbacks,
@@ -149,7 +162,7 @@ async function renderAndReplaceProse(
       ctx.ui.notify("正文 reroll 失败：渲染器不可用，已保留原正文", "warning");
       return;
     }
-    if (ctx.sessionManager.getLeafId() !== target.proseEntry.id) {
+    if (!isRerollTargetStillCurrent(ctx.sessionManager.getBranch(), target)) {
       ctx.ui.notify("会话位置已变化，取消替换旧正文", "warning");
       return;
     }

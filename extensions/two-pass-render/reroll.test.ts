@@ -15,7 +15,7 @@ import {
   SUBMIT_DIRECTION_PACKET_TOOL,
   PROSE_CUSTOM_TYPE,
 } from "../../engine/direction/render-turn.ts";
-import { findRerollTarget } from "./reroll.ts";
+import { findRerollTarget, isRerollTargetStillCurrent } from "./reroll.ts";
 
 const PACKET: RenderDirectionPacket = {
   needsRender: true,
@@ -137,6 +137,38 @@ void test("findRerollTarget 允许正文后的隐藏非消息 entry", () => {
   assert.equal(target.proseEntry.id, "p1");
   assert.equal(target.parentId, "a1");
   assert.equal(target.pending.toolCallId, "call-a1");
+});
+
+void test("isRerollTargetStillCurrent 允许渲染期间保留隐藏非消息 leaf", () => {
+  const initialBranch: SessionEntry[] = [
+    userEntry("u1", null, "调查祭坛"),
+    assistantPacketEntry("a1", "u1"),
+    proseEntry("p1", "a1"),
+  ];
+  const target = findRerollTarget(initialBranch);
+  assert.equal(target.kind, "ready");
+  if (target.kind !== "ready") {
+    assert.fail("expected ready reroll target");
+  }
+
+  const currentBranch = [...initialBranch, hiddenStateEntry("s1", "p1")];
+  assert.equal(isRerollTargetStillCurrent(currentBranch, target), true);
+});
+
+void test("isRerollTargetStillCurrent 拒绝渲染期间出现的新消息", () => {
+  const initialBranch: SessionEntry[] = [
+    userEntry("u1", null, "调查祭坛"),
+    assistantPacketEntry("a1", "u1"),
+    proseEntry("p1", "a1"),
+  ];
+  const target = findRerollTarget(initialBranch);
+  assert.equal(target.kind, "ready");
+  if (target.kind !== "ready") {
+    assert.fail("expected ready reroll target");
+  }
+
+  const currentBranch = [...initialBranch, userEntry("u2", "p1", "继续检查")];
+  assert.equal(isRerollTargetStillCurrent(currentBranch, target), false);
 });
 
 void test("findRerollTarget 拒绝没有正文的分支", () => {
