@@ -38,7 +38,7 @@ export function parseTypeBoxValue<T>(
   if (validator.Check(converted)) {
     return converted;
   }
-  throw new Error(formatTypeBoxValidationErrors(fieldName, validator.Errors(converted)));
+  throw new Error(formatTypeBoxValidationErrors(fieldName, validator.Errors(converted), converted));
 }
 
 /**
@@ -215,12 +215,126 @@ function cloneValidationInput(value: unknown, fieldName: string): unknown {
 function formatTypeBoxValidationErrors(
   fieldName: string,
   errors: readonly TLocalizedValidationError[],
+  source: unknown,
 ): string {
   if (errors.length === 0) {
     return `非法 ${fieldName}: schema 校验失败。`;
   }
-  const messages = errors.map((error) => formatTypeBoxValidationError(fieldName, error));
+  const merged = mergeUnionErrors(errors);
+  const messages = merged.map((entry) =>
+    entry.branches === null
+      ? formatTypeBoxValidationError(fieldName, entry.summary)
+      : formatMergedUnionError(fieldName, entry.summary, entry.branches, source),
+  );
   return `非法 ${fieldName}: ${messages.join("；")}。`;
+}
+
+interface MergedUnionEntry {
+  /** null = standalone error; non-null = union summary with collapsed branch errors. */
+  branches: TLocalizedValidationError[] | null;
+  summary: TLocalizedValidationError;
+}
+
+/**
+ * 折叠 anyOf/oneOf 汇总：每条汇总错误回头吸收紧邻的、同 instancePath 的分支级错误，
+ * 输出端只显示一条合并消息，而不是 [branch1, branch2, summary] 三条噪声。
+ * 顺序保持原样：汇总落在它原本的位置，被吸收的子错误就地消失。
+ */
+function mergeUnionErrors(errors: readonly TLocalizedValidationError[]): MergedUnionEntry[] {
+  const result: MergedUnionEntry[] = [];
+  for (const error of errors) {
+    if (error.keyword !== "anyOf" && error.keyword !== "oneOf") {
+      result.push({ branches: null, summary: error });
+      continue;
+    }
+    const branches: TLocalizedValidationError[] = [];
+    while (result.length > 0) {
+      const last = result[result.length - 1];
+      if (
+        last !== undefined &&
+        last.branches === null &&
+        last.summary.instancePath === error.instancePath
+      ) {
+        branches.unshift(last.summary);
+        result.pop();
+        continue;
+      }
+      break;
+    }
+    result.push({ branches, summary: error });
+  }
+  return result;
+}
+
+function formatMergedUnionError(
+  fieldName: string,
+  summary: TLocalizedValidationError,
+  branches: readonly TLocalizedValidationError[],
+  source: unknown,
+): string {
+  const path = formatValidationPath(fieldName, summary.instancePath);
+  const actualType = jsonTypeOf(getValueByInstancePath(source, summary.instancePath));
+  if (branches.length === 0) {
+    // 没有分支级前置错误（异常情况）—— 退回原汇总文案，至少标注实际类型。
+    const connector = summary.keyword === "oneOf" ? "只匹配一种结构" : "匹配其中一种结构";
+    return `${path} 必须${connector}（实际收到 ${actualType}）`;
+  }
+  const branchDescs = branches.map(describeUnionBranch);
+  const allTypeBranches = branches.every((b) => b.keyword === "type");
+  if (allTypeBranches) {
+    return `${path} 必须是 ${branchDescs.join(" 或 ")}，实际收到 ${actualType}`;
+  }
+  const separator = summary.keyword === "oneOf" ? "或（且仅一种）" : "或";
+  return `${path} 必须是 ${branchDescs.join(` ${separator} `)}，实际收到 ${actualType}`;
+}
+
+function describeUnionBranch(error: TLocalizedValidationError): string {
+  switch (error.keyword) {
+    case "type":
+      return formatExpectedType(error.params.type);
+    case "required":
+      return `包含 ${error.params.requiredProperties.join(", ")} 的对象`;
+    case "const":
+      return formatAllowedValue(error.params.allowedValue);
+    case "enum":
+      return `${formatAllowedValues(error.params.allowedValues)} 之一`;
+    case "minLength":
+      return `长度 >= ${error.params.limit} 的字符串`;
+    case "additionalProperties":
+      return `不含额外字段 ${error.params.additionalProperties.join(", ")} 的对象`;
+    default:
+      return error.message;
+  }
+}
+
+/**
+ * 把 instancePath（RFC 6901 JSON Pointer）解析到 source 上，用于报告实际类型。
+ * source 取自 Convert+Clean 之后的值，与 Errors() 报路径一致。
+ */
+function getValueByInstancePath(source: unknown, instancePath: string): unknown {
+  if (instancePath.length === 0) {
+    return source;
+  }
+  const segments = instancePath
+    .split("/")
+    .filter((segment) => segment.length > 0)
+    .map(unescapeJsonPointerSegment);
+  let current: unknown = source;
+  for (const segment of segments) {
+    if (current === null || current === undefined) {
+      return undefined;
+    }
+    if (Array.isArray(current)) {
+      current = current[Number(segment)];
+      continue;
+    }
+    if (isRecord(current)) {
+      current = current[segment];
+      continue;
+    }
+    return undefined;
+  }
+  return current;
 }
 
 function formatTypeBoxValidationError(fieldName: string, error: TLocalizedValidationError): string {
