@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 
 import { Type } from "typebox";
 
@@ -45,7 +45,7 @@ function formatAccepted(packet: DirectionPacket): string {
   ].join("\n");
 }
 
-export const submitDirectionPacketToolDefinition: FsnToolDefinition = {
+export const submitDirectionPacketToolDefinition: FateToolDefinition = {
   name: SUBMIT_DIRECTION_PACKET_TOOL,
   description:
     "提交本轮 direction packet 并结束结算。这是每轮唯一的收尾动作。\n\n" +

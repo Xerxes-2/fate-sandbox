@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
 import { Type } from "typebox";
@@ -72,7 +72,7 @@ const RECORD_SCHEMA = Type.Object({
 
 const RECORD_VALIDATOR = Compile(RECORD_SCHEMA);
 
-export const recordRelationshipSignalToolDefinition: FsnToolDefinition = {
+export const recordRelationshipSignalToolDefinition: FateToolDefinition = {
   name: "record_relationship_signal",
   description:
     "记录关系信号账本：可回放的行为证据+当下解读+边界。不是好感度数值，也不是公开 NPC 内心独白；player-known 进 public ledger，secret 进 hidden ledger。\n\n" +

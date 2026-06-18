@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
@@ -24,7 +24,7 @@ function formatResult(result: ReturnType<typeof privateResolve>): string {
   ].join("\n");
 }
 
-export const privateResolveToolDefinition: FsnToolDefinition = {
+export const privateResolveToolDefinition: FateToolDefinition = {
   name: "private_resolve",
   description:
     "窄口私密结算：隐藏反应或隐藏相性；只返回玩家安全叙事约束。\n\n" +

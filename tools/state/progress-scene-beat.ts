@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import { timePolicySchema } from "./time-policy-tool-schema.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -29,7 +29,7 @@ export function progressSceneBeatTool(params: unknown, sessionManager: unknown):
   });
 }
 
-export const progressSceneBeatToolDefinition: FsnToolDefinition = {
+export const progressSceneBeatToolDefinition: FateToolDefinition = {
   name: "progress_scene_beat",
   description:
     "推进 Scene Beat lifecycle：用 begin 开启有界行动窗口，用 complete 收口当前 beat。\n\n" +

@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { EconomyEvent } from "../../engine/core/economy.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -41,7 +41,7 @@ function formatPurseIds(draft: State): string {
   return purseIds.length === 0 ? "无" : purseIds.join(", ");
 }
 
-export const updateEconomyToolDefinition: FsnToolDefinition = {
+export const updateEconomyToolDefinition: FateToolDefinition = {
   name: "update_economy",
   description:
     "更新 2004 年日本円经济状态；每笔资金必须指定 purse/account 与 reason，资金增加必须说明可审计来源。\n\n" +

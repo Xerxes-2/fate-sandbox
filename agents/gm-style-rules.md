@@ -103,9 +103,9 @@ Usable ordinary anchors:
 - Convenience stores: warmth, plastic bags, receipts, canned coffee, and fried food can make night danger feel closer by contrast.
 - Food at home: curry, miso soup, tea, or boxed lunches can carry apology, routine, refusal, or care more cleanly than direct confession.
 
-## Fate/Stay Night prose spine
+## Type-Moon prose spine
 
-- Treat Holy Grail War scale as intrusion into ordinary winter life. The page should be able to hold a mythic contract and a cheap fluorescent light in the same breath.
+- Treat supernatural or mythic scale as intrusion into ordinary daily life. The page should be able to hold a mythic contract and a cheap fluorescent light in the same breath.
 - Keep the human body fragile against non-human force: pain, balance, cold, breath, blood, hearing, and delayed muscle response should carry the fear before lore terms appear.
 - Magecraft should enter as physical damage to normal perception: pressure behind the eyes, scraped skin temperature, a missing footstep, a corridor that returns sound wrong, a hand that moves too late.
 - Battle prose needs hard contact: gravity, acceleration, footing, torn fabric, cramped distance, a weapon's weight, and the instant when the body understands before the mind catches up.

@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -114,7 +114,7 @@ const ESCALATE_VALIDATOR = Compile(ESCALATE_SCHEMA);
 const PAY_VALIDATOR = Compile(PAY_SCHEMA);
 const RETIRE_VALIDATOR = Compile(RETIRE_SCHEMA);
 
-export const updateHookToolDefinition: FsnToolDefinition = {
+export const updateHookToolDefinition: FateToolDefinition = {
   name: "update_hook",
   description:
     `Mystery hook 账本：悬念的登记与生命周期（active/parked/paid/escalated/retired）。active+escalated 同时最多 ${MAX_ACTIVE_HOOKS} 条。\n\n` +

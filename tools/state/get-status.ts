@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import { buildGmBrief } from "../../engine/core/public-projection.ts";
 import { hydrateStateFromSessionManager } from "../../engine/core/session-hydration.ts";
@@ -51,7 +51,7 @@ function isObject(value: unknown): value is object {
   return typeof value === "object" && value !== null;
 }
 
-export const getStatusToolDefinition: FsnToolDefinition = {
+export const getStatusToolDefinition: FateToolDefinition = {
   name: "get_status",
   description:
     "查看玩家可见状态摘要；返回 GM brief 风格读模型，不展示完整 JSON。\n\n" +

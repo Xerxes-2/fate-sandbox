@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-import type { FsnToolDefinition } from "./runtime/tool-definition.ts";
+import type { FateToolDefinition } from "./runtime/tool-definition.ts";
 
 import { getStateSchemaToolDefinition } from "./debug/get-state-schema.ts";
 import { migrateStateToolDefinition } from "./debug/migrate-state.ts";
@@ -35,7 +35,7 @@ import { updateServantFormToolDefinition } from "./state/update-servant-form.ts"
 import { upsertActorToolDefinition } from "./state/upsert-actor.ts";
 
 /** 全部 Domain Event Tool 契约清单；契约本体与实现同文件维护。 */
-const TOOL_DEFINITIONS: readonly FsnToolDefinition[] = [
+const TOOL_DEFINITIONS: readonly FateToolDefinition[] = [
   initializeNewGameToolDefinition,
   configureCampaignToolDefinition,
   commitTurnToolDefinition,

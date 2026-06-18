@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 
 import { Type } from "typebox";
 
@@ -61,7 +61,7 @@ function assertString(value: unknown, fieldName: string): string {
   return value.trim();
 }
 
-export const migrateStateToolDefinition: FsnToolDefinition = {
+export const migrateStateToolDefinition: FateToolDefinition = {
   name: "migrate_state",
   description:
     "【调试工具】把旧 Game State 程序化迁移到当前 schemaVersion；默认只返回迁移结果，apply=true 时覆盖当前内存状态。必须写明 reason。",

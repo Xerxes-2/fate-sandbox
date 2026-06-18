@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { PublicActorState } from "../../engine/core/state.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -197,7 +197,7 @@ function assertActorKind(value: unknown, fieldName: string): void {
   }
 }
 
-export const upsertActorToolDefinition: FsnToolDefinition = {
+export const upsertActorToolDefinition: FateToolDefinition = {
   name: "upsert_actor",
   description:
     "将 protagonist、公开 NPC skeleton、公开 NPC 摘要或从者数据写入 public actor registry。\n\n" +

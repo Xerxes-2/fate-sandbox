@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { MemoryEvent, MemoryEventResult } from "../../engine/core/memory.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -42,7 +42,7 @@ function normalizeSourceEventId(params: unknown): unknown {
   return { ...params, sourceEventId };
 }
 
-export const recordMemoryToolDefinition: FsnToolDefinition = {
+export const recordMemoryToolDefinition: FateToolDefinition = {
   name: "record_memory",
   description:
     "写入玩家已知的长期事实、重大事件或日常摘要。每条 public memory 必须给 claims（事实类型+确定性+证据）；普通事实用 kind=mundane。\n\n" +

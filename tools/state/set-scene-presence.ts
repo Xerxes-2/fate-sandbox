@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
@@ -17,7 +17,7 @@ export function setScenePresenceTool(params: unknown, sessionManager: unknown): 
   });
 }
 
-export const setScenePresenceToolDefinition: FsnToolDefinition = {
+export const setScenePresenceToolDefinition: FateToolDefinition = {
   name: "set_scene_presence",
   description:
     "更新当前场景在场 actor 与同行者；materialization 与 physical presence 分离，避免 upsert_actor 兼做入/离场。\n\n" +

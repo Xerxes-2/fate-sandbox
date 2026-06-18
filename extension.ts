@@ -1,5 +1,5 @@
 /**
- * Fate/Stay Night 沙盒 — pi extension
+ * 型月（Type-Moon / Fate）世界观沙盒 — pi extension
  *
  * DeepSeek V4 特化：系统提示极简 + 上下文/铁则注入 user 消息流 + 全链路中文
  */

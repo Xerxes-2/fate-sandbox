@@ -1,7 +1,7 @@
 import type { Static } from "typebox";
 
 import type { TypeBoxValidator } from "../../engine/core/typebox-validation.ts";
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
@@ -107,7 +107,7 @@ export function overrideLockedFactTool(params: unknown, sessionManager: unknown)
   return textResult(`锁定事实已覆盖：${override.kind}。原因：${override.reason}`, details);
 }
 
-export const overrideLockedFactToolDefinition: FsnToolDefinition = {
+export const overrideLockedFactToolDefinition: FateToolDefinition = {
   name: "override_locked_fact",
   description:
     "【调试工具】覆盖已锁定的从者职阶、真名或基础参数。仅用于开发修档，必须写明 reason。",

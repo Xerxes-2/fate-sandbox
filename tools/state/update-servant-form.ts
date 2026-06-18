@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { ServantFormEvent } from "../../engine/core/servant.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -69,7 +69,7 @@ function normalizeNullableFields(params: unknown): unknown {
   return next;
 }
 
-export const updateServantFormToolDefinition: FsnToolDefinition = {
+export const updateServantFormToolDefinition: FateToolDefinition = {
   name: "update_servant_form",
   description:
     "更新从者形态的魔力、灵核、契约、参数修正和永久缺损；锁定字段不可改。\n\n" +

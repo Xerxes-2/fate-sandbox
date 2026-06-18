@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { CurrencyCode } from "../../engine/core/state.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -37,7 +37,7 @@ function normalizeCurrencyAlias(params: unknown): unknown {
   return { ...params, currency: alias };
 }
 
-export const configureCampaignToolDefinition: FsnToolDefinition = {
+export const configureCampaignToolDefinition: FateToolDefinition = {
   name: "configure_campaign",
   description:
     "配置开局 campaign preset、时间线、本地时区、起始时间、地点和经济规则；进正式剧情前的第一步，也可热修当前存档 campaign 元数据。\n\n" +

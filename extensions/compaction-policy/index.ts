@@ -15,7 +15,7 @@ import { buildSettlementCompactionSummary } from "../../engine/direction/settlem
  */
 export default function compactionPolicyExtension(pi: ExtensionAPI): void {
   pi.on("session_before_compact", async (event, _ctx) => {
-    return runFsnCompaction(event);
+    return runFateCompaction(event);
   });
 
   pi.on("session_compact", async (event, ctx) => {
@@ -29,7 +29,7 @@ export default function compactionPolicyExtension(pi: ExtensionAPI): void {
   });
 }
 
-function runFsnCompaction(
+function runFateCompaction(
   event: SessionBeforeCompactEvent,
 ): { compaction: { summary: string; firstKeptEntryId: string; tokensBefore: number } } | undefined {
   const {

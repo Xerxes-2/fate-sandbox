@@ -6,7 +6,7 @@
  * 主模型现编，泄密风险由 engine 过滤而非 prompt 自查。
  */
 
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
 import { Type } from "typebox";
@@ -99,7 +99,7 @@ function optionalBoolean(value: unknown): boolean | undefined {
   return undefined;
 }
 
-export const runParallelLineToolDefinition: FsnToolDefinition = {
+export const runParallelLineToolDefinition: FateToolDefinition = {
   name: "run_parallel_line",
   description:
     "由 engine 自动装配 parallel-line 子代理输入。GM 只给 lineId + timeWindow + 可选偏好，engine 从 secret state / agenda / offscreenEventLog / pressure palette 补齐其余字段，返回可直接传给子代理的 JSON。\n\n" +

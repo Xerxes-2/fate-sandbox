@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -152,7 +152,7 @@ const SCHEDULE_EVENT_VALIDATOR = Compile(SCHEDULE_EVENT_SCHEMA);
 const RESOLVE_DUE_VALIDATOR = Compile(RESOLVE_DUE_SCHEMA);
 const EXTEND_DUE_VALIDATOR = Compile(EXTEND_DUE_SCHEMA);
 
-export const manageFactionClockToolDefinition: FsnToolDefinition = {
+export const manageFactionClockToolDefinition: FateToolDefinition = {
   name: "manage_faction_clock",
   description:
     "管理幕后阵营进度钟与到期义务。时钟与到期事件对玩家不可见；到期或填满时 canonical commit 会催账。\n\n" +

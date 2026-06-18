@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 
 import {
@@ -103,7 +103,7 @@ function uniqueLines(lines: readonly string[]): string[] {
   return unique;
 }
 
-export const resolveCombatExchangeToolDefinition: FsnToolDefinition = {
+export const resolveCombatExchangeToolDefinition: FateToolDefinition = {
   name: "resolve_combat_exchange",
   description:
     "裁决当前战斗交锋窗口；比较 Fate 参数/尺度、资源投入、已知优势/劣势和伤势压力，返回结果 band 与必须落地的状态约束。必须落地项会登记为义务账本，提交 turn 前必须清账。\n\n" +

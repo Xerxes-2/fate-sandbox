@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type {
   ConfigureActorSecretsResult,
@@ -55,7 +55,7 @@ function secretMessage(output: RevealSecretToolResult): string {
   return output.result.playerSafeMessage;
 }
 
-export const revealSecretToolDefinition: FsnToolDefinition = {
+export const revealSecretToolDefinition: FateToolDefinition = {
   name: "reveal_secret",
   description:
     "配置或揭示 hidden-canonical secret。配置模式只写 secrets；揭示模式只在玩家可见证据成立时更新 public。\n\n" +

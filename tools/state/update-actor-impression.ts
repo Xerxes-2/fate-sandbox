@@ -5,7 +5,7 @@
  * 印象卡由 pre-response 按 scene presence 路由自动注入。
  */
 
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
 import { Type } from "typebox";
@@ -60,7 +60,7 @@ function optionalString(value: unknown): string | undefined {
   return value.trim();
 }
 
-export const updateActorImpressionToolDefinition: FsnToolDefinition = {
+export const updateActorImpressionToolDefinition: FateToolDefinition = {
   name: "update_actor_impression",
   description:
     "蒸馏或更新一个 NPC 的印象卡（voice/posture/texture 快照）。印象卡在该 actor 在场时自动注入 pre-response，保证 compaction 后 NPC 声音一致性。\n\n" +

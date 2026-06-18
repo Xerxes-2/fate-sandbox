@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import type { ToolResult } from "../runtime/tool-result.ts";
 
@@ -17,7 +17,7 @@ export function initializeNewGameTool(params: unknown, sessionManager: unknown):
   });
 }
 
-export const initializeNewGameToolDefinition: FsnToolDefinition = {
+export const initializeNewGameToolDefinition: FateToolDefinition = {
   name: "initialize_new_game",
   description:
     "初始化新游戏 Game State 的单入口 recipe：重置 state、配置 campaign、写 protagonist、设在场 actor、必要时配 protagonist 从者隐藏真名。\n\n" +

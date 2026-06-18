@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 
 import { Type } from "typebox";
 
@@ -12,7 +12,7 @@ export function lookupTool(params: unknown): ToolResult {
   return textResult(result.text);
 }
 
-export const lookupToolDefinition: FsnToolDefinition = {
+export const lookupToolDefinition: FateToolDefinition = {
   name: "lookup",
   description:
     "查询型月世界的权威设定——角色、从者、地点、概念、时间线的唯一数据入口。默认跨全库搜索；支持单关键词，也支持用空格/逗号分隔的少量关键词（如“绫香 沙条 Fate strange Fake”“两仪式 空之境界”）。\n\n" +

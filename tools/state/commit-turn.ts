@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import { timePolicySchema } from "./time-policy-tool-schema.ts";
 import { commitTurn } from "../../engine/core/turn-commit.ts";
@@ -16,7 +16,7 @@ export function commitTurnTool(params: unknown, sessionManager: unknown): ToolRe
   });
 }
 
-export const commitTurnToolDefinition: FsnToolDefinition = {
+export const commitTurnToolDefinition: FateToolDefinition = {
   name: "commit_turn",
   description:
     "每轮叙事结束时一次性提交本轮领域事件。用于一轮内聚合多个状态变化。\n\n" +

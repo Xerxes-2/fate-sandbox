@@ -1,4 +1,4 @@
-import type { FsnToolDefinition } from "../runtime/tool-definition.ts";
+import type { FateToolDefinition } from "../runtime/tool-definition.ts";
 import { Type } from "typebox";
 import { updateActorCondition } from "../../engine/core/actor-condition.ts";
 import type { ToolResult } from "../runtime/tool-result.ts";
@@ -16,7 +16,7 @@ export function updateActorConditionTool(params: unknown, sessionManager: unknow
 }
 
 
-export const updateActorConditionToolDefinition: FsnToolDefinition = {
+export const updateActorConditionToolDefinition: FateToolDefinition = {
   name: "update_actor_condition",
   description:
     "更新 actor 的伤势、异常、长期影响、外观装备或 tracked item。\n\n" +
