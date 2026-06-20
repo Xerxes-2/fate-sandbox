@@ -19,6 +19,7 @@ import type {
 import { setScenePresence, upsertActor } from "./actor.ts";
 import { configureCampaign } from "./campaign.ts";
 import { recordMemory } from "./memory.ts";
+import { getActorSecretSlots } from "./secret-actor-state.ts";
 import { configureServantSecrets } from "./secrets.ts";
 import { createInitialState } from "./state-store.ts";
 
@@ -277,7 +278,7 @@ function assertNewGameInitialized(state: State, input: NewGameInitializationInpu
     }
     if (
       input.hiddenTrueName !== undefined &&
-      state.secrets.actorSecrets[PROTAGONIST_ACTOR_ID] === undefined
+      getActorSecretSlots(state.secrets, PROTAGONIST_ACTOR_ID) === undefined
     ) {
       throw new Error("新游戏初始化失败：隐藏真名未写入 Secret Game State。");
     }

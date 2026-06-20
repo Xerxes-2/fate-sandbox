@@ -65,7 +65,7 @@ function nullable<T extends TSchema>(schema: T) {
 }
 
 export const STATE_META_SCHEMA = Type.Object({
-  schemaVersion: Type.Literal(13),
+  schemaVersion: Type.Literal(14),
   createdAt: ISO_INSTANT_SCHEMA,
   updatedAt: ISO_INSTANT_SCHEMA,
   rngSeed: Type.Number(),
@@ -528,15 +528,20 @@ const ACTOR_KNOWLEDGE_LENS_SCHEMA = Type.Object({
   forbiddenKnowledge: Type.Array(NON_EMPTY_STRING_SCHEMA),
 });
 
+const SECRET_ACTOR_STATE_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  secrets: Type.Optional(ACTOR_SECRET_SLOTS_SCHEMA),
+  agenda: Type.Optional(ACTOR_AGENDA_STATE_SCHEMA),
+  knowledgeLens: Type.Optional(ACTOR_KNOWLEDGE_LENS_SCHEMA),
+});
+
 export const SECRET_GAME_STATE_SCHEMA = Type.Object({
-  actorSecrets: Type.Record(Type.String(), ACTOR_SECRET_SLOTS_SCHEMA),
+  actorStates: Type.Record(Type.String(), SECRET_ACTOR_STATE_SCHEMA),
   campaignSecrets: Type.Array(SECRET_CAMPAIGN_FACT_SCHEMA),
   secretEventLog: Type.Array(SECRET_EVENT_MEMORY_SCHEMA),
   offscreenEventLog: Type.Array(OFFSCREEN_EVENT_SCHEMA),
   factionClocks: Type.Array(FACTION_CLOCK_SCHEMA),
   scheduledEvents: Type.Array(SCHEDULED_EVENT_SCHEMA),
-  actorAgendas: Type.Record(Type.String(), ACTOR_AGENDA_STATE_SCHEMA),
-  actorKnowledgeLenses: Type.Record(Type.String(), ACTOR_KNOWLEDGE_LENS_SCHEMA),
   relationshipSignals: Type.Array(RELATIONSHIP_SIGNAL_SCHEMA),
 });
 
@@ -638,8 +643,9 @@ function normalizeStateDatesInPlace(state: State): void {
     event.timeRange.end = normalizeIsoInstant(event.timeRange.end, "offscreenEvent.timeRange.end");
   }
 
-  for (const agenda of Object.values(state.secrets.actorAgendas)) {
-    if (agenda.lastIndependentActionAt !== null) {
+  for (const bundle of Object.values(state.secrets.actorStates)) {
+    const agenda = bundle.agenda;
+    if (agenda !== undefined && agenda.lastIndependentActionAt !== null) {
       agenda.lastIndependentActionAt = normalizeIsoInstant(
         agenda.lastIndependentActionAt,
         "actorAgenda.lastIndependentActionAt",
@@ -657,9 +663,7 @@ function assertStateInvariants(state: State): void {
   assertSceneActorReferences(state, actors);
   assertTrackedItemInvariants(state, actors);
   assertEconomyActorReferences(state, actors);
-  assertActorSecretsInvariants(state, actors);
-  assertActorAgendaInvariants(state, actors);
-  assertActorKnowledgeLensInvariants(state, actors);
+  assertSecretActorStateInvariants(state, actors);
   assertRelationshipSignalInvariants(state, actors);
   assertActorImpressionInvariants(state, actors);
   assertFactionClockInvariants(state);
@@ -734,30 +738,27 @@ function assertEconomyActorReferences(state: State, actors: ActorRegistry): void
   }
 }
 
-function assertActorSecretsInvariants(state: State, actors: ActorRegistry): void {
-  for (const [actorId, slots] of Object.entries(state.secrets.actorSecrets)) {
-    if (slots.actorId !== actorId) {
-      throw new Error(`actorSecrets key ${actorId} 与 actorId ${slots.actorId} 不一致。`);
+function assertSecretActorStateInvariants(state: State, actors: ActorRegistry): void {
+  for (const [actorId, bundle] of Object.entries(state.secrets.actorStates)) {
+    if (bundle.actorId !== actorId) {
+      throw new Error(`actorStates key ${actorId} 与 actorId ${bundle.actorId} 不一致。`);
     }
-    assertActorExists(actorId, actors, "actorSecrets key");
-  }
-}
-
-function assertActorAgendaInvariants(state: State, actors: ActorRegistry): void {
-  for (const [actorId, agenda] of Object.entries(state.secrets.actorAgendas)) {
-    if (agenda.actorId !== actorId) {
-      throw new Error(`actorAgendas key ${actorId} 与 actorId ${agenda.actorId} 不一致。`);
+    assertActorExists(actorId, actors, "actorStates key");
+    if (bundle.secrets !== undefined && bundle.secrets.actorId !== actorId) {
+      throw new Error(
+        `actorStates.${actorId}.secrets.actorId ${bundle.secrets.actorId} 与 key 不一致。`,
+      );
     }
-    assertActorExists(actorId, actors, "actorAgendas key");
-  }
-}
-
-function assertActorKnowledgeLensInvariants(state: State, actors: ActorRegistry): void {
-  for (const [actorId, lens] of Object.entries(state.secrets.actorKnowledgeLenses)) {
-    if (lens.actorId !== actorId) {
-      throw new Error(`actorKnowledgeLenses key ${actorId} 与 actorId ${lens.actorId} 不一致。`);
+    if (bundle.agenda !== undefined && bundle.agenda.actorId !== actorId) {
+      throw new Error(
+        `actorStates.${actorId}.agenda.actorId ${bundle.agenda.actorId} 与 key 不一致。`,
+      );
     }
-    assertActorExists(actorId, actors, "actorKnowledgeLenses key");
+    if (bundle.knowledgeLens !== undefined && bundle.knowledgeLens.actorId !== actorId) {
+      throw new Error(
+        `actorStates.${actorId}.knowledgeLens.actorId ${bundle.knowledgeLens.actorId} 与 key 不一致。`,
+      );
+    }
   }
 }
 

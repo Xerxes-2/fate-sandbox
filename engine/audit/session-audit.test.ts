@@ -283,8 +283,11 @@ void test("groupTurns takes fsn-prose custom message as final prose in two-pass 
 
 void test("measureLint reports prose violations and secret leaks", () => {
   const secrets = {
-    actorSecrets: {
-      saber: { trueName: { value: "两仪式", revealState: "hidden" }, hiddenNoblePhantasms: [] },
+    actorStates: {
+      saber: {
+        actorId: "saber",
+        secrets: { trueName: { value: "两仪式", revealState: "hidden" }, hiddenNoblePhantasms: [] },
+      },
     },
   };
   const jsonl = buildJsonl([
@@ -325,7 +328,9 @@ void test("measureLint reports underlength two-pass prose from packet context", 
 
 void test("measureLint uses latest secrets snapshot inside the turn", () => {
   const secrets = {
-    actorSecrets: { a: { trueName: { value: "美狄亚", revealState: "hidden" } } },
+    actorStates: {
+      a: { actorId: "a", secrets: { trueName: { value: "美狄亚", revealState: "hidden" } } },
+    },
   };
   // 秘密在轮内才配置（state 快照出现在 toolResult 后）
   const jsonl = buildJsonl([

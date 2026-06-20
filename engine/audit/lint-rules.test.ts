@@ -192,14 +192,17 @@ void test("findSecretLeaks returns empty on no match and empty secret", () => {
 
 void test("collectUnrevealedSecretStrings extracts only unrevealed names", () => {
   const secrets = {
-    actorSecrets: {
+    actorStates: {
       saber: {
         actorId: "saber",
-        trueName: { value: "两仪式", revealState: "hidden", revealConditions: [] },
-        hiddenNoblePhantasms: [
-          { value: { name: "无垢识·空之境界" }, revealState: "revealed", revealConditions: [] },
-          { value: { name: "唯识·直死之魔眼" }, revealState: "hidden", revealConditions: [] },
-        ],
+        secrets: {
+          actorId: "saber",
+          trueName: { value: "两仪式", revealState: "hidden", revealConditions: [] },
+          hiddenNoblePhantasms: [
+            { value: { name: "无垢识·空之境界" }, revealState: "revealed", revealConditions: [] },
+            { value: { name: "唯识·直死之魔眼" }, revealState: "hidden", revealConditions: [] },
+          ],
+        },
       },
     },
   };
@@ -209,7 +212,9 @@ void test("collectUnrevealedSecretStrings extracts only unrevealed names", () =>
 
 void test("collectUnrevealedSecretStrings skips revealed true names", () => {
   const out = collectUnrevealedSecretStrings({
-    actorSecrets: { a: { trueName: { value: "尼禄", revealState: "revealed" } } },
+    actorStates: {
+      a: { actorId: "a", secrets: { trueName: { value: "尼禄", revealState: "revealed" } } },
+    },
   });
   assert.deepEqual(out, []);
 });
@@ -217,5 +222,5 @@ void test("collectUnrevealedSecretStrings skips revealed true names", () => {
 void test("collectUnrevealedSecretStrings tolerates malformed input", () => {
   assert.deepEqual(collectUnrevealedSecretStrings(undefined), []);
   assert.deepEqual(collectUnrevealedSecretStrings("x"), []);
-  assert.deepEqual(collectUnrevealedSecretStrings({ actorSecrets: 3 }), []);
+  assert.deepEqual(collectUnrevealedSecretStrings({ actorStates: 3 }), []);
 });

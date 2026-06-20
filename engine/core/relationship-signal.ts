@@ -1,6 +1,7 @@
 import type { ActorId, RelationshipSignal, RelationshipSignalVisibility, State } from "./state.ts";
 
 import { createId } from "./ids.ts";
+import { allActorSecretSlots } from "./secret-actor-state.ts";
 import { assertNonEmptyString, isRecord } from "./typebox-validation.ts";
 
 export interface RecordRelationshipSignalInput {
@@ -72,7 +73,7 @@ function assertPlayerKnownSignalIsSafe(draft: State, signal: RelationshipSignal)
 
 function collectUnrevealedSecretStrings(state: State): string[] {
   const out = new Set<string>();
-  for (const slots of Object.values(state.secrets.actorSecrets)) {
+  for (const slots of allActorSecretSlots(state.secrets)) {
     const trueName = readUnrevealedValue(slots.trueName, pickString);
     if (trueName !== undefined) out.add(trueName);
     for (const noblePhantasm of slots.hiddenNoblePhantasms) {

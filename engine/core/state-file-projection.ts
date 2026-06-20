@@ -100,11 +100,9 @@ export function buildTimelineStateContextFromRaw(raw: unknown): TimelineStateCon
     optionalArray(publicState["relationshipSignals"]),
     optionalArray(secrets["relationshipSignals"]),
   );
-  const actorAgendas = indexByActorId(secrets["actorAgendas"], "actorAgendas");
-  const actorKnowledgeLenses = indexByActorId(
-    secrets["actorKnowledgeLenses"],
-    "actorKnowledgeLenses",
-  );
+  const actorStates = requireRecord(secrets["actorStates"], "secrets.actorStates");
+  const actorAgendas = facetByActorId(actorStates, "agenda");
+  const actorKnowledgeLenses = facetByActorId(actorStates, "knowledgeLens");
   const currentAt = requireString(clock["currentAt"], "clock.currentAt");
   const timezone = requireTimezone(clock["timezone"], "clock.timezone");
   const displayTime = formatHumanTime(currentAt, timezone).display;
@@ -341,11 +339,20 @@ function isCoolingDown(
   return recentPressureTypes.slice(windowStart).includes(slot.pressureType);
 }
 
-function indexByActorId(value: unknown, fieldName: string): Map<string, unknown> {
-  const record = requireRecord(value, fieldName);
+function facetByActorId(
+  actorStates: Record<string, unknown>,
+  facet: "agenda" | "knowledgeLens",
+): Map<string, unknown> {
   const result = new Map<string, unknown>();
-  for (const [actorId, entry] of Object.entries(record)) {
-    result.set(actorId, requireRecord(entry, `${fieldName}.${actorId}`));
+  for (const [actorId, bundleValue] of Object.entries(actorStates)) {
+    const bundle = optionalRecord(bundleValue);
+    if (bundle === null) {
+      continue;
+    }
+    const value = bundle[facet];
+    if (value !== undefined) {
+      result.set(actorId, requireRecord(value, `secrets.actorStates.${actorId}.${facet}`));
+    }
   }
   return result;
 }

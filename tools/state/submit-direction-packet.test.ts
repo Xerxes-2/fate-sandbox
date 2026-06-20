@@ -62,12 +62,15 @@ function seedHiddenTrueName(trueName: string): void {
     null,
   );
   const draft = cloneState();
-  draft.secrets.actorSecrets["saber_shiki"] = {
+  draft.secrets.actorStates["saber_shiki"] = {
     actorId: "saber_shiki",
-    trueName: { id: "tn-1", value: trueName, revealState: "hidden", revealConditions: [] },
-    hiddenNoblePhantasms: [],
-    privateMotives: [],
-    unrevealedAffiliations: [],
+    secrets: {
+      actorId: "saber_shiki",
+      trueName: { id: "tn-1", value: trueName, revealState: "hidden", revealConditions: [] },
+      hiddenNoblePhantasms: [],
+      privateMotives: [],
+      unrevealedAffiliations: [],
+    },
   };
   commitState(draft);
 }

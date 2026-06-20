@@ -9,6 +9,7 @@ import type {
 
 import { createId } from "./ids.ts";
 import { settleOldestObligation } from "./obligations.ts";
+import { allActorSecretSlots } from "./secret-actor-state.ts";
 import { assertIsoDateString, assertNonEmptyString } from "./typebox-validation.ts";
 
 export type {
@@ -92,24 +93,20 @@ function validateClaims(draft: State, claims: readonly MemoryClaim[] | undefined
       "record_memory 必须提供 claims；用结构化 claim 表达 public memory 的事实类型、确定性和证据。普通事实用 kind=mundane。",
     );
   }
+  const secretSlots = allActorSecretSlots(draft.secrets);
   for (const claim of claims) {
-    validateClaim(claim, draft.secrets.actorSecrets);
+    validateClaim(claim, secretSlots);
   }
 }
 
-type ClaimSecretSlotRegistry = Readonly<
-  Record<
-    string,
-    {
-      trueName?: SecretSlot<string>;
-      hiddenNoblePhantasms: SecretSlot<unknown>[];
-      privateMotives: SecretSlot<string>[];
-      unrevealedAffiliations: SecretSlot<string>[];
-    }
-  >
->;
+type ClaimSecretSlots = Readonly<{
+  trueName?: SecretSlot<string>;
+  hiddenNoblePhantasms: SecretSlot<unknown>[];
+  privateMotives: SecretSlot<string>[];
+  unrevealedAffiliations: SecretSlot<string>[];
+}>;
 
-function validateClaim(claim: MemoryClaim, actorSecrets: ClaimSecretSlotRegistry): void {
+function validateClaim(claim: MemoryClaim, actorSecrets: readonly ClaimSecretSlots[]): void {
   assertNonEmptyString(claim.statement, "claim.statement");
   if (claim.kind === "mundane") {
     return;
@@ -136,14 +133,14 @@ function validateClaim(claim: MemoryClaim, actorSecrets: ClaimSecretSlotRegistry
 
 function findRelatedSecretSlots(
   claim: MemoryClaim,
-  actorSecrets: ClaimSecretSlotRegistry,
+  actorSecrets: readonly ClaimSecretSlots[],
 ): SecretSlot<unknown>[] {
   const relatedIds = claim.relatedSecretSlotIds ?? [];
   if (relatedIds.length === 0) {
     return [];
   }
 
-  const allSlots = Object.values(actorSecrets).flatMap((slots) => [
+  const allSlots = actorSecrets.flatMap((slots) => [
     slots.trueName,
     ...slots.hiddenNoblePhantasms,
     ...slots.privateMotives,

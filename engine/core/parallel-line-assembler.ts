@@ -17,6 +17,7 @@ import type {
 } from "./state.ts";
 
 import { getTimelinePressureSlots } from "../../data/timeline-pressure-palettes.ts";
+import { allActorAgendas } from "./secret-actor-state.ts";
 import { assertNonEmptyString } from "./typebox-validation.ts";
 
 export interface AssembleParallelLineInput {
@@ -180,7 +181,7 @@ function buildPrivateFacts(state: State, input: AssembleParallelLineInput): stri
 }
 
 function buildActorGoals(state: State): string[] {
-  return Object.values(state.secrets.actorAgendas).map((agenda) => formatAgendaGoal(agenda));
+  return allActorAgendas(state.secrets).map((agenda) => formatAgendaGoal(agenda));
 }
 
 function formatAgendaGoal(agenda: ActorAgendaState): string {

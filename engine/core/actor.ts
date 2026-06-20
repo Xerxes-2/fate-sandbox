@@ -8,6 +8,7 @@ import type {
 } from "./actor-schema.ts";
 import type { ActorId, PublicActorState, PublicGameState, State } from "./state.ts";
 
+import { deleteSecretActorState } from "./secret-actor-state.ts";
 import { assertNonEmptyString } from "./typebox-validation.ts";
 
 export interface UpsertActorInput {
@@ -216,16 +217,14 @@ export function retireActor(draft: State, input: RetireActorInput): RetireActorR
 
 /**
  * actor 生命周期的唯一级联出口：从所有按 actorId 聚合的状态中抹除该 actor。
- * 独占表（actors / actorSecrets / impressions / agendas / knowledgeLenses）按 key 删除；
+ * 独占状态（public.actors / public.actorImpressions / secrets.actorStates）按 key 删除；
  * 关系边（两层 relationshipSignals）凡是碰到该 actor 的一端就一起删。
  * 所有退场路径必须走这里，不允许再手动逐表删除。
  */
 export function removeActorEverywhere(draft: State, actorId: ActorId): void {
   delete draft.public.actors[actorId];
   delete draft.public.actorImpressions[actorId];
-  delete draft.secrets.actorSecrets[actorId];
-  delete draft.secrets.actorAgendas[actorId];
-  delete draft.secrets.actorKnowledgeLenses[actorId];
+  deleteSecretActorState(draft.secrets, actorId);
   draft.public.scene.presentActorIds = draft.public.scene.presentActorIds.filter(
     (presentActorId) => presentActorId !== actorId,
   );

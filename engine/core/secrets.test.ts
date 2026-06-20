@@ -113,7 +113,7 @@ void test("revealSecret marks foreshadowed when evidence matches but claim does 
 
   assert.equal(result.outcome, "foreshadowed");
   assert.equal(result.playerSafeMessage.includes(TRUE_NAME), false);
-  const slots = draft.secrets.actorSecrets["caster"];
+  const slots = draft.secrets.actorStates["caster"]?.secrets;
   assert.equal(slots?.trueName?.revealState, "foreshadowed");
   assert.equal(draft.public.actors["caster"]?.servantForm?.identity.trueName.status, "hidden");
 });
@@ -337,7 +337,7 @@ void test("configureActorSecrets validates payload and dedupes motives by value"
     reason: "测试重复写入合并",
   });
 
-  const slots = draft.secrets.actorSecrets["sakura"];
+  const slots = draft.secrets.actorStates["sakura"]?.secrets;
   assert.equal(slots?.privateMotives.length, 1);
   assert.deepEqual(slots?.privateMotives[0]?.revealConditions, ["间桐", "刻印"]);
 });

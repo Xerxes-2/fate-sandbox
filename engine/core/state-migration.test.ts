@@ -137,13 +137,12 @@ void test("migrateState upgrades schema v5 states with an empty hook ledger", ()
 
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
   assert.deepEqual(migrated.public.hooks, []);
-  assert.deepEqual(migrated.secrets.actorAgendas, {});
-  assert.deepEqual(migrated.secrets.actorKnowledgeLenses, {});
+  assert.deepEqual(migrated.secrets.actorStates, {});
 });
 
 void test("migrateState upgrades schema v6 states with empty actor autonomy ledgers", () => {
   const current = createInitialState();
-  const { actorAgendas: _agendas, actorKnowledgeLenses: _lenses, ...secretsV6 } = current.secrets;
+  const { actorStates: _actorStates, ...secretsV6 } = current.secrets;
   const rawV6 = {
     ...current,
     meta: { ...current.meta, schemaVersion: 6 },
@@ -154,8 +153,7 @@ void test("migrateState upgrades schema v6 states with empty actor autonomy ledg
   const migrated = migrateState(rawV6);
 
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
-  assert.deepEqual(migrated.secrets.actorAgendas, {});
-  assert.deepEqual(migrated.secrets.actorKnowledgeLenses, {});
+  assert.deepEqual(migrated.secrets.actorStates, {});
   assert.deepEqual(migrated.public.relationshipSignals, []);
   assert.deepEqual(migrated.secrets.relationshipSignals, []);
 });
@@ -282,17 +280,65 @@ void test("migrateState upgrades v12 to v13 by indexing per-actor side tables on
     voiceMaterial: "",
     updatedAt: current.public.clock.currentAt,
   };
+  const { actorStates: _drop, ...secretsV12 } = current.secrets;
   const rawV12 = {
     ...current,
     meta: { ...current.meta, schemaVersion: 12 },
     public: { ...current.public, actorImpressions: [impression] },
-    secrets: { ...current.secrets, actorAgendas: [agenda], actorKnowledgeLenses: [lens] },
+    secrets: { ...secretsV12, actorAgendas: [agenda], actorKnowledgeLenses: [lens] },
   };
 
   const migrated = migrateState(rawV12);
 
+  // v12->v13 先把侧表数组按 actorId 索引成 record，v13->v14 再折进 actorStates 聚合。
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
-  assert.deepEqual(migrated.secrets.actorAgendas, { protagonist: agenda });
-  assert.deepEqual(migrated.secrets.actorKnowledgeLenses, { protagonist: lens });
+  assert.deepEqual(migrated.secrets.actorStates, {
+    protagonist: { actorId: "protagonist", agenda, knowledgeLens: lens },
+  });
   assert.deepEqual(migrated.public.actorImpressions, { protagonist: impression });
+});
+
+void test("migrateState upgrades v13 to v14 by folding per-actor secret tables into actorStates", () => {
+  const current = createInitialState();
+  const slots = {
+    actorId: "protagonist",
+    hiddenNoblePhantasms: [],
+    privateMotives: [],
+    unrevealedAffiliations: [],
+  };
+  const agenda = {
+    actorId: "protagonist",
+    goal: "cross the gate",
+    fear: "being noticed",
+    currentOrder: null,
+    lastIndependentActionAt: null,
+  };
+  const lens = {
+    actorId: "protagonist",
+    knows: ["the gate is open"],
+    suspects: [],
+    falseBeliefs: [],
+    forbiddenKnowledge: [],
+  };
+  const { actorStates: _drop, ...secretsV13 } = current.secrets;
+  const rawV13 = {
+    ...current,
+    meta: { ...current.meta, schemaVersion: 13 },
+    secrets: {
+      ...secretsV13,
+      actorSecrets: { protagonist: slots },
+      actorAgendas: { protagonist: agenda },
+      actorKnowledgeLenses: { protagonist: lens },
+    },
+  };
+
+  const migrated = migrateState(rawV13);
+
+  assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
+  assert.deepEqual(migrated.secrets.actorStates, {
+    protagonist: { actorId: "protagonist", secrets: slots, agenda, knowledgeLens: lens },
+  });
+  assert.ok(!Object.hasOwn(migrated.secrets, "actorSecrets"));
+  assert.ok(!Object.hasOwn(migrated.secrets, "actorAgendas"));
+  assert.ok(!Object.hasOwn(migrated.secrets, "actorKnowledgeLenses"));
 });

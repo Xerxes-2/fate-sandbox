@@ -18,6 +18,7 @@ import type {
 import { recordMemory } from "./memory.ts";
 import { settleOldestObligation } from "./obligations.ts";
 import { recordOffscreenEvent } from "./offscreen-event.ts";
+import { getActorSecretSlots, setActorSecretSlots } from "./secret-actor-state.ts";
 import { assertNonEmptyString } from "./typebox-validation.ts";
 
 export type {
@@ -68,7 +69,7 @@ export function configureServantSecrets(
   }
 
   const existing =
-    draft.secrets.actorSecrets[input.actorId] ?? createEmptyActorSecretSlots(input.actorId);
+    getActorSecretSlots(draft.secrets, input.actorId) ?? createEmptyActorSecretSlots(input.actorId);
   if (input.trueName !== undefined) {
     existing.trueName = buildStringSecretSlot(
       existing.trueName,
@@ -79,7 +80,7 @@ export function configureServantSecrets(
   for (const noblePhantasm of input.hiddenNoblePhantasms ?? []) {
     upsertNoblePhantasmSecretSlot(existing.hiddenNoblePhantasms, input.actorId, noblePhantasm);
   }
-  draft.secrets.actorSecrets[input.actorId] = existing;
+  setActorSecretSlots(draft.secrets, input.actorId, existing);
 
   return { message: `从者 secrets 已配置：${input.actorId}。` };
 }
@@ -103,7 +104,7 @@ export function configureActorSecrets(
   }
 
   const existing =
-    draft.secrets.actorSecrets[input.actorId] ?? createEmptyActorSecretSlots(input.actorId);
+    getActorSecretSlots(draft.secrets, input.actorId) ?? createEmptyActorSecretSlots(input.actorId);
   appendStringSecretSlots(
     existing.privateMotives,
     input.actorId,
@@ -116,7 +117,7 @@ export function configureActorSecrets(
     "affiliation",
     input.unrevealedAffiliations ?? [],
   );
-  draft.secrets.actorSecrets[input.actorId] = existing;
+  setActorSecretSlots(draft.secrets, input.actorId, existing);
 
   return { message: `actor secrets 已配置：${input.actorId}。` };
 }
@@ -162,7 +163,7 @@ function applyRevealSecret(
   if (actor === undefined) {
     throw new Error(`actor 不存在: ${event.actorId}`);
   }
-  const slots = draft.secrets.actorSecrets[event.actorId];
+  const slots = getActorSecretSlots(draft.secrets, event.actorId);
   if (slots === undefined) {
     return { outcome: "insufficient-evidence", playerSafeMessage: "没有足够证据确认。" };
   }
@@ -398,7 +399,7 @@ function hiddenReaction(
   if (draft.public.actors[event.actorId] === undefined) {
     throw new Error(`actor 不存在: ${event.actorId}`);
   }
-  const slots = draft.secrets.actorSecrets[event.actorId];
+  const slots = getActorSecretSlots(draft.secrets, event.actorId);
   const hasRelevantSecret =
     slots !== undefined && secretText(slots).includes(event.stimulus.toLowerCase());
   if (hasRelevantSecret) {
@@ -433,8 +434,8 @@ function secretCompatibility(
     throw new Error(`target actor 不存在: ${event.targetActorId}`);
   }
   const bothHaveSecrets =
-    draft.secrets.actorSecrets[event.actorId] !== undefined &&
-    draft.secrets.actorSecrets[event.targetActorId] !== undefined;
+    getActorSecretSlots(draft.secrets, event.actorId) !== undefined &&
+    getActorSecretSlots(draft.secrets, event.targetActorId) !== undefined;
   return {
     outcome: bothHaveSecrets ? "strong-reaction" : "no-special-effect",
     narrativeConstraints: bothHaveSecrets

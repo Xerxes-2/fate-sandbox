@@ -73,6 +73,6 @@ void describe("initializeNewGame", () => {
 
     assert.equal(protagonist?.servantForm?.identity.trueName.status, "hidden");
     assert.equal(protagonist?.servantForm?.identity.trueName.display, "Saber");
-    assert.notEqual(state.secrets.actorSecrets["protagonist"], undefined);
+    assert.notEqual(state.secrets.actorStates["protagonist"]?.secrets, undefined);
   });
 });

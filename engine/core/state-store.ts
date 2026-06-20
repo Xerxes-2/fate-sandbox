@@ -206,14 +206,12 @@ export function createInitialState(): State {
       actorImpressions: {},
     },
     secrets: {
-      actorSecrets: {},
+      actorStates: {},
       campaignSecrets: [],
       secretEventLog: [],
       offscreenEventLog: [],
       factionClocks: [],
       scheduledEvents: [],
-      actorAgendas: {},
-      actorKnowledgeLenses: {},
       relationshipSignals: [],
     },
   };

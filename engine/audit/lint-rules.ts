@@ -382,11 +382,13 @@ function pickNoblePhantasmName(value: unknown): string | undefined {
  */
 export function collectUnrevealedSecretStrings(secrets: unknown): string[] {
   if (!isRecord(secrets)) return [];
-  const actorSecrets = secrets["actorSecrets"];
-  if (!isRecord(actorSecrets)) return [];
+  const actorStates = secrets["actorStates"];
+  if (!isRecord(actorStates)) return [];
 
   const out = new Set<string>();
-  for (const entry of Object.values(actorSecrets)) {
+  for (const bundle of Object.values(actorStates)) {
+    if (!isRecord(bundle)) continue;
+    const entry = bundle["secrets"];
     if (!isRecord(entry)) continue;
     const trueName = readUnrevealedValue(entry["trueName"], pickString);
     if (trueName !== undefined) out.add(trueName);

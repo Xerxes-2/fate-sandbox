@@ -279,7 +279,7 @@ void test("configureServantSecrets creates mergeable slots for runtime servants"
     reason: "测试追加宝具揭示条件",
   });
 
-  const casterSecrets = draft.secrets.actorSecrets["caster"];
+  const casterSecrets = draft.secrets.actorStates["caster"]?.secrets;
   assert.equal(casterSecrets?.trueName?.value, "美狄亚");
   assert.deepEqual(casterSecrets?.trueName?.revealConditions, ["科尔基斯", "金羊皮"]);
   assert.equal(casterSecrets?.hiddenNoblePhantasms.length, 1);
@@ -583,10 +583,11 @@ function countActorReferences(state: State, actorId: string): Record<string, num
       (id) => id === actorId,
     ).length,
     "public.allyActorIds": state.public.allyActorIds.filter((id) => id === actorId).length,
-    "secrets.actorSecrets": state.secrets.actorSecrets[actorId] === undefined ? 0 : 1,
-    "secrets.actorAgendas": state.secrets.actorAgendas[actorId] === undefined ? 0 : 1,
-    "secrets.actorKnowledgeLenses":
-      state.secrets.actorKnowledgeLenses[actorId] === undefined ? 0 : 1,
+    "secrets.actorStates.secrets":
+      state.secrets.actorStates[actorId]?.secrets === undefined ? 0 : 1,
+    "secrets.actorStates.agenda": state.secrets.actorStates[actorId]?.agenda === undefined ? 0 : 1,
+    "secrets.actorStates.knowledgeLens":
+      state.secrets.actorStates[actorId]?.knowledgeLens === undefined ? 0 : 1,
     "secrets.relationshipSignals": state.secrets.relationshipSignals.filter(
       (row) => row.actorId === actorId || row.targetActorId === actorId,
     ).length,
@@ -645,19 +646,23 @@ void test("retireActor leaves no orphan rows in any actor-keyed side table", () 
     privateMotives: [{ value: "暗中保护主角。", revealConditions: [] }],
     reason: "seed secret slot",
   });
-  draft.secrets.actorAgendas["tohsaka-rin"] = {
+  draft.secrets.actorStates["tohsaka-rin"] = {
     actorId: "tohsaka-rin",
-    goal: "赢得圣杯战争。",
-    fear: "主角受伤。",
-    currentOrder: null,
-    lastIndependentActionAt: null,
-  };
-  draft.secrets.actorKnowledgeLenses["tohsaka-rin"] = {
-    actorId: "tohsaka-rin",
-    knows: ["主角是魔术师。"],
-    suspects: [],
-    falseBeliefs: [],
-    forbiddenKnowledge: [],
+    secrets: draft.secrets.actorStates["tohsaka-rin"]?.secrets,
+    agenda: {
+      actorId: "tohsaka-rin",
+      goal: "赢得圣杯战争。",
+      fear: "主角受伤。",
+      currentOrder: null,
+      lastIndependentActionAt: null,
+    },
+    knowledgeLens: {
+      actorId: "tohsaka-rin",
+      knows: ["主角是魔术师。"],
+      suspects: [],
+      falseBeliefs: [],
+      forbiddenKnowledge: [],
+    },
   };
   draft.secrets.relationshipSignals.push({
     id: "sig-secret-1",
@@ -774,7 +779,10 @@ void test("configureServantSecrets accepts multi-plus Fate ranks", () => {
     reason: "测试多加号 rank",
   });
 
-  assert.equal(draft.secrets.actorSecrets["caster"]?.hiddenNoblePhantasms[0]?.value.rank, "A++");
+  assert.equal(
+    draft.secrets.actorStates["caster"]?.secrets?.hiddenNoblePhantasms[0]?.value.rank,
+    "A++",
+  );
 });
 
 void test("configureServantSecrets accepts non-noble-phantasm sword techniques", () => {
@@ -832,5 +840,8 @@ void test("configureServantSecrets accepts non-noble-phantasm sword techniques",
     reason: "记录 Assassin 隐藏剑技线索",
   });
 
-  assert.equal(draft.secrets.actorSecrets["assassin"]?.hiddenNoblePhantasms[0]?.value.rank, "none");
+  assert.equal(
+    draft.secrets.actorStates["assassin"]?.secrets?.hiddenNoblePhantasms[0]?.value.rank,
+    "none",
+  );
 });

@@ -34,8 +34,8 @@ void test("upsertActorAgenda creates and replaces an agenda for one actor", () =
 
   assert.equal(created.goal, "leave the gate");
   assert.equal(replaced.currentOrder, "move now");
-  assert.equal(Object.keys(draft.secrets.actorAgendas).length, 1);
-  assert.equal(draft.secrets.actorAgendas[PROTAGONIST_ACTOR_ID]?.goal, "cross the street");
+  assert.equal(Object.keys(draft.secrets.actorStates).length, 1);
+  assert.equal(draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.agenda?.goal, "cross the street");
 });
 
 void test("markActorIndependentAction stamps current time on an existing agenda", () => {
@@ -51,7 +51,10 @@ void test("markActorIndependentAction stamps current time on an existing agenda"
   const agenda = markActorIndependentAction(draft, PROTAGONIST_ACTOR_ID, "circle the gate");
 
   assert.equal(agenda.lastIndependentActionAt, draft.public.clock.currentAt);
-  assert.equal(draft.secrets.actorAgendas[PROTAGONIST_ACTOR_ID]?.currentOrder, "circle the gate");
+  assert.equal(
+    draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.agenda?.currentOrder,
+    "circle the gate",
+  );
 });
 
 void test("agenda helpers reject missing actors and missing agendas", () => {
@@ -87,9 +90,10 @@ void test("upsertActorKnowledgeLens dedupes fact lists and replaces by actor", (
   });
 
   assert.deepEqual(lens.knows, ["school gate"]);
-  assert.deepEqual(draft.secrets.actorKnowledgeLenses[PROTAGONIST_ACTOR_ID]?.forbiddenKnowledge, [
-    "hidden true name",
-  ]);
+  assert.deepEqual(
+    draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.knowledgeLens?.forbiddenKnowledge,
+    ["hidden true name"],
+  );
 
   upsertActorKnowledgeLens(draft, {
     actorId: PROTAGONIST_ACTOR_ID,
@@ -99,8 +103,10 @@ void test("upsertActorKnowledgeLens dedupes fact lists and replaces by actor", (
     forbiddenKnowledge: [],
   });
 
-  assert.equal(Object.keys(draft.secrets.actorKnowledgeLenses).length, 1);
-  assert.deepEqual(draft.secrets.actorKnowledgeLenses[PROTAGONIST_ACTOR_ID]?.knows, ["new fact"]);
+  assert.equal(Object.keys(draft.secrets.actorStates).length, 1);
+  assert.deepEqual(draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.knowledgeLens?.knows, [
+    "new fact",
+  ]);
 });
 
 void test("recordActorKnowledgeFact auto-creates a lens and removes exact facts", () => {
@@ -110,16 +116,16 @@ void test("recordActorKnowledgeFact auto-creates a lens and removes exact facts"
   recordActorKnowledgeFact(draft, PROTAGONIST_ACTOR_ID, "suspects", "someone is watching");
   recordActorKnowledgeFact(draft, PROTAGONIST_ACTOR_ID, "falseBeliefs", "the road is empty");
 
-  assert.deepEqual(draft.secrets.actorKnowledgeLenses[PROTAGONIST_ACTOR_ID]?.suspects, [
+  assert.deepEqual(draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.knowledgeLens?.suspects, [
     "someone is watching",
   ]);
-  assert.deepEqual(draft.secrets.actorKnowledgeLenses[PROTAGONIST_ACTOR_ID]?.falseBeliefs, [
+  assert.deepEqual(draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.knowledgeLens?.falseBeliefs, [
     "the road is empty",
   ]);
 
   removeActorKnowledgeFact(draft, PROTAGONIST_ACTOR_ID, "suspects", "someone is watching");
 
-  assert.deepEqual(draft.secrets.actorKnowledgeLenses[PROTAGONIST_ACTOR_ID]?.suspects, []);
+  assert.deepEqual(draft.secrets.actorStates[PROTAGONIST_ACTOR_ID]?.knowledgeLens?.suspects, []);
   assert.throws(
     () => removeActorKnowledgeFact(draft, PROTAGONIST_ACTOR_ID, "suspects", "someone is watching"),
     /不含该 fact/,
@@ -133,5 +139,5 @@ void test("clearActorKnowledgeLens removes the actor lens", () => {
   const removed = clearActorKnowledgeLens(draft, PROTAGONIST_ACTOR_ID);
 
   assert.equal(removed.actorId, PROTAGONIST_ACTOR_ID);
-  assert.deepEqual(draft.secrets.actorKnowledgeLenses, {});
+  assert.deepEqual(draft.secrets.actorStates, {});
 });

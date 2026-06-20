@@ -1,5 +1,14 @@
 import type { ActorAgendaState, ActorId, ActorKnowledgeLens, State } from "./state.ts";
 
+import {
+  deleteActorAgenda,
+  deleteActorKnowledgeLens,
+  getActorAgenda,
+  getActorKnowledgeLens,
+  setActorAgenda,
+  setActorKnowledgeLens,
+} from "./secret-actor-state.ts";
+
 export type KnowledgeLensCategory = "knows" | "suspects" | "falseBeliefs" | "forbiddenKnowledge";
 
 export interface UpsertActorAgendaInput {
@@ -21,7 +30,7 @@ export interface UpsertActorKnowledgeLensInput {
 export function upsertActorAgenda(state: State, input: UpsertActorAgendaInput): ActorAgendaState {
   assertActorExists(state, input.actorId);
   const agenda = normalizeAgenda(input);
-  state.secrets.actorAgendas[input.actorId] = agenda;
+  setActorAgenda(state.secrets, input.actorId, agenda);
   return agenda;
 }
 
@@ -43,11 +52,11 @@ export function markActorIndependentAction(
 }
 
 export function clearActorAgenda(state: State, actorId: ActorId): ActorAgendaState {
-  const agenda = state.secrets.actorAgendas[actorId];
+  const agenda = getActorAgenda(state.secrets, actorId);
   if (agenda === undefined) {
     throw new Error(`actor agenda ${actorId} 不存在。`);
   }
-  delete state.secrets.actorAgendas[actorId];
+  deleteActorAgenda(state.secrets, actorId);
   return agenda;
 }
 
@@ -57,7 +66,7 @@ export function upsertActorKnowledgeLens(
 ): ActorKnowledgeLens {
   assertActorExists(state, input.actorId);
   const lens = normalizeKnowledgeLens(input);
-  state.secrets.actorKnowledgeLenses[input.actorId] = lens;
+  setActorKnowledgeLens(state.secrets, input.actorId, lens);
   return lens;
 }
 
@@ -100,11 +109,11 @@ export function removeActorKnowledgeFact(
 }
 
 export function clearActorKnowledgeLens(state: State, actorId: ActorId): ActorKnowledgeLens {
-  const lens = state.secrets.actorKnowledgeLenses[actorId];
+  const lens = getActorKnowledgeLens(state.secrets, actorId);
   if (lens === undefined) {
     throw new Error(`actor knowledge lens ${actorId} 不存在。`);
   }
-  delete state.secrets.actorKnowledgeLenses[actorId];
+  deleteActorKnowledgeLens(state.secrets, actorId);
   return lens;
 }
 
@@ -154,16 +163,16 @@ function ensureKnowledgeLens(state: State, actorId: ActorId): ActorKnowledgeLens
     return lens;
   }
   const fresh = { actorId, knows: [], suspects: [], falseBeliefs: [], forbiddenKnowledge: [] };
-  state.secrets.actorKnowledgeLenses[actorId] = fresh;
+  setActorKnowledgeLens(state.secrets, actorId, fresh);
   return fresh;
 }
 
 function findActorAgenda(state: State, actorId: ActorId): ActorAgendaState | undefined {
-  return state.secrets.actorAgendas[actorId];
+  return getActorAgenda(state.secrets, actorId);
 }
 
 function findActorKnowledgeLens(state: State, actorId: ActorId): ActorKnowledgeLens | undefined {
-  return state.secrets.actorKnowledgeLenses[actorId];
+  return getActorKnowledgeLens(state.secrets, actorId);
 }
 
 function lensEntries(lens: ActorKnowledgeLens, category: KnowledgeLensCategory): string[] {

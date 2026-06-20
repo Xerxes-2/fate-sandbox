@@ -47,6 +47,8 @@ function migrateOneSchemaVersion(
       return migrateGameStateV11ToV12(raw);
     case 12:
       return migrateGameStateV12ToV13(raw);
+    case 13:
+      return migrateGameStateV13ToV14(raw);
     default:
       throw new Error(
         `不支持的 state schemaVersion: ${version}。当前支持逐步迁移到 ${CURRENT_STATE_SCHEMA_VERSION}。`,
@@ -191,7 +193,7 @@ function migrateGameStateV11ToV12(raw: Record<string, unknown>): Record<string, 
 function migrateGameStateV12ToV13(raw: Record<string, unknown>): Record<string, unknown> {
   const next = structuredClone(raw);
   const meta = assertRecordForMigration(next["meta"], "meta");
-  meta["schemaVersion"] = CURRENT_STATE_SCHEMA_VERSION;
+  meta["schemaVersion"] = 13;
   const publicState = assertRecordForMigration(next["public"], "public");
   publicState["actorImpressions"] = indexByActorId(
     publicState["actorImpressions"],
@@ -204,6 +206,43 @@ function migrateGameStateV12ToV13(raw: Record<string, unknown>): Record<string, 
     "secrets.actorKnowledgeLenses",
   );
   return next;
+}
+
+// v14: secrets 侧的三张 per-actor 表（actorSecrets / actorAgendas / actorKnowledgeLenses）
+// 收敛成单一聚合 actorStates: Record<actorId, { actorId, secrets?, agenda?, knowledgeLens? }>。
+function migrateGameStateV13ToV14(raw: Record<string, unknown>): Record<string, unknown> {
+  const next = structuredClone(raw);
+  const meta = assertRecordForMigration(next["meta"], "meta");
+  meta["schemaVersion"] = CURRENT_STATE_SCHEMA_VERSION;
+  const secrets = assertRecordForMigration(next["secrets"], "secrets");
+  const actorStates: Record<string, Record<string, unknown>> = {};
+  const bundleFor = (actorId: string): Record<string, unknown> => {
+    const existing = actorStates[actorId];
+    if (existing !== undefined) {
+      return existing;
+    }
+    const fresh: Record<string, unknown> = { actorId };
+    actorStates[actorId] = fresh;
+    return fresh;
+  };
+  for (const [actorId, slots] of Object.entries(recordOrEmpty(secrets["actorSecrets"]))) {
+    bundleFor(actorId)["secrets"] = slots;
+  }
+  for (const [actorId, agenda] of Object.entries(recordOrEmpty(secrets["actorAgendas"]))) {
+    bundleFor(actorId)["agenda"] = agenda;
+  }
+  for (const [actorId, lens] of Object.entries(recordOrEmpty(secrets["actorKnowledgeLenses"]))) {
+    bundleFor(actorId)["knowledgeLens"] = lens;
+  }
+  secrets["actorStates"] = actorStates;
+  delete secrets["actorSecrets"];
+  delete secrets["actorAgendas"];
+  delete secrets["actorKnowledgeLenses"];
+  return next;
+}
+
+function recordOrEmpty(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
 }
 
 function indexByActorId(value: unknown, fieldName: string): Record<string, unknown> {

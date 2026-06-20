@@ -76,22 +76,32 @@ void test("parseStateSchema rejects malformed ISO instants", () => {
   assert.throws(() => parseStateSchema(raw), /clock\.currentAt必须是 ISO 时间字符串/);
 });
 
-void test("parseStateSchema rejects orphan actorSecrets without a matching actor", () => {
-  const raw = rawState();
-  section(section(raw, "secrets"), "actorSecrets")["ghost"] = {
-    actorId: "ghost",
-    hiddenNoblePhantasms: [],
-    privateMotives: [],
-    unrevealedAffiliations: [],
-  };
+void test("parseStateSchema rejects actorStates bundle key mismatch and orphans", () => {
+  const mismatch = rawState();
+  section(section(mismatch, "secrets"), "actorStates")["protagonist"] = { actorId: "saber" };
+  assert.throws(
+    () => parseStateSchema(mismatch),
+    /actorStates key protagonist 与 actorId saber 不一致/,
+  );
 
-  assert.throws(() => parseStateSchema(raw), /非法actorSecrets key: actor ghost 不存在/);
+  const orphan = rawState();
+  section(section(orphan, "secrets"), "actorStates")["ghost"] = {
+    actorId: "ghost",
+    secrets: {
+      actorId: "ghost",
+      hiddenNoblePhantasms: [],
+      privateMotives: [],
+      unrevealedAffiliations: [],
+    },
+  };
+  assert.throws(() => parseStateSchema(orphan), /非法actorStates key: actor ghost 不存在/);
 });
 
-void test("parseStateSchema validates actor agenda actor refs and key consistency", () => {
+void test("parseStateSchema validates actor agenda facet actorId against bundle key", () => {
   const raw = rawState();
-  section(raw, "secrets")["actorAgendas"] = {
-    protagonist: {
+  section(section(raw, "secrets"), "actorStates")["protagonist"] = {
+    actorId: "protagonist",
+    agenda: {
       actorId: "saber",
       goal: "leave the school gate",
       fear: "being watched",
@@ -102,25 +112,15 @@ void test("parseStateSchema validates actor agenda actor refs and key consistenc
 
   assert.throws(
     () => parseStateSchema(raw),
-    /actorAgendas key protagonist 与 actorId saber 不一致/,
+    /actorStates.protagonist.agenda.actorId saber 与 key 不一致/,
   );
-
-  section(raw, "secrets")["actorAgendas"] = {
-    ghost: {
-      actorId: "ghost",
-      goal: "watch",
-      fear: "light",
-      currentOrder: null,
-      lastIndependentActionAt: null,
-    },
-  };
-  assert.throws(() => parseStateSchema(raw), /非法actorAgendas key: actor ghost 不存在/);
 });
 
-void test("parseStateSchema validates actor knowledge lens actor refs and key consistency", () => {
+void test("parseStateSchema validates actor knowledge lens facet actorId against bundle key", () => {
   const raw = rawState();
-  section(raw, "secrets")["actorKnowledgeLenses"] = {
-    protagonist: {
+  section(section(raw, "secrets"), "actorStates")["protagonist"] = {
+    actorId: "protagonist",
+    knowledgeLens: {
       actorId: "saber",
       knows: ["A"],
       suspects: [],
@@ -131,19 +131,15 @@ void test("parseStateSchema validates actor knowledge lens actor refs and key co
 
   assert.throws(
     () => parseStateSchema(raw),
-    /actorKnowledgeLenses key protagonist 与 actorId saber 不一致/,
+    /actorStates.protagonist.knowledgeLens.actorId saber 与 key 不一致/,
   );
-
-  section(raw, "secrets")["actorKnowledgeLenses"] = {
-    ghost: { actorId: "ghost", knows: [], suspects: [], falseBeliefs: [], forbiddenKnowledge: [] },
-  };
-  assert.throws(() => parseStateSchema(raw), /非法actorKnowledgeLenses key: actor ghost 不存在/);
 });
 
 void test("parseStateSchema normalizes actor agenda independent-action time", () => {
   const raw = rawState();
-  section(raw, "secrets")["actorAgendas"] = {
-    protagonist: {
+  section(section(raw, "secrets"), "actorStates")["protagonist"] = {
+    actorId: "protagonist",
+    agenda: {
       actorId: "protagonist",
       goal: "cross the gate",
       fear: "being noticed",
@@ -155,7 +151,7 @@ void test("parseStateSchema normalizes actor agenda independent-action time", ()
   const parsed = parseStateSchema(raw);
 
   assert.equal(
-    parsed.secrets.actorAgendas["protagonist"]?.lastIndependentActionAt,
+    parsed.secrets.actorStates["protagonist"]?.agenda?.lastIndependentActionAt,
     "2004-01-30T07:00:00.000Z",
   );
 });

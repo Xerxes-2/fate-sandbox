@@ -97,17 +97,20 @@ void test("recordRelationshipSignal rejects missing actors and empty fields", ()
 
 void test("recordRelationshipSignal blocks player-known unrevealed secret strings", () => {
   const draft = createInitialState();
-  draft.secrets.actorSecrets[PROTAGONIST_ACTOR_ID] = {
+  draft.secrets.actorStates[PROTAGONIST_ACTOR_ID] = {
     actorId: PROTAGONIST_ACTOR_ID,
-    trueName: {
-      id: "protagonist-true-name",
-      value: "Artoria Pendragon",
-      revealState: "hidden",
-      revealConditions: ["revealed in story"],
+    secrets: {
+      actorId: PROTAGONIST_ACTOR_ID,
+      trueName: {
+        id: "protagonist-true-name",
+        value: "Artoria Pendragon",
+        revealState: "hidden",
+        revealConditions: ["revealed in story"],
+      },
+      hiddenNoblePhantasms: [],
+      privateMotives: [],
+      unrevealedAffiliations: [],
     },
-    hiddenNoblePhantasms: [],
-    privateMotives: [],
-    unrevealedAffiliations: [],
   };
 
   assert.throws(

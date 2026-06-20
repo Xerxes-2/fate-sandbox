@@ -64,7 +64,7 @@ void test("initializeNewGameTool initializes servant protagonist hidden true nam
 
   const state = getStateDetail(sessionManager);
   assert.equal(state.public.actors.protagonist?.servantForm?.identity.trueName.status, "hidden");
-  assert.equal(state.secrets.actorSecrets.protagonist !== undefined, true);
+  assert.equal(state.secrets.actorStates.protagonist?.secrets !== undefined, true);
 });
 
 void test("initializeNewGameTool rejects public revealed servant protagonist true name", () => {
@@ -118,7 +118,7 @@ void test("initializeNewGameTool coerces scalar reveal conditions into an array"
     createMockSessionManager(),
   );
 
-  const trueName = getState().secrets.actorSecrets["protagonist"]?.trueName;
+  const trueName = getState().secrets.actorStates["protagonist"]?.secrets?.trueName;
   assert.equal(trueName?.value, "隐藏真名");
   assert.deepEqual(trueName?.revealConditions, ["剧情内证据"]);
 });
@@ -149,7 +149,7 @@ function getStateDetail(sessionManager: MockSessionManager): {
       };
     };
   };
-  secrets: { actorSecrets: { protagonist?: unknown } };
+  secrets: { actorStates: { protagonist?: { secrets?: unknown } } };
 } {
   const entry = sessionManager.entries[sessionManager.entries.length - 1];
   const data =
@@ -171,7 +171,7 @@ function isStateEntry(value: unknown): value is {
         };
       };
     };
-    secrets: { actorSecrets: { protagonist?: unknown } };
+    secrets: { actorStates: { protagonist?: { secrets?: unknown } } };
   };
 } {
   return typeof value === "object" && value !== null && "state" in value;

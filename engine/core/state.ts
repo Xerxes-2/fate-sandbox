@@ -93,7 +93,7 @@ export interface GameState {
 }
 
 export interface StateMeta {
-  schemaVersion: 13;
+  schemaVersion: 14;
   createdAt: string;
   updatedAt: string;
   /** Seeded RNG seed（backlog #9）：确定性随机源，初始化时生成 */
@@ -155,7 +155,12 @@ export interface TurnObligation {
 }
 
 export interface SecretGameState {
-  actorSecrets: Record<ActorId, ActorSecretSlots>;
+  /**
+   * GM 对每个 actor 的隐藏内部模型，按 actorId 聚合。
+   * 三个 facet（secrets / agenda / knowledgeLens）同生死、同过 removeActorEverywhere 级联。
+   * 未来新增的 per-actor 秘密状态应作为 SecretActorState 的新字段，而非新的顶层侧表。
+   */
+  actorStates: Record<ActorId, SecretActorState>;
   campaignSecrets: SecretCampaignFact[];
   secretEventLog: SecretEventMemory[];
   offscreenEventLog: OffscreenEvent[];
@@ -163,12 +168,20 @@ export interface SecretGameState {
   factionClocks: FactionClock[];
   /** 到期义务：越过 dueAt 后 canonical commit 会在返回值里催账 */
   scheduledEvents: ScheduledEvent[];
-  /** NPC 主动性账本：目标、恐惧、当前指令与最近自主行动；按 actorId 聚合 */
-  actorAgendas: Record<ActorId, ActorAgendaState>;
-  /** NPC 认知边界账本：已知、猜测、误信与禁止知道的事实；按 actorId 聚合 */
-  actorKnowledgeLenses: Record<ActorId, ActorKnowledgeLens>;
   /** 玩家未确认的关系信号与误判，只给 GM/private resolve/subagent 使用 */
   relationshipSignals: RelationshipSignal[];
+}
+
+/**
+ * 单个 actor 的隐藏聚合：他秘密是什么（secrets）、想要什么（agenda）、知道什么（knowledgeLens）。
+ * 三个 facet 都是可选的；bundle.actorId 始终等于其在 actorStates 里的 key。
+ * 访问一律走 secret-actor-state.ts 的访问器，不允许裸 nested 写入（由它统一维护空 bundle 修剪）。
+ */
+export interface SecretActorState {
+  actorId: ActorId;
+  secrets?: ActorSecretSlots;
+  agenda?: ActorAgendaState;
+  knowledgeLens?: ActorKnowledgeLens;
 }
 
 export interface ActorAgendaState {
@@ -644,4 +657,4 @@ export interface StateExport extends Omit<GameState, "public"> {
 
 export type State = GameState;
 
-export const CURRENT_STATE_SCHEMA_VERSION = 13;
+export const CURRENT_STATE_SCHEMA_VERSION = 14;
