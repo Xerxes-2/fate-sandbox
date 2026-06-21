@@ -23,7 +23,7 @@ export const retireActorToolDefinition: FateToolDefinition = {
     "【使用边界】\n" +
     "- 临时敌人/路人/一次性从者退场，留在 public actors 会污染状态\n" +
     "- actor 不在场、非 ally、无 tracked item、也无需 condition/servantForm 追踪\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- retire protagonist\n" +
     "- 删除仍被契约/master role/tracked item 引用的 actor\n" +
     "- 用它隐藏仍属 active threat 的敌人（应留在 scene/threat 或 offscreen/memory 结算）",

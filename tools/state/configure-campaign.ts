@@ -45,7 +45,7 @@ export const configureCampaignToolDefinition: FateToolDefinition = {
     "- 开局定好时间线/城市/时区/货币/开场地点，推进前\n" +
     "- 换线（FSF/EXTRA/空境/月姬/custom）需同步 campaign 与 clock\n" +
     "- 存档 timeline/timezone 与实际地点不一致，热修\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 剧情中随意改时间线/时区逃避后果\n" +
     "- 用它替代 Scene Beat/地点移动（复杂 beat 用 progress_scene_beat，普通移动用 commit_turn）\n" +
     "- 未写 reason 就改 campaign 语义",

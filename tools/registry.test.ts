@@ -20,6 +20,27 @@ void test("tool entry schemas stay loose across all tool files", () => {
   }
 });
 
+void test("tool descriptions avoid checklist headings that bait reasoning", () => {
+  const forbiddenHeadings = [
+    "【必须调用的场景】",
+    "【必须调用场景】",
+    "【必须】",
+    "【严禁的行为】",
+    "【严禁行为】",
+    "【严禁】",
+  ];
+  for (const file of listToolSourceFiles()) {
+    const source = readFileSync(file, "utf-8");
+    for (const heading of forbiddenHeadings) {
+      assert.equal(
+        source.includes(heading),
+        false,
+        `${file}: tool descriptions should use compact boundary bullets, not ${heading}.`,
+      );
+    }
+  }
+});
+
 void test("registry stays a thin list without inline contracts", () => {
   const source = readFileSync(join(process.cwd(), "tools", "registry.ts"), "utf-8");
   assert.equal(

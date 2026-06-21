@@ -63,7 +63,7 @@ export const revealSecretToolDefinition: FateToolDefinition = {
     "- 首次建立从者或重要 NPC 的隐藏真相时，用 configure-* 写入 secret slot\n" +
     "- 玩家提出真名/宝具/隐藏身份 claim，或场内触发揭示条件时，用 claim-reveal / observed-reveal\n" +
     "- revealConditions 必须是之后 claim/trigger/evidence 能字面命中的短线索词\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 重复配置相同 secret\n" +
     "- 列出 secret slots 或幕后真相\n" +
     "- 证据不足时泄露正确答案",

@@ -24,7 +24,7 @@ export const initializeNewGameToolDefinition: FateToolDefinition = {
     "【使用边界】\n" +
     "- /skill:start-game 已定好时间线/立场/开场身份，进正式剧情前一次性建立可运行 state\n" +
     "- protagonist 是从者/非人现界者且真名/宝具需 hidden-canonical secret slot\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 用它续局、修档或剧情中重置后果\n" +
     "- 把 player-only 原作知识写成 public world fact\n" +
     "- protagonist 从者开局直接 public revealed 真名（未公开必须 hidden/suspected + hiddenTrueName secret）\n" +

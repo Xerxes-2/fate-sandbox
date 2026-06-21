@@ -111,7 +111,7 @@ export const resolveCombatExchangeToolDefinition: FateToolDefinition = {
     "- 战斗、撤退、保护、破除拘束、试探能力、宝具解放等高风险交锋\n" +
     "- 双方存在参数、伤势、地形、情报或资源投入差异，不能只靠口头裁决\n" +
     "- 可变评级宝具必须指定本次释放档位\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 一次结算完整战斗\n" +
     "- 把 outcome 当成自动状态变更\n" +
     "- 输出 HP、内部 score、DC 或未揭示秘密",

@@ -50,7 +50,7 @@ export const recordMemoryToolDefinition: FateToolDefinition = {
     "- 身世/契约/生死/真名/宝具/令咒/阵营/永久缺损等重大变化：record-major-event + claims\n" +
     "- 单次采购/调查/战斗结论等需长期保留的事件：也用 record-major-event\n" +
     "- 仅半天以上跳过、日终/章节摘要：record-daily-summary\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 记 GM 猜测、幕后真相、闲聊或短暂情绪\n" +
     "- 把玩家未确认秘密写进 public memory\n" +
     "- 非 mundane claim 缺 evidence/relatedSecretSlotIds 却标 confirmed/observed/inferred\n" +

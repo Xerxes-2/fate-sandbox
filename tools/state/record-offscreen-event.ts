@@ -36,7 +36,7 @@ export const recordOffscreenEventToolDefinition: FateToolDefinition = {
     "- 平行线 subagent 返回的 offscreen/secret 事件要成为 canonical secret state\n" +
     "- NPC 阵营在视野外侦察/准备/转移/调结界/传令\n" +
     "- 保存 future hooks 但暂不入 public memory\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 写入 player-known（公开事实用 record_memory 或对应 update 工具）\n" +
     "- 把 privateSummary 原样展示给玩家\n" +
     "- 越过剧情窗口或违反 forbiddenEscalations",

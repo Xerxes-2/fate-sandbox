@@ -25,7 +25,7 @@ export const commitTurnToolDefinition: FateToolDefinition = {
     "- 一轮内同时改变时间、地点、目标、伤势、物品、资金、记忆或从者资源\n" +
     "- Scene Beat 开启/收口优先用 progress_scene_beat\n" +
     "- resolve_combat_exchange 登记的义务必须在本次 events 里落地\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 把它当裸 patch\n" +
     "- 在 events 里写时间或移动\n" +
     "- 提交隐藏事实到 public\n" +

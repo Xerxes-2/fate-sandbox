@@ -37,7 +37,7 @@ export const progressSceneBeatToolDefinition: FateToolDefinition = {
     "- 复杂调查、潜入、对峙、撤退、战斗准备等场景用 kind=begin\n" +
     "- 当前 beat 收口、解决目标、清理威胁、可选进入 nextBeat 时用 kind=complete\n" +
     "- begin / complete 都必须填写 time\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 用它记录长期目标或幕后真相\n" +
     "- 在当前无剧情窗口或无目标时强行 complete\n" +
     "- complete 后继续压入下一 foreground beat",

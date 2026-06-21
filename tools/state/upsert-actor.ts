@@ -213,7 +213,7 @@ export const upsertActorToolDefinition: FateToolDefinition = {
     "- 开局确认玩家角色：setup-protagonist\n" +
     "- 从者正式入场：upsert-servant\n" +
     "- 无主从者用 masterless，并省略或置空 masterActorId/masterName\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 对普通 NPC 使用 upsert-servant\n" +
     "- 用 upsert-public-npc 写入魔术、真名、宝具或隐藏身份\n" +
     "- 把本局不需要追踪的角色全量写进 state",

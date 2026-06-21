@@ -125,7 +125,7 @@ export const updateHookToolDefinition: FateToolDefinition = {
     "- 悬念压力实质上调：escalate，novelty 必填\n" +
     "- 悬念兑现：pay\n" +
     "- 悬念不再有价值：retire\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 不登记就反复让悬念出现在正文\n" +
     "- 用空泛 novelty 维持存在感\n" +
     "- 预算满时硬开新悬念",

@@ -25,7 +25,7 @@ export const updateActorConditionToolDefinition: FateToolDefinition = {
     "- 外观/服装变化用 change-outfit\n" +
     "- 关键物跨 actor 转移、状态变化或加入 trackedItems\n" +
     "- 非从者 actor 的魔术回路或 Od 状态变化\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 改写锁定身份事实、真名或基础参数\n" +
     "- 用通用 HP 百分比代替离散伤势\n" +
     "- 声称 Od / 魔力变化却不更新 circuits\n" +

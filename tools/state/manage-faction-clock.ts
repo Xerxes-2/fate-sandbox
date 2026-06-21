@@ -162,7 +162,7 @@ export const manageFactionClockToolDefinition: FateToolDefinition = {
     "- 未来某时必然发生的事：schedule-event\n" +
     "- commit 返回催账时：resolve-due 或 extend-due\n" +
     "- 时钟填满后：先兑现格局变化，再 reset-clock 或 retire-clock\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 直接把时钟内容或到期事件写给玩家\n" +
     "- 无理由 advance\n" +
     "- 用 extend-due 无限拖延\n" +

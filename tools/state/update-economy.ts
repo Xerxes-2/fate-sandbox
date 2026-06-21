@@ -44,14 +44,9 @@ function formatPurseIds(draft: State): string {
 export const updateEconomyToolDefinition: FateToolDefinition = {
   name: "update_economy",
   description:
-    "更新 2004 年日本円经济状态；每笔资金必须指定 purse/account 与 reason，资金增加必须说明可审计来源。\n\n" +
-    "【必须调用的场景】\n" +
-    "- 消费、获得现金、增加可访问资金账户、修正资金账户名称或记录债务\n" +
-    "- 食宿、装备、服务、情报等交易发生时\n\n" +
-    "【严禁的行为】\n" +
-    "- 把同行者资金说成玩家随身现金\n" +
-    "- 资金不足时默认免费兜底\n" +
-    "- 用 gain-money 把现金设为目标数值或凭空发财；gain-money 必须提供 source 和 counterparty",
+    "更新 2004 年日本円经济状态；每笔资金指定 purse/account 与 reason，资金增加说明可审计来源。\n\n" +
+    "使用边界：消费、获得现金、增加/重命名资金账户、记录债务，或食宿/装备/服务/情报等交易。\n" +
+    "禁区：把同行者资金说成玩家随身现金、资金不足时免费兜底，或用 gain-money 设目标数值/凭空发财。", 
   parameters: Type.Object({
     kind: Type.String({
       description: "允许: spend-money / gain-money / add-purse / rename-purse / add-debt",

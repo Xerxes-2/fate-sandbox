@@ -147,7 +147,7 @@ export const recordActorKnowledgeToolDefinition: FateToolDefinition = {
     "- 重建整个认知边界：upsert-lens（四数组显式给出）\n" +
     "- 谣言证伪/误信纠正/信息过期：remove-fact\n" +
     "- NPC 离开本局跟踪：clear + reason\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 用它公开秘密：它只写 secret state\n" +
     "- 把玩家现实知识/GM lookup/未揭示真名/隐藏宝具塞进 knows（除非剧情已成立）\n" +
     "- 让 NPC 说出 forbiddenKnowledge；需揭示先走 reveal_secret 或前台证据",

@@ -137,7 +137,7 @@ export const updateActorAgendaToolDefinition: FateToolDefinition = {
     "- 开启/改写行动线（目标/命令/恐惧变化）：kind=upsert，覆盖旧账本\n" +
     "- NPC 在视野外做自主行动：kind=mark-independent-action（自动登记时钟）\n" +
     "- 退出跟踪/死亡/离场/行动线终结：kind=clear + reason\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 把 agenda 内容直接写给玩家\n" +
     "- 用空泛 goal（如“制造剧情张力”）；必须是世界内想达成的事\n" +
     "- 让重要 NPC 连续多轮只等玩家询问",

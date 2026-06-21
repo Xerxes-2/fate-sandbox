@@ -48,15 +48,9 @@ function formatAccepted(packet: DirectionPacket): string {
 export const submitDirectionPacketToolDefinition: FateToolDefinition = {
   name: SUBMIT_DIRECTION_PACKET_TOOL,
   description:
-    "提交本轮 direction packet 并结束结算。这是每轮唯一的收尾动作。\n\n" +
-    "【必须调用的场景】\n" +
-    "- 本轮全部领域工具结算完成之后，一轮恰好一次\n" +
-    "- meta/OOC 轮用 needsRender=false + directReply 直接作答\n\n" +
-    "【严禁的行为】\n" +
-    "- 在调用前后输出叙事正文（玩家看不到，渲染器也看不到）\n" +
-    "- 把未揭示真名/隐藏宝具名写进任何字段（防火墙会整包拒绝）\n" +
-    "- 用它替代领域工具落账：时间/伤势/金钱/揭示必须先用对应工具结算\n" +
-    "- 把 UI 候选行动写进 endWindow 或正文；候选只能放 suggestedActions，且 submitText 必须是给玩家完整显示的自然输入，不得压缩",
+    "提交本轮 direction packet 并结束结算；每轮唯一收尾动作。\n\n" +
+    "使用边界：全部领域工具结算完成后调用；meta/OOC 轮用 needsRender=false + directReply 直接作答。\n" +
+    "禁区：调用前后输出叙事正文、泄露未揭示真名/隐藏宝具名、替代领域工具落账，或把 UI 候选行动写进 suggestedActions 以外的位置。", 
   parameters: Type.Object({
     needsRender: Type.Boolean({
       description: "true=叙事轮（渲染器产出正文）；false=meta/OOC 直答轮",

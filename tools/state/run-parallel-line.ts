@@ -107,7 +107,7 @@ export const runParallelLineToolDefinition: FateToolDefinition = {
     "- 需推进后台世界线，不想手写全部 ParallelLineInput\n" +
     "- gm-tool-policy 触发 parallel-line（跳时 >10-30min、beat 关闭、连续 2 轮无代价）\n" +
     "流程：拿 JSON → 作 task 传给 parallel-line 子代理（agentScope: project）→ 审查后用 record_offscreen_event 等工具落地。\n\n" +
-    "【严禁】\n" +
+    "禁区：\n" +
     "- 绕过 engine 装配手写完整 ParallelLineInput\n" +
     "- 把 privateFacts 原样写进玩家可见正文\n" +
     "- 不审查子代理候选就落地",

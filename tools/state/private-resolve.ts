@@ -28,12 +28,8 @@ export const privateResolveToolDefinition: FateToolDefinition = {
   name: "private_resolve",
   description:
     "窄口私密结算：隐藏反应或隐藏相性；只返回玩家安全叙事约束。\n\n" +
-    "【必须调用的场景】\n" +
-    "- 需要隐藏事实参与 NPC 反应，但不能公开真相\n" +
-    "- 判断两个 actor 互动是否触发隐藏相性\n\n" +
-    "【严禁的行为】\n" +
-    "- 询问完整隐藏真相或幕后动机\n" +
-    "- 用它替代 reveal_secret",
+    "使用边界：隐藏事实参与 NPC 反应但不能公开真相，或判断两个 actor 互动是否触发隐藏相性。\n" +
+    "禁区：询问完整隐藏真相/幕后动机，或替代 reveal_secret。", 
   parameters: Type.Object({
     kind: Type.String({ description: "允许: hidden-reaction / secret-compatibility" }),
     actorId: Type.String({ description: "主体 actor id；必须已存在于 public actors" }),
