@@ -1,6 +1,8 @@
 # Spike: in-process subagents for a synchronous `advance_parallel_line`
 
-**Branch:** `spike/in-process-subagents` · **Status:** migration EXECUTED on branch (round 3), pending online runtime validation. NOT merged.
+**Branch:** `spike/in-process-subagents` · **Status:** ABANDONED (round 4). Live smoke
+test proved multi-point integration breakage; master keeps the old working
+substrate. Branch + this doc retained as the recorded negative result. DO NOT MERGE.
 **Candidate substrate:** [`@gotgenes/pi-subagents@17.2.0`](https://pi.dev/packages/@gotgenes/pi-subagents) (in-process hard fork of tintinweb's)
 
 ## Question
@@ -262,3 +264,48 @@ itself is NOT exercisable headless (needs the harness + a model).
 
 If #3 and #5 pass, the substrate is sound and `advance_parallel_line` (step 4)
 becomes a low-risk follow-up.
+
+## Round 4: live smoke test — ABANDONED
+
+Ran the substrate smoke prompt (GM → `subagent({ subagent_type: "parallel-line",
+prompt: <ParallelLineInput + DIAG override> })`) against the live harness with
+deepseek-v4-pro. Pulled the child's own transcript off disk
+(`sessions/<parent>/tasks/<child>.jsonl`) plus the permission-system review log
+and the installed @gotgenes source. Findings:
+
+| # | Observed | Evidence | Verdict |
+| - | -------- | -------- | ------- |
+| 1 | **Context injection dead** | child's first user message = the raw prompt, **no `<timeline_state_context>`** | our parent-side `tool_call` → `event.input` mutation never reaches the @gotgenes child prompt (worked on the old substrate; the object/ordering differs) |
+| 2 | **`lookup` not callable** | child assistant message: `toolCalls: NONE`, model emitted `<tool_call name="lookup">` as **plain text** then halted, **no ParallelLineOutput JSON** | child got **zero usable tools** (firewall-closed or tools-not-registered), not a leak — a working firewall would have left exactly `lookup` |
+| 3 | **Firewall correctness** | child never attempted a domain tool | UNVERIFIED — but #2 (no lookup either) points to deny-closed, not open |
+| 4 | **No valid output** | output was only the lookup text | the run was effectively empty |
+
+**Root causes (source-level):**
+
+- **Injection:** `@gotgenes/pi-subagents` builds the child prompt from the
+  `subagent` tool's `prompt` arg (`buildAgentPrompt`, `create-subagent-session.ts`
+  `systemPromptOverride: () => cfg.systemPrompt` + the user prompt). Our
+  `extension.ts` `tool_call` hook mutates `event.input.prompt` parent-side; that
+  mutation does not propagate into the child the way it did on the old
+  separate-process substrate.
+- **Firewall:** `@gotgenes/pi-permission-system` resolves the active agent name
+  from `<active_agent name="...">` markers / `active_agent` session entries
+  **designed for `pi-agent-router`** (`active-agent.ts`). `@gotgenes/pi-subagents`
+  does inject that tag in `buildAgentPrompt`, yet the child still ended up with no
+  `lookup` — so either `before_agent_start`'s `event.systemPrompt` doesn't carry
+  the tag, or rule composition denied `lookup` too. Unresolved and fragile; the
+  intended pairing is router-based, not in-process-subagent-based.
+
+**Decision (user, criterion "migrate only if debt < mainline value"):** the payoff
+is ergonomic-only — Phase 3's backstage-obligation ledger already guarantees
+correctness and the manual three-step works on the old substrate. The two
+headless-unverifiable runtime risks the round-2 debt ledger flagged both
+**materialized** as real breakage. Debt > value. **Abandon the migration; stay on
+master** (which retains `npm:pi-subagents`, the timeline extension, the
+`tools: lookup` + `extensions:` frontmatter — injection and firewall both proven
+there — plus the schema-migration fix). The in-process one-shot
+`advance_parallel_line` stays shelved; Phase 3 remains the correctness guarantee.
+
+**What carried back to master independently:** only the schema-migration fix
+(each step sets its own target version) — cherry-picked as `5a9cf6e`. Everything
+else here is spike-only and stays unmerged.
