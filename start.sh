@@ -83,7 +83,10 @@ fi
 mkdir -p .pi/agent/recipes .pi/agent/backstage-sessions
 if compgen -G "./agents/recipes/*.json" >/dev/null 2>&1; then
   cp -f ./agents/recipes/*.json .pi/agent/recipes/
-  echo "✓ 已同步后台 director recipe → .pi/agent/recipes/"
+  # recipe 是可执行资产；pi-actors 拒绝/告警 group-writable 的 recipe 根（组内可注入恶意 recipe）。
+  # 默认 umask 0002 会让 cp 出的文件/目录带 g+w，每次启动都去掉组写。
+  chmod -R g-w .pi/agent/recipes
+  echo "✓ 已同步后台 director recipe → .pi/agent/recipes/（已去组写）"
 fi
 
 # 双模型：渲染轮（玩家可见正文）可与结算轮用不同模型，详见 README “Model Notes”。

@@ -20,8 +20,11 @@
 
 import type { State } from "./state.ts";
 
-import { assembleParallelLineInput, type AssembleParallelLineInput } from "./parallel-line-assembler.ts";
 import { BACKSTAGE_DIRECTOR_PERSONA } from "./backstage-director-persona.ts";
+import {
+  assembleParallelLineInput,
+  type AssembleParallelLineInput,
+} from "./parallel-line-assembler.ts";
 import { buildTimelineStateContextFromRaw } from "./state-file-projection.ts";
 
 const CONTEXT_OPEN_TAG = "<timeline_state_context>";
