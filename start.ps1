@@ -150,19 +150,8 @@ if (Test-Path -LiteralPath $SettingsPath) {
 if (-not $Settings.ContainsKey("theme")) {
   $Settings["theme"] = "dark"
 }
-if (-not $Settings.ContainsKey("subagents") -or -not ($Settings["subagents"] -is [System.Collections.IDictionary])) {
-  $Settings["subagents"] = @{}
-}
-$Settings["subagents"]["disableBuiltins"] = -not $DevMode
-
+# pi-subagents 内置 agents 的禁用逻辑已随老扩展移除。
 Write-Utf8NoBomFile -Path $SettingsPath -Content (($Settings | ConvertTo-Json -Depth 20) + [Environment]::NewLine)
-
-if ($DevMode) {
-  Write-Host "Dev mode: pi-subagents builtin agents are enabled."
-} else {
-  Write-Host "Player mode: pi-subagents builtin coding agents are disabled."
-  Write-Host "Dev mode: set `$env:TAVERN2AGENT_DEV='1'; then run .\start.ps1"
-}
 
 if ($env:FATE_RENDER_MODEL) {
   Write-Host "Render pass model override: FATE_RENDER_MODEL=$env:FATE_RENDER_MODEL"

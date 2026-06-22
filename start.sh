@@ -27,7 +27,7 @@ mkdir -p ./sessions
 # 然后 --skill ./skills/ 显式加载项目自己的 skills 目录。
 # 确保 reviewer/coder/oracle 等开发用 skill 不会泄漏到游戏会话中。
 #
-# 项目级 pi 包（例如 npm:pi-subagents / npm:pi-powerline-footer）应声明在
+# 项目级 pi 包（例如 npm:pi-web-access / npm:pi-powerline-footer）应声明在
 # 项目根 .pi/settings.json 的 packages 数组中；pi 首次启动会自动安装到 .pi/npm/。
 # 发布包保留 .pi/settings.json 和 .pi/agents/，不要打包 .pi/npm/。
 #
@@ -52,12 +52,10 @@ EOF
   echo "  （如需指定默认模型，编辑此文件添加 defaultProvider / defaultModel）"
 fi
 
-# 普通玩家模式禁用 pi-subagents 内置 coding agents，避免 reviewer/worker/oracle 等出现在游戏运行时。
-# 开发时如需保留内置 agents：TAVERN2AGENT_DEV=1 ./start.sh
+# 项目隔离配置默认 theme。（pi-subagents 内置 agents 的禁用逻辑已随老扩展移除。）
 node - <<'NODE'
 const fs = require('fs');
 const path = '.pi/agent/settings.json';
-const dev = process.env.TAVERN2AGENT_DEV === '1';
 let settings = {};
 try {
   if (fs.existsSync(path)) settings = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -65,15 +63,8 @@ try {
   settings = {};
 }
 settings.theme ??= 'dark';
-settings.subagents ??= {};
-settings.subagents.disableBuiltins = !dev;
 fs.writeFileSync(path, JSON.stringify(settings, null, 2) + '\n');
 NODE
-if [ "${TAVERN2AGENT_DEV:-}" = "1" ]; then
-  echo "✓ 开发模式：保留 pi-subagents 内置 agents"
-else
-  echo "✓ 玩家模式：已禁用 pi-subagents 内置 coding agents（开发模式: TAVERN2AGENT_DEV=1 ./start.sh）"
-fi
 
 # 双模型：渲染轮（玩家可见正文）可与结算轮用不同模型，详见 README “Model Notes”。
 if [ -n "${FATE_RENDER_MODEL:-}" ]; then

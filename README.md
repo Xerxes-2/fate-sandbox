@@ -171,11 +171,6 @@ agents/user/prose-lint.json
 - 游玩存档在 `sessions/`。
 - `state/` 是运行时 debug export / legacy fallback，不是发布内容。
 - `.pi/agent/auth.json` 包含本地认证信息，不要分享。
-- 普通玩家模式会禁用 pi-subagents 内置 coding agents；开发时可用：
-
-```bash
-TAVERN2AGENT_DEV=1 ./start.sh
-```
 
 ## License
 
