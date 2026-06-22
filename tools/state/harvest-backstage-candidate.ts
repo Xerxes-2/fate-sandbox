@@ -1,10 +1,10 @@
 /**
  * harvest_backstage_candidate 领域工具（引擎直接异步导演 slice A，回程防火墙）。
  *
- * 异步 faction-director 跑完后，GM 从该 director 的持久 session 取回最后一条
- * assistant 文本（裸候选）。本工具把这段原始文本过 engine 的 TypeBox 验收
- * （parseParallelLineOutput：容前后噪音、定位首尾大括号、严格校验结构），
- * 返回已验收的 ParallelLineOutput 供 GM 审查后落地。
+ * GM 只给 run_parallel_line 返回的 run_id；engine 自己按 run_id 定位该 director 的
+ * 持久 session（取最新一份），抽出最后一条 assistant 文本（裸候选），再过 engine 的
+ * TypeBox 验收（parseParallelLineOutput：容前后噪音、定位首尾大括号、严格校验结构），
+ * 返回已验收的 ParallelLineOutput 供 GM 审查后落地。无需 GM 手动读 session / 用 inspect。
  *
  * 不自动落地：审查后由 GM 决定走 record_offscreen_event（progress/escalation）
  * 或 resolve_backstage_line（no-change/blocked）。「不审查就落地」是禁区。
@@ -16,17 +16,20 @@ import type { ToolResult } from "../runtime/tool-result.ts";
 
 import { Type } from "typebox";
 
+import { readBackstageCandidateRaw } from "../../engine/core/backstage-session-read.ts";
 import { parseParallelLineOutput } from "../../engine/core/parallel-line-output-schema.ts";
 import { assertNonEmptyString, isRecord } from "../../engine/core/typebox-validation.ts";
 import { textResult } from "../runtime/tool-result.ts";
 
-export function harvestBackstageCandidateTool(params: unknown): ToolResult {
+/** sessionDir 仅供测试注入临时夹具目录；生产走默认 BACKSTAGE_SESSION_DIR。 */
+export function harvestBackstageCandidateTool(params: unknown, sessionDir?: string): ToolResult {
   if (!isRecord(params)) {
     throw new Error("harvest_backstage_candidate 参数必须是对象。");
   }
-  const raw = assertNonEmptyString(params["raw"], "raw");
+  const runId = assertNonEmptyString(params["run_id"], "run_id");
+  const raw = readBackstageCandidateRaw(runId, sessionDir);
   const candidate = parseParallelLineOutput(raw);
-  return textResult(buildGuidance(candidate), { candidate });
+  return textResult(buildGuidance(candidate), { candidate, runId });
 }
 
 function buildGuidance(candidate: ParallelLineOutput): string {
@@ -51,18 +54,19 @@ function buildGuidance(candidate: ParallelLineOutput): string {
 export const harvestBackstageCandidateToolDefinition: FateToolDefinition = {
   name: "harvest_backstage_candidate",
   description:
-    "把异步 faction-director 返回的裸候选文本过 engine 验收，返回结构合法的 ParallelLineOutput 供审查后落地。\n\n" +
+    "按 run_id 从 director 的持久 session 取回裸候选并过 engine 验收，返回结构合法的 ParallelLineOutput 供审查后落地。\n\n" +
     "【使用边界】\n" +
-    "- faction-director 异步跑完，从其持久 session 取回最后一条 assistant 文本后，先过本工具验收\n" +
+    "- run_parallel_line 异步起 director 后，隔轮（约 10-20s）用其返回的 run_id 调本工具；engine 自动定位 session、抽取候选、做结构校验\n" +
+    "- run 尚未产出候选 / run_id 不存在会报错：稍后重试或核对 run_id\n" +
     "- 验收失败（非法 JSON / 缺字段）会报错：重开 director 或修正后重试\n" +
-    "流程：spawn faction_director（异步）→ 隔轮取回裸文本 → harvest_backstage_candidate 验收 → 审查 → record_offscreen_event / resolve_backstage_line 落地清账。\n\n" +
+    "流程：run_parallel_line（异步）→ 隔轮 harvest_backstage_candidate(run_id) 验收 → 审查 → record_offscreen_event / resolve_backstage_line 落地清账。\n\n" +
     "禁区：\n" +
     "- 跳过验收直接落地未经结构校验的候选\n" +
     "- 把 privateSummary 原样展示给玩家\n" +
-    "- 本工具不落地、不改 state；落地用 record_offscreen_event / resolve_backstage_line",
+    "- 本工具不落地、不改 canonical state；落地用 record_offscreen_event / resolve_backstage_line",
   parameters: Type.Object({
-    raw: Type.String({
-      description: "faction-director 持久 session 里最后一条 assistant 消息的原始文本（裸候选 JSON，可含前后噪音）",
+    run_id: Type.String({
+      description: "run_parallel_line 返回的 run_id（如 bl-archer-floor1-scout）；engine 按它定位该 director 的持久 session 并取回裸候选",
     }),
   }),
   execute: async (_toolCallId, params) => harvestBackstageCandidateTool(params),

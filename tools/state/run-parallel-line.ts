@@ -40,8 +40,8 @@ export function runParallelLineTool(params: unknown, sessionManager: unknown): T
       "后台 director 已【异步起飞】（engine 直接 fork hermetic pi -p，不经主循环、不阻塞本回合）：",
       `  run_id=${handle.runId}  model=${handle.model}  session_dir=${handle.sessionDir}  pid=${handle.pid ?? "?"}`,
       "",
-      "隔轮（约 10-20s 后）从 session_dir 取该 run 的最后一条 assistant 文本 →",
-      "harvest_backstage_candidate 验收 → 审查 → record_offscreen_event（progress/escalation，落地即清义务）",
+      `隔轮（约 10-20s 后）用 run_id=${handle.runId} 调 harvest_backstage_candidate（engine 自动取回，无需手动读 session / inspect）→`,
+      "审查 → record_offscreen_event（progress/escalation，落地即清义务）",
       "或 resolve_backstage_line（no-change/blocked）。导演失败/未起不算清账。",
     ].join("\n"),
     {
