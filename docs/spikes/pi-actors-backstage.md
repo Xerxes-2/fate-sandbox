@@ -232,18 +232,92 @@ Two factions with disjoint agendas/scope/knowledge, fired at the same time:
 
 ### Pass / fail (probe 3)
 
-| #   | Check             | Pass                                                                                       |
-| --- | ----------------- | ------------------------------------------------------------------------------------------ |
-| S1  | **Concurrency**   | both runs reach `code=0`; they overlap in time (not serialized by us)                      |
-| S2  | **Isolation** 🔑   | Caster candidate is Caster-only, Assassin candidate is Assassin-only; codewords differ; neither session file contains the other's content |
-| S3  | **Batch harvest** | the GM collects both candidates cleanly into one tick batch                                 |
-| S4  | **Output**        | both bare `ParallelLineOutput` JSON with `carryForward`                                     |
+| #   | Check             | Pass                                                                                                                                      |
+| --- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | **Concurrency**   | both runs reach `code=0`; they overlap in time (not serialized by us)                                                                     |
+| S2  | **Isolation** 🔑  | Caster candidate is Caster-only, Assassin candidate is Assassin-only; codewords differ; neither session file contains the other's content |
+| S3  | **Batch harvest** | the GM collects both candidates cleanly into one tick batch                                                                               |
+| S4  | **Output**        | both bare `ParallelLineOutput` JSON with `carryForward`                                                                                   |
 
 If S1 + S2 pass, the "world breathing" floor is real: many factions advance
 offscreen at once, each in its own sealed lane. (Cross-faction **coordination** —
 `room`/`coordinator`, where faction A's move informs faction B — is a deeper,
 separate capability; not in scope here. Independent fan-out is the floor we need
 first.)
+
+### Probe 3 result (live) — PASS
+
+Two concurrent spawns (`pl_caster_sw` / `dir-caster-swarm`, `pl_assassin_sw` /
+`dir-assassin-swarm`), deepseek-v4-pro, model pinned per learning #1.
+
+- **S1 Concurrency — PASS.** Starts 43ms apart
+  (`05:54:38.696Z` / `05:54:38.739Z`), both ran ~20s fully overlapped, both
+  `code=0`. Genuine parallelism.
+- **S2 Isolation — PASS.** Distinct invented codewords
+  (`twilight-thread` vs `Kagemusha`). Caster candidate is harvest-only, Assassin
+  candidate is gate-watch-only. Each session file contains **zero** of the
+  other's content. Firewall holds per-faction under concurrency.
+- **S3 Batch harvest — PASS.** Both candidates collected from their session
+  files into one tick batch.
+- **S4 Output — PASS.** Both bare `ParallelLineOutput` JSON with `carryForward`.
+
+**Real finding (the next frontier, not a failure):** Caster's `nextSteps`
+included "have Assassin scout the town perimeter" — it tried to **direct** another
+faction it saw in its own context. In independent fan-out, Assassin (a separate
+director) never receives that; it would be the GM's job to fold such a
+cross-faction intent into Assassin's next delta. This precisely marks the
+boundary between the validated **independent fan-out** floor and the deeper
+**coordination** ceiling (`room`/`coordinator`).
+
+---
+
+## Spike complete — capability map 4/4 validated
+
+| Capability                         | Verdict | `pi-subagents` can? |
+| ---------------------------------- | ------- | ------------------- |
+| Async hermetic single-line         | ✅ r1/r2 | partial (sync only) |
+| Durable, inspectable retrieval     | ✅ r2    | ❌                  |
+| **Persistent-memory director**     | ✅ p2    | ❌ (structural)     |
+| **Swarm: concurrent independent**  | ✅ p3    | ❌                  |
+| Cross-faction coordination (room)  | ⚪ not probed | ❌              |
+
+The firewall held in **every** mode (single, persistent, concurrent): 0 tools, no
+secret ever in any child session, no canonical-state path. The differentiators
+`pi-subagents` cannot reach — self-remembering directors and a concurrent
+multi-faction world tick — are both proven.
+
+### Recommendation
+
+**Adopt `pi-actors` as the backstage-generation substrate — incrementally, on a
+trigger — keeping the Phase 3 obligation ledger as the engine-side correctness
+spine.** This is a clean layering, not a rip-and-replace:
+
+- **Correctness stays in the engine** (Phase 3 ledger: open obligation → settle on
+  a later canonical turn via `record_offscreen_event`). Version-controlled,
+  tested. Unchanged.
+- **Generation moves to pi-actors** (async hermetic directors, durable
+  candidates, persistent per-faction memory). Replaces the old synchronous
+  `pi-subagents` parallel-line call.
+
+**Productionization must-dos (from live learnings):**
+
+1. **Pin a cheap, known-good backstage model with fallback** — do not inherit
+   `{current_model}` (Opus billing failure observed; deepseek worked).
+2. **Session hygiene for persistent directors** — failed attempts accumulate in
+   the resumed session; pin the model to cut failures and/or periodically
+   re-seed/compact the director session.
+3. **A clean harvest path** — the session-JSONL last-assistant-message read works
+   but is clunky; a thin harvest helper (or a declared durable artifact) is worth
+   it before wiring into the loop.
+
+**Adoption trigger:** wire it when backstage breadth actually demands it —
+multi-faction world ticks, or single-turn synchronous generation becoming a UX
+block. Until then the validated spike stands as a proven, ready option; master's
+working synchronous substrate is fine as the baseline.
+
+**Out of scope / next spike if pursued:** cross-faction coordination
+(`room`/`coordinator`) — the only unproven capability, and the one that would let
+Caster actually command Assassin offscreen.
 
 ## Files in this spike
 
