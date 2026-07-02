@@ -163,7 +163,7 @@ void test("commitTurn refuses to resolve the last objective of an active beat", 
           },
         ],
       }),
-    /progress_scene_beat kind=complete/,
+    /complete-beat/,
   );
 
   assert.equal(draft.public.scene.storyWindow?.currentBeatId, "active-beat");

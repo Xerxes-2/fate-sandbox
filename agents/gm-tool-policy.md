@@ -22,10 +22,10 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 
 ## Turn structure
 
-- Use `progress_scene_beat` for complex investigation, infiltration, confrontation, retreat, or battle preparation. `begin`/`complete` are the ONLY way to open or close a Scene Beat / story window.
-- Otherwise use `commit_turn` for aggregated state landing inside the current player action window.
-- Scene objectives and threats are beat-scoped: `add-objective` / `resolve-objective` / `add-threat` / `clear-threat` only work while a Scene Beat is active. `commit_turn` may resolve a non-final objective, but closing a beat's LAST objective requires `progress_scene_beat complete` (which handles the memory/presence/situation/next-beat wrap-up). `commit_turn` no longer auto-closes a window.
-- Canonical turn tools require top-level `time`.
+- Every narrative turn ends with exactly one `commit_turn(time, events=[...])` call. Scene Beat lifecycle (begin/complete) is handled via scene events: use `{ kind:"scene", event:{ kind:"begin-beat", title, objectives, ... } }` to open a beat, and `{ kind:"scene", event:{ kind:"complete-beat", outcome, memory?, nextBeat?, ... } }` to close one.
+- All state changes — economy, actor conditions, memory, scene presence, beat lifecycle — go through the same `commit_turn` events array.
+- Scene objectives and threats are beat-scoped: `add-objective` / `resolve-objective` / `add-threat` / `clear-threat` only work while a Scene Beat is active. Closing a beat's LAST objective requires `complete-beat` which handles the memory/presence/situation/next-beat wrap-up. `resolve-objective` cannot resolve the last objective.
+- `time` is mandatory in `commit_turn`.
 - Resolve one player action window and its immediate consequences per reply.
 - If continuing would require another canonical turn, stop at the next actionable window for the player.
 
@@ -52,7 +52,7 @@ Project-scope subagents are auditors or candidate generators only; the main GM s
 
 ### Backstage obligation (hard-blocked)
 
-The engine now enforces this discipline instead of trusting prompt self-discipline. A canonical turn that advances ≥30 minutes, completes a Scene Beat, or is the second consecutive no-cost turn raises a **backstage obligation**. While one is open, the NEXT `commit_turn` / `progress_scene_beat` is hard-rejected until you discharge it:
+The engine now enforces this discipline instead of trusting prompt self-discipline. A canonical turn that advances ≥30 minutes, completes a Scene Beat (`complete-beat` scene event), or is the second consecutive no-cost turn raises a **backstage obligation**. While one is open, the NEXT `commit_turn` is hard-rejected until you discharge it:
 
 - Real backstage movement → `run_parallel_line` (engine forks the async director itself) → next turn `harvest_backstage_candidate` with the `run_id` (engine auto-retrieves + validates) → land with `record_offscreen_event` (this clears the obligation and the pending-harvest marker).
 - Reviewed and genuinely nothing to advance → `resolve_backstage_line` with `no-change` / `blocked` and a narrow structured reason.

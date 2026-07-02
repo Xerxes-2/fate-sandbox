@@ -47,7 +47,7 @@ export const configureCampaignToolDefinition: FateToolDefinition = {
     "- 存档 timeline/timezone 与实际地点不一致，热修\n\n" +
     "禁区：\n" +
     "- 剧情中随意改时间线/时区逃避后果\n" +
-    "- 用它替代 Scene Beat/地点移动（复杂 beat 用 progress_scene_beat，普通移动用 commit_turn）\n" +
+    "- 用它替代 Scene Beat/地点移动（复杂 beat 用 commit_turn 的 begin-beat scene 事件，普通移动用 time.kind=travel）\n" +
     "- 未写 reason 就改 campaign 语义",
   parameters: Type.Object({
     presetId: Type.String({

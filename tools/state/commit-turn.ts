@@ -21,13 +21,24 @@ function turnHasCost(events: readonly TurnCommitEvent[]): boolean {
     if (COST_EVENT_KINDS.has(event.kind)) {
       return true;
     }
-    if (event.kind === "scene" && event.event.kind === "add-threat") {
+    if (
+      event.kind === "scene" &&
+      (event.event.kind === "add-threat" ||
+        // beat 转换是有代价的 canonical 动作（旧 progress_scene_beat 语义：hasCost 恒真）
+        event.event.kind === "begin-beat" ||
+        event.event.kind === "complete-beat")
+    ) {
       return true;
     }
     // memory 中只有 record-major-event 才计入 cost（重大事件=有代价）；
     // record-daily-event 等轻量笔记不算机械动作。
     return event.kind === "memory" && event.event.kind === "record-major-event";
   });
+}
+
+// beat 收口不再是独立工具；complete-beat scene 子事件就是 beat 边界信号。
+function turnHasBeatBoundary(events: readonly TurnCommitEvent[]): boolean {
+  return events.some((event) => event.kind === "scene" && event.event.kind === "complete-beat");
 }
 
 export function commitTurnTool(params: unknown, sessionManager: unknown): ToolResult {
@@ -41,7 +52,7 @@ export function commitTurnTool(params: unknown, sessionManager: unknown): ToolRe
       recordCanonicalTurnForBackstage(draft, {
         elapsedMinutes: input.time.elapsedMinutes,
         hasCost: turnHasCost(input.events),
-        beatBoundary: false,
+        beatBoundary: turnHasBeatBoundary(input.events),
       });
       return { result, pendingReminder: formatPendingHarvestReminder(draft) };
     },
@@ -54,11 +65,17 @@ export function commitTurnTool(params: unknown, sessionManager: unknown): ToolRe
 export const commitTurnToolDefinition: FateToolDefinition = {
   name: "commit_turn",
   description:
-    "每轮叙事结束时一次性提交本轮领域事件。用于一轮内聚合多个状态变化。\n\n" +
+    "每轮叙事结束时一次性提交本轮所有状态变化。把这轮里发生的各种变化——经济收支、记忆记录、角色状态、场景更新、beat 开启/收口——打包放进 events 数组。\n\n" +
+    "时间推进：顶层 time 必填（elapsedMinutes >= 1），时间独立于 events；地点移动用 time.kind=travel。\n\n" +
+    "events 示例：\n" +
+    '  { kind: "economy", event: { purseId: "...", amount: 900, reason: "买药" } }\n' +
+    '  { kind: "memory", event: { kind: "record-daily-event", eventKind: "shopping", title: "...", summary: "..." } }\n' +
+    '  { kind: "scene", event: { kind: "begin-beat", title: "潜入柳洞寺", purpose: "...", objectives: [...] } }\n' +
+    '  { kind: "scene", event: { kind: "complete-beat", outcome: "...", nextBeat: {...} } }\n\n' +
     "【使用边界】\n" +
     "- 每次 canonical turn 都必须提交顶层 time\n" +
-    "- 一轮内同时改变时间、地点、目标、伤势、物品、资金、记忆或从者资源\n" +
-    "- Scene Beat 开启/收口优先用 progress_scene_beat\n" +
+    "- Scene Beat 开启/收口用 scene 子事件 begin-beat / complete-beat（唯一方式），可与其他 events 同轮提交\n" +
+    "- objectives/threats 是 beat-scoped：resolve-objective 不能解决最后一个目标，收口用 complete-beat\n" +
     "- resolve_combat_exchange 登记的义务必须在本次 events 里落地\n\n" +
     "禁区：\n" +
     "- 把它当裸 patch\n" +
@@ -80,7 +97,11 @@ export const commitTurnToolDefinition: FateToolDefinition = {
         }),
         event: Type.Unknown({
           description:
-            "对应领域事件载荷；scene event 不包含时间/移动；resolve-objective 只用于当前目标",
+            "对应领域事件载荷，两层嵌套：外层 kind 声明领域，内层 event 含具体子类型。\n" +
+            "scene 子事件速查：\n" +
+            '  begin-beat → { kind:"begin-beat", title, objectives, purpose, beatId?, actionPolicy?, threats?, presence?, situation? }\n' +
+            '  complete-beat → { kind:"complete-beat", outcome, memory?, nextBeat?, presence?, situation? }\n' +
+            "scene event 不包含时间/移动；resolve-objective 只用于非最终目标",
         }),
       }),
     ),

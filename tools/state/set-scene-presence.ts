@@ -24,7 +24,7 @@ export const setScenePresenceToolDefinition: FateToolDefinition = {
     "【使用边界】\n" +
     "- 已存在 actor 入场/离场/同行者变化\n" +
     "- upsert_actor materialize 新 actor 后声明是否在场\n" +
-    "- 场景切换但不需 progress_scene_beat\n\n" +
+    "- 场景切换但不需开新 beat（begin-beat）\n\n" +
     "禁区：\n" +
     "- 写入不存在的 actorId（先用 upsert_actor materialize）\n" +
     "- 用 upsert_actor 暗示在场变化\n" +

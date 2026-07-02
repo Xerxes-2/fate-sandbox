@@ -5,7 +5,7 @@
  * 「必须落地」项以前靠 GM 自觉跟进——这是无人看守的缝隙。
  * 现在裁决产生的 mandatory landing 记入账本，对应领域事件成功执行时
  * 自动清账（FIFO，一次事件清一条），canonical commit（commit_turn /
- * progress_scene_beat）在收尾时对账：账未清则拒绝提交。
+ * commit_turn）在收尾时对账：账未清则拒绝提交。
  */
 
 import type { State, TurnObligation, TurnObligationKind } from "./state.ts";

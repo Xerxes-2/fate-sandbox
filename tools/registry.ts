@@ -16,7 +16,6 @@ import { initializeNewGameToolDefinition } from "./state/initialize-new-game.ts"
 import { manageFactionClockToolDefinition } from "./state/manage-faction-clock.ts";
 import { patchStateToolDefinition } from "./state/patch-state.ts";
 import { privateResolveToolDefinition } from "./state/private-resolve.ts";
-import { progressSceneBeatToolDefinition } from "./state/progress-scene-beat.ts";
 import { recallMemoryToolDefinition } from "./state/recall-memory.ts";
 import { recordActorKnowledgeToolDefinition } from "./state/record-actor-knowledge.ts";
 import { recordMemoryToolDefinition } from "./state/record-memory.ts";
@@ -42,7 +41,6 @@ const TOOL_DEFINITIONS: readonly FateToolDefinition[] = [
   initializeNewGameToolDefinition,
   configureCampaignToolDefinition,
   commitTurnToolDefinition,
-  progressSceneBeatToolDefinition,
   getStatusToolDefinition,
   recordMemoryToolDefinition,
   recordOffscreenEventToolDefinition,

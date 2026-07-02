@@ -32,7 +32,7 @@ export interface CanonicalTurnBackstageInput {
   elapsedMinutes: number;
   /** 本轮是否产生机械代价（伤势/资源/威胁/记忆等），用于打断 no-cost 连击 */
   hasCost: boolean;
-  /** 本轮是否是 beat 收口（progress_scene_beat complete） */
+  /** 本轮是否是 beat 收口（commit_turn 里的 complete-beat scene 子事件） */
   beatBoundary: boolean;
 }
 

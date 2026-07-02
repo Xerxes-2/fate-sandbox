@@ -81,7 +81,7 @@ void test("updateScene rejects resolving the last objective of a beat", () => {
         objectiveSummary: "唯一目标",
         reason: "尝试收最后一个",
       }),
-    /progress_scene_beat kind=complete/,
+    /complete-beat/,
   );
 });
 
@@ -553,5 +553,88 @@ void test("updateScene clear-threat by unknown id lists available threats", () =
       assert.ok(message.includes(`- ${id}: 黑水中抬升的庞然大物`));
       return true;
     },
+  );
+});
+
+// ── begin-beat / complete-beat scene 子事件（backport lotm 8d72578）──────────
+
+void test("updateScene begin-beat opens a Scene Beat with objectives and threats", () => {
+  const draft = createInitialState();
+
+  const result = updateScene(draft, {
+    kind: "begin-beat",
+    title: "夜访教会",
+    purpose: "确认监督者的立场",
+    objectives: ["见到言峰绮礼", "确认中立规则"],
+    threats: [{ summary: "教会不可测的敌意", severity: "medium" }],
+  });
+
+  assert.match(result.message, /Scene Beat 已开始/);
+  assert.equal(draft.public.scene.storyWindow?.title, "夜访教会");
+  assert.equal(draft.public.scene.objectives.length, 2);
+  assert.equal(draft.public.scene.threats.length, 1);
+});
+
+void test("updateScene complete-beat closes the beat, records memory, and opens nextBeat", () => {
+  const draft = createInitialState();
+  updateScene(draft, {
+    kind: "begin-beat",
+    title: "夜访教会",
+    purpose: "确认监督者的立场",
+    objectives: ["见到言峰绮礼"],
+  });
+
+  const result = updateScene(draft, {
+    kind: "complete-beat",
+    outcome: "得到中立保证但察觉言峰藏有私心。",
+    memory: {
+      title: "教会会谈",
+      summary: "监督者承诺中立。",
+      claims: [{ kind: "mundane", statement: "监督者承诺中立。", certainty: "confirmed" }],
+    },
+    nextBeat: {
+      title: "返回宅邸",
+      objectives: ["安全返回"],
+    },
+  });
+
+  assert.match(result.message, /Scene Beat 已切换/);
+  assert.equal(draft.public.scene.storyWindow?.title, "返回宅邸");
+  assert.equal(draft.public.scene.objectives.length, 1);
+  assert.equal(draft.public.scene.objectives[0]?.status, "active");
+  assert.ok(draft.public.memory.eventLog.some((event) => event.title === "教会会谈"));
+});
+
+void test("updateScene complete-beat without active beat throws guidance", () => {
+  const draft = createInitialState();
+
+  assert.throws(
+    () =>
+      updateScene(draft, {
+        kind: "complete-beat",
+        outcome: "无 beat 收口",
+      }),
+    /complete-beat 需要当前存在 Scene Beat/,
+  );
+});
+
+void test("updateScene begin-beat rejects a second beat while one is active", () => {
+  const draft = createInitialState();
+  updateScene(draft, {
+    kind: "begin-beat",
+    title: "第一个 beat",
+    purpose: "测试",
+    objectives: ["目标一"],
+  });
+
+  assert.throws(
+    () =>
+      updateScene(draft, {
+        kind: "begin-beat",
+        title: "第二个 beat",
+        purpose: "测试",
+        objectives: ["目标二"],
+      }),
+    /complete-beat 收口当前 beat/,
   );
 });

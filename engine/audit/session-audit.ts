@@ -474,10 +474,26 @@ export function measureParallelLine(turns: readonly AuditTurn[]): ParallelLineRe
     for (const call of turn.toolCalls) {
       if (!call.accepted || !CANONICAL_COMMIT_TOOLS.has(call.name)) continue;
       elapsed += topLevelTime(call.args).elapsedMinutes;
+      // 旧格式（历史 session）：独立 progress_scene_beat 工具
       if (
         call.name === "progress_scene_beat" &&
         isRecord(call.args) &&
         call.args["kind"] === "complete"
+      ) {
+        beatComplete = true;
+      }
+      // 新格式：commit_turn 里 scene.complete-beat
+      if (
+        call.name === "commit_turn" &&
+        isRecord(call.args) &&
+        Array.isArray(call.args["events"]) &&
+        call.args["events"].some(
+          (entry: unknown) =>
+            isRecord(entry) &&
+            entry["kind"] === "scene" &&
+            isRecord(entry["event"]) &&
+            entry["event"]["kind"] === "complete-beat",
+        )
       ) {
         beatComplete = true;
       }

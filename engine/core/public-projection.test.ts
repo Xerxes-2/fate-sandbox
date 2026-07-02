@@ -100,12 +100,12 @@ void test("GM brief objective routing covers all three branches", () => {
 
   // 有 active beat 但目标已全部解决：提示用 complete 收口。
   publicState.scene.objectives = [{ id: "obj-1", summary: "调查异变", status: "resolved" }];
-  assert.match(buildGmBrief(publicState), /progress_scene_beat kind=complete 收口/);
+  assert.match(buildGmBrief(publicState), /complete-beat scene 事件收口/);
 
   // 有 active beat 且仍有未解决目标：局部推进用 resolve-objective，收口用 complete。
   publicState.scene.objectives = [{ id: "obj-1", summary: "调查异变", status: "active" }];
   const brief = buildGmBrief(publicState);
-  assert.match(brief, /active beat 收口用 progress_scene_beat complete/);
+  assert.match(brief, /active beat 收口用 complete-beat scene 事件/);
   assert.match(
     brief,
     /arc-1\/beat-1《夜间的调查》；允许：走访、观察；禁区：直接战斗；完成：找到目击者/,

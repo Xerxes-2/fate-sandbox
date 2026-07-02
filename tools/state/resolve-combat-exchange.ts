@@ -70,7 +70,7 @@ function formatCombatExchangeResult(
     ...(recordedObligations > 0
       ? [
           "",
-          `⚠ 已登记 ${recordedObligations} 条必须落地的义务；本轮 canonical commit（commit_turn / progress_scene_beat）前必须用对应状态事件清账，否则提交会被拒绝。`,
+          `⚠ 已登记 ${recordedObligations} 条必须落地的义务；本轮 canonical commit（commit_turn）前必须用对应状态事件清账，否则提交会被拒绝。`,
         ]
       : []),
   ].join("\n");

@@ -3,17 +3,24 @@ import test from "node:test";
 
 import { getState, resetState } from "../../engine/core/state-store.ts";
 import { commitTurnTool } from "./commit-turn.ts";
-import { progressSceneBeatTool } from "./progress-scene-beat.ts";
 
 // objectives/threats 是 beat-scoped：需要在 active beat 里验证 scene objective 事件的用例先开 beat。
+// beat 开启现在走 commit_turn 的 begin-beat scene 子事件（backport lotm 8d72578）。
 function beginBeatViaTool(objectives: string[]): void {
-  progressSceneBeatTool(
+  commitTurnTool(
     {
-      kind: "begin",
-      title: "测试 beat",
-      objectives,
-      purpose: "测试设置 beat",
       time: { kind: "elapsed", elapsedMinutes: 1, reason: "开启测试 beat。" },
+      events: [
+        {
+          kind: "scene",
+          event: {
+            kind: "begin-beat",
+            title: "测试 beat",
+            objectives,
+            purpose: "测试设置 beat",
+          },
+        },
+      ],
     },
     createNoopSessionManager(),
   );
