@@ -5,6 +5,7 @@ import type { ToolResult } from "../runtime/tool-result.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
+import { FACTION_CLOCK_VISIBILITIES } from "../../engine/core/backstage/backstage-state-schema.ts";
 import {
   advanceFactionClock,
   extendScheduledEvent,
@@ -15,7 +16,6 @@ import {
   upsertFactionClock,
 } from "../../engine/core/backstage/faction-clock.ts";
 import { stringEnumSchema } from "../../engine/core/state/state-enum-schemas.ts";
-import { FACTION_CLOCK_VISIBILITIES } from "../../engine/core/state/state-schema.ts";
 import {
   assertNonEmptyString,
   isRecord,

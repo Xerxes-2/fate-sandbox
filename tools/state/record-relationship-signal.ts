@@ -5,9 +5,9 @@ import type { ToolResult } from "../runtime/tool-result.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
+import { RELATIONSHIP_SIGNAL_VISIBILITIES } from "../../engine/core/actor/actor-schema.ts";
 import { recordRelationshipSignal } from "../../engine/core/actor/relationship-signal.ts";
 import { stringEnumSchema } from "../../engine/core/state/state-enum-schemas.ts";
-import { RELATIONSHIP_SIGNAL_VISIBILITIES } from "../../engine/core/state/state-schema.ts";
 import {
   assertNonEmptyString,
   parseTypeBoxValue,

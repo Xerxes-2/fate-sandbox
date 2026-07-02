@@ -6,6 +6,12 @@ import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
 import {
+  ISO_INSTANT_SCHEMA,
+  NON_EMPTY_STRING_ARRAY_SCHEMA,
+  NON_EMPTY_STRING_SCHEMA,
+  nullable,
+} from "../state/schema-primitives.ts";
+import {
   SCENE_THREAT_SEVERITY_SCHEMA,
   SITUATION_KIND_SCHEMA,
   stringEnumSchema,
@@ -156,3 +162,33 @@ export function parseSceneEvent(value: unknown, fieldName: string): SceneEvent {
     SCENE_EVENT_VARIANT_VALIDATORS,
   );
 }
+
+/**
+ * ---- Scene 状态树 schema（自 state-schema.ts 分拆而来） ----
+ * 与 state.ts 手写接口一一对应；漂移由 state-schema.ts 的双向赋值检查拦截。
+ */
+
+export const SCENE_OBJECTIVE_STATUSES = ["active", "blocked", "resolved"] as const;
+const SCENE_OBJECTIVE_STATUS_SCHEMA = stringEnumSchema(SCENE_OBJECTIVE_STATUSES);
+
+export const SCENE_OBJECTIVE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+  status: SCENE_OBJECTIVE_STATUS_SCHEMA,
+});
+
+export const SCENE_THREAT_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+  severity: SCENE_THREAT_SEVERITY_SCHEMA,
+});
+
+export const SCENE_STATE_SCHEMA = Type.Object({
+  location: LOCATION_STATE_SCHEMA,
+  situation: SITUATION_KIND_SCHEMA,
+  storyWindow: nullable(STORY_WINDOW_STATE_SCHEMA),
+  presentActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
+  objectives: Type.Array(SCENE_OBJECTIVE_SCHEMA),
+  threats: Type.Array(SCENE_THREAT_SCHEMA),
+  lastResolvedAt: ISO_INSTANT_SCHEMA,
+});

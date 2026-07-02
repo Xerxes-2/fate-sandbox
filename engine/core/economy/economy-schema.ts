@@ -5,7 +5,15 @@ import type { TypeBoxValidator } from "../utils/typebox-validation.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
-import { PURSE_ACCESS_SCHEMA, stringEnumSchema } from "../state/state-enum-schemas.ts";
+import {
+  NON_EMPTY_STRING_SCHEMA,
+  NON_NEGATIVE_INTEGER_SCHEMA,
+} from "../state/schema-primitives.ts";
+import {
+  CURRENCY_CODE_SCHEMA,
+  PURSE_ACCESS_SCHEMA,
+  stringEnumSchema,
+} from "../state/state-enum-schemas.ts";
 import { parseTaggedTypeBoxUnion, trimStringsDeep } from "../utils/typebox-validation.ts";
 
 /**
@@ -110,3 +118,30 @@ export function parseEconomyEvent(value: unknown, fieldName: string): EconomyEve
     ECONOMY_EVENT_VARIANT_VALIDATORS,
   );
 }
+
+/**
+ * ---- Economy 状态树 schema（自 state-schema.ts 分拆而来） ----
+ * 与 state.ts 手写接口一一对应；漂移由 state-schema.ts 的双向赋值检查拦截。
+ */
+
+const MONEY_PURSE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  ownerActorId: NON_EMPTY_STRING_SCHEMA,
+  label: NON_EMPTY_STRING_SCHEMA,
+  amount: NON_NEGATIVE_INTEGER_SCHEMA,
+  access: PURSE_ACCESS_SCHEMA,
+});
+
+const DEBT_STATE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  debtorActorId: NON_EMPTY_STRING_SCHEMA,
+  creditor: NON_EMPTY_STRING_SCHEMA,
+  amount: NON_NEGATIVE_INTEGER_SCHEMA,
+  reason: NON_EMPTY_STRING_SCHEMA,
+});
+
+export const ECONOMY_STATE_SCHEMA = Type.Object({
+  currency: CURRENCY_CODE_SCHEMA,
+  accessibleFunds: Type.Array(MONEY_PURSE_SCHEMA),
+  debts: Type.Array(DEBT_STATE_SCHEMA),
+});

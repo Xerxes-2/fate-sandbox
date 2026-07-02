@@ -5,6 +5,12 @@ import type { TypeBoxValidator } from "../utils/typebox-validation.ts";
 import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
+import {
+  ISO_INSTANT_SCHEMA,
+  NON_EMPTY_STRING_ARRAY_SCHEMA,
+  NON_EMPTY_STRING_SCHEMA,
+  nullable,
+} from "../state/schema-primitives.ts";
 import { MEMORY_SCOPE_SCHEMA, stringEnumSchema } from "../state/state-enum-schemas.ts";
 import { parseTaggedTypeBoxUnion, trimStringsDeep } from "../utils/typebox-validation.ts";
 
@@ -131,3 +137,48 @@ export function parseMemoryEvent(value: unknown, fieldName: string): MemoryEvent
     MEMORY_EVENT_VARIANT_VALIDATORS,
   );
 }
+
+/**
+ * ---- Memory 状态树 schema（自 state-schema.ts 分拆而来） ----
+ * 与 state.ts 手写接口一一对应；漂移由 state-schema.ts 的双向赋值检查拦截。
+ */
+
+const MEMORY_FACT_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  scope: MEMORY_SCOPE_SCHEMA,
+  subject: NON_EMPTY_STRING_SCHEMA,
+  text: NON_EMPTY_STRING_SCHEMA,
+  since: ISO_INSTANT_SCHEMA,
+  sourceEventId: nullable(NON_EMPTY_STRING_SCHEMA),
+});
+
+const MAJOR_EVENT_MEMORY_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  time: ISO_INSTANT_SCHEMA,
+  title: NON_EMPTY_STRING_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+  consequences: NON_EMPTY_STRING_ARRAY_SCHEMA,
+  claims: Type.Optional(Type.Array(MEMORY_CLAIM_SCHEMA)),
+});
+
+const DAILY_EVENT_MEMORY_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  time: ISO_INSTANT_SCHEMA,
+  eventKind: DAILY_EVENT_KIND_SCHEMA,
+  title: NON_EMPTY_STRING_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+});
+
+const DAILY_SUMMARY_MEMORY_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  startDate: ISO_INSTANT_SCHEMA,
+  endDate: ISO_INSTANT_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+});
+
+export const CAMPAIGN_MEMORY_SCHEMA = Type.Object({
+  pinnedFacts: Type.Array(MEMORY_FACT_SCHEMA),
+  eventLog: Type.Array(MAJOR_EVENT_MEMORY_SCHEMA),
+  dailyEvents: Type.Array(DAILY_EVENT_MEMORY_SCHEMA),
+  dailySummaries: Type.Array(DAILY_SUMMARY_MEMORY_SCHEMA),
+});

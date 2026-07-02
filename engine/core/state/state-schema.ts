@@ -1,4 +1,4 @@
-import type { Static, TSchema } from "typebox";
+import type { Static } from "typebox";
 
 import type { TypeBoxValidator } from "../utils/typebox-validation.ts";
 import type { State } from "./state.ts";
@@ -7,63 +7,56 @@ import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
 import {
-  ACTOR_ROLE_SCHEMA,
-  FATE_PARAMS_SCHEMA,
-  FATE_RANK_OR_NONE_SCHEMA,
-  NOBLE_PHANTASM_SCHEMA,
-  OUTFIT_STATE_SCHEMA,
-  RELATIONSHIP_STATE_SCHEMA,
-  SERVANT_SKILL_SCHEMA,
+  ACTOR_IMPRESSION_SCHEMA,
+  PUBLIC_ACTOR_STATE_SCHEMA,
+  RELATIONSHIP_SIGNAL_SCHEMA,
+  TRACKED_ITEM_STATE_SCHEMA,
 } from "../actor/actor-schema.ts";
-import { DAILY_EVENT_KIND_SCHEMA, MEMORY_CLAIM_SCHEMA } from "../knowledge/memory-schema.ts";
-import { STORY_WINDOW_STATE_SCHEMA } from "../scene/scene-schema.ts";
+import {
+  BACKSTAGE_OBLIGATION_SCHEMA,
+  BACKSTAGE_PENDING_HARVEST_SCHEMA,
+  BACKSTAGE_REVIEW_ENTRY_SCHEMA,
+  FACTION_CLOCK_SCHEMA,
+  OFFSCREEN_EVENT_SCHEMA,
+  SCHEDULED_EVENT_SCHEMA,
+} from "../backstage/backstage-state-schema.ts";
+import { ECONOMY_STATE_SCHEMA } from "../economy/economy-schema.ts";
+import { HOOK_STATE_SCHEMA } from "../knowledge/hook-schema.ts";
+import { CAMPAIGN_MEMORY_SCHEMA } from "../knowledge/memory-schema.ts";
+import {
+  SECRET_ACTOR_STATE_SCHEMA,
+  SECRET_CAMPAIGN_FACT_SCHEMA,
+  SECRET_EVENT_MEMORY_SCHEMA,
+} from "../knowledge/secrets-schema.ts";
+import { SCENE_STATE_SCHEMA } from "../scene/scene-schema.ts";
 import { normalizeIsoInstant } from "../utils/date-time.ts";
 import { isRecord, parseTypeBoxValue, trimStringsDeep } from "../utils/typebox-validation.ts";
 import {
-  CIRCUIT_STATUS_SCHEMA,
-  CONTRACT_STATUS_SCHEMA,
-  CURRENCY_CODE_SCHEMA,
-  FATE_PARAM_KEY_SCHEMA,
-  MANA_SUPPLY_SCHEMA,
-  MEMORY_SCOPE_SCHEMA,
-  OFFSCREEN_EVENT_SOURCE_SCHEMA,
-  OFFSCREEN_EVENT_VISIBILITY_SCHEMA,
+  ISO_INSTANT_SCHEMA,
+  NON_EMPTY_STRING_ARRAY_SCHEMA,
+  NON_EMPTY_STRING_SCHEMA,
+  NON_NEGATIVE_INTEGER_SCHEMA,
+  nullable,
+} from "./schema-primitives.ts";
+import {
   OPENING_MODE_SCHEMA,
-  PURSE_ACCESS_SCHEMA,
-  REVEAL_STATUS_SCHEMA,
   RULE_SET_ID_SCHEMA,
-  SCENE_THREAT_SEVERITY_SCHEMA,
-  SERVANT_CLASS_SCHEMA,
-  SITUATION_KIND_SCHEMA,
   stringEnumSchema,
   TIMELINE_ID_SCHEMA,
   TIMEZONE_ID_SCHEMA,
-  TRACKED_ITEM_CONDITION_SCHEMA,
-  TRACKED_ITEM_KIND_SCHEMA,
-  TRACKED_ITEM_VISIBILITY_SCHEMA,
-  WOUND_SEVERITY_SCHEMA,
 } from "./state-enum-schemas.ts";
 import { LOCATION_STATE_SCHEMA } from "./turn-time-schema.ts";
 
 /**
- * State 反序列化边界 schema：与 state.ts 的手写接口一一对应。
- * 结构与字段约束由 TypeBox 校验；ISO 时间归一化与跨字段引用
- * （actor 引用、registry key 一致性等）由 parseStateSchema 的
+ * State 反序列化边界 schema 的组合根：领域状态片段住在各自领域的
+ * *-schema.ts（actor / scene / economy / knowledge / backstage），本文件只保留
+ * 状态机骨架自己的 schema（meta / campaign / clock / turnLog / obligations）
+ * 并拼装出 STATE_SCHEMA。结构与字段约束由 TypeBox 校验；ISO 时间归一化与
+ * 跨字段引用（actor 引用、registry key 一致性等）由 parseStateSchema 的
  * 后置 pass 处理——schema 表达不了的不变量集中在那里。
  *
- * 与手写接口的漂移由文件底部的双向赋值检查在编译期拦截。
+ * 与 state.ts 手写接口的漂移由文件底部的双向赋值检查在编译期拦截。
  */
-
-const NON_EMPTY_STRING_SCHEMA = Type.String({ minLength: 1 });
-const NON_EMPTY_STRING_ARRAY_SCHEMA = Type.Array(NON_EMPTY_STRING_SCHEMA);
-/** ISO 时间字段：结构上只要求非空字符串，格式校验与归一化在后置 pass。 */
-const ISO_INSTANT_SCHEMA = Type.String({ minLength: 1 });
-const PERCENT_SCHEMA = Type.Integer({ minimum: 0, maximum: 100 });
-const NON_NEGATIVE_INTEGER_SCHEMA = Type.Integer({ minimum: 0 });
-
-function nullable<T extends TSchema>(schema: T) {
-  return Type.Union([schema, Type.Null()]);
-}
 
 export const STATE_META_SCHEMA = Type.Object({
   schemaVersion: Type.Literal(19),
@@ -86,280 +79,6 @@ export const CLOCK_STATE_SCHEMA = Type.Object({
   currentAt: ISO_INSTANT_SCHEMA,
   timezone: TIMEZONE_ID_SCHEMA,
   lastLongRestAt: nullable(ISO_INSTANT_SCHEMA),
-});
-
-export const SCENE_OBJECTIVE_STATUSES = ["active", "blocked", "resolved"] as const;
-const SCENE_OBJECTIVE_STATUS_SCHEMA = stringEnumSchema(SCENE_OBJECTIVE_STATUSES);
-
-export const SCENE_OBJECTIVE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-  status: SCENE_OBJECTIVE_STATUS_SCHEMA,
-});
-
-export const SCENE_THREAT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-  severity: SCENE_THREAT_SEVERITY_SCHEMA,
-});
-
-export const SCENE_STATE_SCHEMA = Type.Object({
-  location: LOCATION_STATE_SCHEMA,
-  situation: SITUATION_KIND_SCHEMA,
-  storyWindow: nullable(STORY_WINDOW_STATE_SCHEMA),
-  presentActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  objectives: Type.Array(SCENE_OBJECTIVE_SCHEMA),
-  threats: Type.Array(SCENE_THREAT_SCHEMA),
-  lastResolvedAt: ISO_INSTANT_SCHEMA,
-});
-
-const MAGECRAFT_CIRCUIT_STATE_SCHEMA = Type.Object({
-  count: NON_EMPTY_STRING_SCHEMA,
-  quality: FATE_RANK_OR_NONE_SCHEMA,
-  od: PERCENT_SCHEMA,
-  status: CIRCUIT_STATUS_SCHEMA,
-  traits: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const MAGECRAFT_DISCIPLINE_SCHEMA = Type.Object({
-  name: NON_EMPTY_STRING_SCHEMA,
-  rank: FATE_RANK_OR_NONE_SCHEMA,
-  notes: NON_EMPTY_STRING_SCHEMA,
-});
-
-const MAGECRAFT_CAPABILITY_SCHEMA = Type.Object({
-  circuits: MAGECRAFT_CIRCUIT_STATE_SCHEMA,
-  disciplines: Type.Array(MAGECRAFT_DISCIPLINE_SCHEMA),
-  affiliation: nullable(NON_EMPTY_STRING_SCHEMA),
-});
-
-const IDENTITY_STATE_SCHEMA = Type.Object({
-  publicIdentity: NON_EMPTY_STRING_SCHEMA,
-  background: NON_EMPTY_STRING_SCHEMA,
-  lockedFacts: Type.Array(
-    Type.Object({ id: NON_EMPTY_STRING_SCHEMA, text: NON_EMPTY_STRING_SCHEMA }),
-  ),
-});
-
-const PRESENTATION_STATE_SCHEMA = Type.Object({
-  internalName: NON_EMPTY_STRING_SCHEMA,
-  renderName: NON_EMPTY_STRING_SCHEMA,
-  apparentAge: NON_EMPTY_STRING_SCHEMA,
-  outfit: OUTFIT_STATE_SCHEMA,
-  demeanor: NON_EMPTY_STRING_SCHEMA,
-});
-
-const WOUND_STATE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  severity: WOUND_SEVERITY_SCHEMA,
-  text: NON_EMPTY_STRING_SCHEMA,
-  recoverable: Type.Boolean(),
-  treatment: nullable(NON_EMPTY_STRING_SCHEMA),
-});
-
-const AFFLICTION_STATE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  source: NON_EMPTY_STRING_SCHEMA,
-  text: NON_EMPTY_STRING_SCHEMA,
-  expectedDuration: nullable(NON_EMPTY_STRING_SCHEMA),
-});
-
-const PERMANENT_EFFECT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  source: NON_EMPTY_STRING_SCHEMA,
-  text: NON_EMPTY_STRING_SCHEMA,
-  mechanicalEffect: NON_EMPTY_STRING_SCHEMA,
-});
-
-const CONDITION_STATE_SCHEMA = Type.Object({
-  wounds: Type.Array(WOUND_STATE_SCHEMA),
-  afflictions: Type.Array(AFFLICTION_STATE_SCHEMA),
-  permanentEffects: Type.Array(PERMANENT_EFFECT_SCHEMA),
-});
-
-const INVENTORY_STATE_SCHEMA = Type.Object({
-  ordinaryItems: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const ABILITY_STATE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  label: NON_EMPTY_STRING_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-});
-
-const TRUE_NAME_STATE_SCHEMA = Type.Object({
-  status: REVEAL_STATUS_SCHEMA,
-  display: NON_EMPTY_STRING_SCHEMA,
-});
-
-const SERVANT_IDENTITY_STATE_SCHEMA = Type.Object({
-  className: SERVANT_CLASS_SCHEMA,
-  trueName: TRUE_NAME_STATE_SCHEMA,
-  locked: Type.Literal(true),
-});
-
-const RESOURCE_TRACK_SCHEMA = Type.Object({ value: PERCENT_SCHEMA });
-
-const SERVANT_CONDITION_STATE_SCHEMA = Type.Object({
-  spiritualCore: RESOURCE_TRACK_SCHEMA,
-  mana: RESOURCE_TRACK_SCHEMA,
-  spiritualCondition: NON_EMPTY_STRING_SCHEMA,
-  permanentDefects: Type.Array(PERMANENT_EFFECT_SCHEMA),
-});
-
-const SERVANT_CONTRACT_STATE_SCHEMA = Type.Object({
-  masterActorId: nullable(NON_EMPTY_STRING_SCHEMA),
-  masterName: nullable(NON_EMPTY_STRING_SCHEMA),
-  status: CONTRACT_STATUS_SCHEMA,
-  manaSupply: MANA_SUPPLY_SCHEMA,
-});
-
-const PARAM_MODIFIER_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  source: NON_EMPTY_STRING_SCHEMA,
-  affectedParams: Type.Array(FATE_PARAM_KEY_SCHEMA),
-  summary: NON_EMPTY_STRING_SCHEMA,
-  expiresAt: nullable(ISO_INSTANT_SCHEMA),
-});
-
-const SERVANT_PARAMETER_STATE_SCHEMA = Type.Object({
-  base: FATE_PARAMS_SCHEMA,
-  modifiers: Type.Array(PARAM_MODIFIER_SCHEMA),
-  baseLocked: Type.Literal(true),
-});
-
-const SERVANT_SKILL_STATE_SCHEMA = Type.Object({
-  classSkills: Type.Array(SERVANT_SKILL_SCHEMA),
-  personalSkills: Type.Array(SERVANT_SKILL_SCHEMA),
-});
-
-export const SERVANT_CORE_STATE_SCHEMA = Type.Object({
-  identity: SERVANT_IDENTITY_STATE_SCHEMA,
-  condition: SERVANT_CONDITION_STATE_SCHEMA,
-  contract: SERVANT_CONTRACT_STATE_SCHEMA,
-  parameters: SERVANT_PARAMETER_STATE_SCHEMA,
-  skills: SERVANT_SKILL_STATE_SCHEMA,
-  noblePhantasms: Type.Array(NOBLE_PHANTASM_SCHEMA),
-  currentOrder: NON_EMPTY_STRING_SCHEMA,
-});
-
-const ACTOR_BASE_PROPERTIES = {
-  id: NON_EMPTY_STRING_SCHEMA,
-  roles: Type.Array(ACTOR_ROLE_SCHEMA),
-  magecraft: nullable(MAGECRAFT_CAPABILITY_SCHEMA),
-  servantForm: nullable(SERVANT_CORE_STATE_SCHEMA),
-  identity: IDENTITY_STATE_SCHEMA,
-  presentation: PRESENTATION_STATE_SCHEMA,
-  condition: CONDITION_STATE_SCHEMA,
-  inventory: INVENTORY_STATE_SCHEMA,
-  abilities: Type.Array(ABILITY_STATE_SCHEMA),
-  relationshipToProtagonist: RELATIONSHIP_STATE_SCHEMA,
-} as const;
-
-const HUMAN_ACTOR_STATE_SCHEMA = Type.Object({
-  ...ACTOR_BASE_PROPERTIES,
-  kind: Type.Literal("human"),
-});
-
-const OUTSIDER_ACTOR_STATE_SCHEMA = Type.Object({
-  ...ACTOR_BASE_PROPERTIES,
-  kind: Type.Literal("outsider"),
-  sourceProfile: NON_EMPTY_STRING_SCHEMA,
-  fateTranslation: NON_EMPTY_STRING_SCHEMA,
-  restrictions: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const SPIRIT_ACTOR_STATE_SCHEMA = Type.Object({
-  ...ACTOR_BASE_PROPERTIES,
-  kind: Type.Literal("spirit"),
-  origin: NON_EMPTY_STRING_SCHEMA,
-});
-
-const OTHER_ACTOR_STATE_SCHEMA = Type.Object({
-  ...ACTOR_BASE_PROPERTIES,
-  kind: Type.Literal("other"),
-  nature: NON_EMPTY_STRING_SCHEMA,
-});
-
-export const PUBLIC_ACTOR_STATE_SCHEMA = Type.Union([
-  HUMAN_ACTOR_STATE_SCHEMA,
-  OUTSIDER_ACTOR_STATE_SCHEMA,
-  SPIRIT_ACTOR_STATE_SCHEMA,
-  OTHER_ACTOR_STATE_SCHEMA,
-]);
-
-export const TRACKED_ITEM_STATE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  label: NON_EMPTY_STRING_SCHEMA,
-  kind: TRACKED_ITEM_KIND_SCHEMA,
-  ownerActorId: nullable(NON_EMPTY_STRING_SCHEMA),
-  holderActorId: nullable(NON_EMPTY_STRING_SCHEMA),
-  location: nullable(LOCATION_STATE_SCHEMA),
-  condition: TRACKED_ITEM_CONDITION_SCHEMA,
-  visibility: TRACKED_ITEM_VISIBILITY_SCHEMA,
-  notes: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const MONEY_PURSE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  ownerActorId: NON_EMPTY_STRING_SCHEMA,
-  label: NON_EMPTY_STRING_SCHEMA,
-  amount: NON_NEGATIVE_INTEGER_SCHEMA,
-  access: PURSE_ACCESS_SCHEMA,
-});
-
-const DEBT_STATE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  debtorActorId: NON_EMPTY_STRING_SCHEMA,
-  creditor: NON_EMPTY_STRING_SCHEMA,
-  amount: NON_NEGATIVE_INTEGER_SCHEMA,
-  reason: NON_EMPTY_STRING_SCHEMA,
-});
-
-const ECONOMY_STATE_SCHEMA = Type.Object({
-  currency: CURRENCY_CODE_SCHEMA,
-  accessibleFunds: Type.Array(MONEY_PURSE_SCHEMA),
-  debts: Type.Array(DEBT_STATE_SCHEMA),
-});
-
-const MEMORY_FACT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  scope: MEMORY_SCOPE_SCHEMA,
-  subject: NON_EMPTY_STRING_SCHEMA,
-  text: NON_EMPTY_STRING_SCHEMA,
-  since: ISO_INSTANT_SCHEMA,
-  sourceEventId: nullable(NON_EMPTY_STRING_SCHEMA),
-});
-
-const MAJOR_EVENT_MEMORY_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  time: ISO_INSTANT_SCHEMA,
-  title: NON_EMPTY_STRING_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-  consequences: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  claims: Type.Optional(Type.Array(MEMORY_CLAIM_SCHEMA)),
-});
-
-const DAILY_EVENT_MEMORY_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  time: ISO_INSTANT_SCHEMA,
-  eventKind: DAILY_EVENT_KIND_SCHEMA,
-  title: NON_EMPTY_STRING_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-});
-
-const DAILY_SUMMARY_MEMORY_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  startDate: ISO_INSTANT_SCHEMA,
-  endDate: ISO_INSTANT_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-});
-
-const CAMPAIGN_MEMORY_SCHEMA = Type.Object({
-  pinnedFacts: Type.Array(MEMORY_FACT_SCHEMA),
-  eventLog: Type.Array(MAJOR_EVENT_MEMORY_SCHEMA),
-  dailyEvents: Type.Array(DAILY_EVENT_MEMORY_SCHEMA),
-  dailySummaries: Type.Array(DAILY_SUMMARY_MEMORY_SCHEMA),
 });
 
 /** turnLog 里的 time 与 parseTurnTimePolicySchema 保持同等约束（elapsedMinutes > 0）。 */
@@ -396,46 +115,12 @@ export const TURN_OBLIGATION_KINDS = [
   "reveal-secret",
 ] as const;
 
-export const HOOK_STATUSES = ["active", "parked", "paid", "escalated", "retired"] as const;
-
-const HOOK_STATE_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  label: NON_EMPTY_STRING_SCHEMA,
-  status: stringEnumSchema(HOOK_STATUSES),
-  lastSurfacedAt: ISO_INSTANT_SCHEMA,
-  surfaceCount: NON_NEGATIVE_INTEGER_SCHEMA,
-  lastNovelty: Type.String(),
-});
-
 const TURN_OBLIGATION_SCHEMA = Type.Object({
   id: NON_EMPTY_STRING_SCHEMA,
   source: NON_EMPTY_STRING_SCHEMA,
   kind: stringEnumSchema(TURN_OBLIGATION_KINDS),
   summary: NON_EMPTY_STRING_SCHEMA,
   createdAt: ISO_INSTANT_SCHEMA,
-});
-
-export const RELATIONSHIP_SIGNAL_VISIBILITIES = ["player-known", "secret"] as const;
-const RELATIONSHIP_SIGNAL_VISIBILITY_SCHEMA = stringEnumSchema(RELATIONSHIP_SIGNAL_VISIBILITIES);
-
-const RELATIONSHIP_SIGNAL_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  actorId: NON_EMPTY_STRING_SCHEMA,
-  targetActorId: NON_EMPTY_STRING_SCHEMA,
-  signal: NON_EMPTY_STRING_SCHEMA,
-  interpretation: NON_EMPTY_STRING_SCHEMA,
-  boundary: NON_EMPTY_STRING_SCHEMA,
-  sourceEventId: nullable(NON_EMPTY_STRING_SCHEMA),
-  visibility: RELATIONSHIP_SIGNAL_VISIBILITY_SCHEMA,
-});
-
-const ACTOR_IMPRESSION_SCHEMA = Type.Object({
-  actorId: NON_EMPTY_STRING_SCHEMA,
-  presence: NON_EMPTY_STRING_SCHEMA,
-  actionStyle: NON_EMPTY_STRING_SCHEMA,
-  relationshipPosture: NON_EMPTY_STRING_SCHEMA,
-  voiceMaterial: Type.String(),
-  updatedAt: ISO_INSTANT_SCHEMA,
 });
 
 export const PUBLIC_GAME_STATE_SCHEMA = Type.Object({
@@ -453,121 +138,6 @@ export const PUBLIC_GAME_STATE_SCHEMA = Type.Object({
   hooks: Type.Array(HOOK_STATE_SCHEMA),
   relationshipSignals: Type.Array(RELATIONSHIP_SIGNAL_SCHEMA),
   actorImpressions: Type.Record(Type.String(), ACTOR_IMPRESSION_SCHEMA),
-});
-
-export const SECRET_REVEAL_STATES = ["hidden", "foreshadowed", "revealed"] as const;
-const SECRET_REVEAL_STATE_SCHEMA = stringEnumSchema(SECRET_REVEAL_STATES);
-
-const STRING_SECRET_SLOT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  value: NON_EMPTY_STRING_SCHEMA,
-  revealState: SECRET_REVEAL_STATE_SCHEMA,
-  revealConditions: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const NOBLE_PHANTASM_SECRET_SLOT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  value: NOBLE_PHANTASM_SCHEMA,
-  revealState: SECRET_REVEAL_STATE_SCHEMA,
-  revealConditions: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const ACTOR_SECRET_SLOTS_SCHEMA = Type.Object({
-  actorId: NON_EMPTY_STRING_SCHEMA,
-  trueName: Type.Optional(STRING_SECRET_SLOT_SCHEMA),
-  hiddenNoblePhantasms: Type.Array(NOBLE_PHANTASM_SECRET_SLOT_SCHEMA),
-  privateMotives: Type.Array(STRING_SECRET_SLOT_SCHEMA),
-  unrevealedAffiliations: Type.Array(STRING_SECRET_SLOT_SCHEMA),
-});
-
-const SECRET_CAMPAIGN_FACT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  text: NON_EMPTY_STRING_SCHEMA,
-  relatedActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  revealState: SECRET_REVEAL_STATE_SCHEMA,
-});
-
-const SECRET_EVENT_MEMORY_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  time: ISO_INSTANT_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-  relatedActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
-});
-
-const OFFSCREEN_EVENT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  lineId: NON_EMPTY_STRING_SCHEMA,
-  actorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  timeRange: Type.Object({ start: ISO_INSTANT_SCHEMA, end: ISO_INSTANT_SCHEMA }),
-  visibility: OFFSCREEN_EVENT_VISIBILITY_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-  consequences: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  futureHooks: NON_EMPTY_STRING_ARRAY_SCHEMA,
-  createdFrom: OFFSCREEN_EVENT_SOURCE_SCHEMA,
-  pressureType: NON_EMPTY_STRING_SCHEMA,
-  pressureSlotId: nullable(NON_EMPTY_STRING_SCHEMA),
-});
-
-export const FACTION_CLOCK_VISIBILITIES = ["hidden", "leaked"] as const;
-
-const FACTION_CLOCK_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  factionId: NON_EMPTY_STRING_SCHEMA,
-  label: NON_EMPTY_STRING_SCHEMA,
-  filled: NON_NEGATIVE_INTEGER_SCHEMA,
-  size: Type.Integer({ minimum: 2, maximum: 12 }),
-  visibility: stringEnumSchema(FACTION_CLOCK_VISIBILITIES),
-});
-
-const SCHEDULED_EVENT_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  dueAt: ISO_INSTANT_SCHEMA,
-  summary: NON_EMPTY_STRING_SCHEMA,
-});
-
-const ACTOR_AGENDA_STATE_SCHEMA = Type.Object({
-  actorId: NON_EMPTY_STRING_SCHEMA,
-  goal: NON_EMPTY_STRING_SCHEMA,
-  fear: NON_EMPTY_STRING_SCHEMA,
-  currentOrder: nullable(NON_EMPTY_STRING_SCHEMA),
-  lastIndependentActionAt: nullable(ISO_INSTANT_SCHEMA),
-});
-
-const ACTOR_KNOWLEDGE_LENS_SCHEMA = Type.Object({
-  actorId: NON_EMPTY_STRING_SCHEMA,
-  knows: Type.Array(NON_EMPTY_STRING_SCHEMA),
-  suspects: Type.Array(NON_EMPTY_STRING_SCHEMA),
-  falseBeliefs: Type.Array(NON_EMPTY_STRING_SCHEMA),
-  forbiddenKnowledge: Type.Array(NON_EMPTY_STRING_SCHEMA),
-});
-
-const SECRET_ACTOR_STATE_SCHEMA = Type.Object({
-  actorId: NON_EMPTY_STRING_SCHEMA,
-  secrets: Type.Optional(ACTOR_SECRET_SLOTS_SCHEMA),
-  agenda: Type.Optional(ACTOR_AGENDA_STATE_SCHEMA),
-  knowledgeLens: Type.Optional(ACTOR_KNOWLEDGE_LENS_SCHEMA),
-});
-
-const BACKSTAGE_OBLIGATION_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  trigger: stringEnumSchema(["time-advance", "beat-complete", "no-cost-streak"]),
-  summary: NON_EMPTY_STRING_SCHEMA,
-  createdAt: ISO_INSTANT_SCHEMA,
-});
-
-const BACKSTAGE_PENDING_HARVEST_SCHEMA = Type.Object({
-  runId: NON_EMPTY_STRING_SCHEMA,
-  lineId: NON_EMPTY_STRING_SCHEMA,
-  spawnedAt: ISO_INSTANT_SCHEMA,
-});
-
-const BACKSTAGE_REVIEW_ENTRY_SCHEMA = Type.Object({
-  id: NON_EMPTY_STRING_SCHEMA,
-  obligationId: NON_EMPTY_STRING_SCHEMA,
-  outcome: stringEnumSchema(["landed", "no-change", "blocked"]),
-  reasonCode: NON_EMPTY_STRING_SCHEMA,
-  note: NON_EMPTY_STRING_SCHEMA,
-  reviewedAt: ISO_INSTANT_SCHEMA,
 });
 
 export const SECRET_GAME_STATE_SCHEMA = Type.Object({

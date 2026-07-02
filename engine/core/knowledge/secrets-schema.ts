@@ -6,6 +6,12 @@ import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
 import { NOBLE_PHANTASM_SCHEMA } from "../actor/actor-schema.ts";
+import {
+  ISO_INSTANT_SCHEMA,
+  NON_EMPTY_STRING_ARRAY_SCHEMA,
+  NON_EMPTY_STRING_SCHEMA,
+  nullable,
+} from "../state/schema-primitives.ts";
 import { stringEnumSchema } from "../state/state-enum-schemas.ts";
 import { parseTaggedTypeBoxUnion, trimStringsDeep } from "../utils/typebox-validation.ts";
 
@@ -142,3 +148,70 @@ export function parseRevealSecretToolInput(
     REVEAL_SECRET_TOOL_VARIANT_VALIDATORS,
   );
 }
+
+/**
+ * ---- Secrets 状态树 schema（自 state-schema.ts 分拆而来） ----
+ * 与 state.ts 手写接口一一对应；漂移由 state-schema.ts 的双向赋值检查拦截。
+ */
+
+export const SECRET_REVEAL_STATES = ["hidden", "foreshadowed", "revealed"] as const;
+const SECRET_REVEAL_STATE_SCHEMA = stringEnumSchema(SECRET_REVEAL_STATES);
+
+const STRING_SECRET_SLOT_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  value: NON_EMPTY_STRING_SCHEMA,
+  revealState: SECRET_REVEAL_STATE_SCHEMA,
+  revealConditions: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
+
+const NOBLE_PHANTASM_SECRET_SLOT_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  value: NOBLE_PHANTASM_SCHEMA,
+  revealState: SECRET_REVEAL_STATE_SCHEMA,
+  revealConditions: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
+
+const ACTOR_SECRET_SLOTS_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  trueName: Type.Optional(STRING_SECRET_SLOT_SCHEMA),
+  hiddenNoblePhantasms: Type.Array(NOBLE_PHANTASM_SECRET_SLOT_SCHEMA),
+  privateMotives: Type.Array(STRING_SECRET_SLOT_SCHEMA),
+  unrevealedAffiliations: Type.Array(STRING_SECRET_SLOT_SCHEMA),
+});
+
+export const SECRET_CAMPAIGN_FACT_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  text: NON_EMPTY_STRING_SCHEMA,
+  relatedActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
+  revealState: SECRET_REVEAL_STATE_SCHEMA,
+});
+
+export const SECRET_EVENT_MEMORY_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  time: ISO_INSTANT_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+  relatedActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
+
+const ACTOR_AGENDA_STATE_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  goal: NON_EMPTY_STRING_SCHEMA,
+  fear: NON_EMPTY_STRING_SCHEMA,
+  currentOrder: nullable(NON_EMPTY_STRING_SCHEMA),
+  lastIndependentActionAt: nullable(ISO_INSTANT_SCHEMA),
+});
+
+const ACTOR_KNOWLEDGE_LENS_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  knows: Type.Array(NON_EMPTY_STRING_SCHEMA),
+  suspects: Type.Array(NON_EMPTY_STRING_SCHEMA),
+  falseBeliefs: Type.Array(NON_EMPTY_STRING_SCHEMA),
+  forbiddenKnowledge: Type.Array(NON_EMPTY_STRING_SCHEMA),
+});
+
+export const SECRET_ACTOR_STATE_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  secrets: Type.Optional(ACTOR_SECRET_SLOTS_SCHEMA),
+  agenda: Type.Optional(ACTOR_AGENDA_STATE_SCHEMA),
+  knowledgeLens: Type.Optional(ACTOR_KNOWLEDGE_LENS_SCHEMA),
+});

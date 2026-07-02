@@ -12,12 +12,28 @@ import { Type } from "typebox";
 import { Compile } from "typebox/compile";
 
 import {
+  ISO_INSTANT_SCHEMA,
+  NON_EMPTY_STRING_ARRAY_SCHEMA,
+  NON_EMPTY_STRING_SCHEMA,
+  nullable,
+  PERCENT_SCHEMA,
+} from "../state/schema-primitives.ts";
+import {
   ACTOR_KIND_SCHEMA,
   ACTOR_STANCE_SCHEMA,
+  CIRCUIT_STATUS_SCHEMA,
+  CONTRACT_STATUS_SCHEMA,
+  FATE_PARAM_KEY_SCHEMA,
+  MANA_SUPPLY_SCHEMA,
   REVEAL_STATUS_SCHEMA,
   SERVANT_CLASS_SCHEMA,
   stringEnumSchema,
+  TRACKED_ITEM_CONDITION_SCHEMA,
+  TRACKED_ITEM_KIND_SCHEMA,
+  TRACKED_ITEM_VISIBILITY_SCHEMA,
+  WOUND_SEVERITY_SCHEMA,
 } from "../state/state-enum-schemas.ts";
+import { LOCATION_STATE_SCHEMA } from "../state/turn-time-schema.ts";
 import {
   parseTaggedTypeBoxUnion,
   parseTypeBoxValue,
@@ -266,3 +282,219 @@ export function parseActorRegistryInput(value: unknown, fieldName: string): Acto
     ACTOR_REGISTRY_VARIANT_VALIDATORS,
   );
 }
+
+/**
+ * ---- Actor 状态树 schema（自 state-schema.ts 分拆而来） ----
+ * 与 state.ts 手写接口一一对应；漂移由 state-schema.ts 底部的
+ * 双向赋值检查在编译期拦截。
+ */
+
+const MAGECRAFT_CIRCUIT_STATE_SCHEMA = Type.Object({
+  count: NON_EMPTY_STRING_SCHEMA,
+  quality: FATE_RANK_OR_NONE_SCHEMA,
+  od: PERCENT_SCHEMA,
+  status: CIRCUIT_STATUS_SCHEMA,
+  traits: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
+
+const MAGECRAFT_DISCIPLINE_SCHEMA = Type.Object({
+  name: NON_EMPTY_STRING_SCHEMA,
+  rank: FATE_RANK_OR_NONE_SCHEMA,
+  notes: NON_EMPTY_STRING_SCHEMA,
+});
+
+const MAGECRAFT_CAPABILITY_SCHEMA = Type.Object({
+  circuits: MAGECRAFT_CIRCUIT_STATE_SCHEMA,
+  disciplines: Type.Array(MAGECRAFT_DISCIPLINE_SCHEMA),
+  affiliation: nullable(NON_EMPTY_STRING_SCHEMA),
+});
+
+const IDENTITY_STATE_SCHEMA = Type.Object({
+  publicIdentity: NON_EMPTY_STRING_SCHEMA,
+  background: NON_EMPTY_STRING_SCHEMA,
+  lockedFacts: Type.Array(
+    Type.Object({ id: NON_EMPTY_STRING_SCHEMA, text: NON_EMPTY_STRING_SCHEMA }),
+  ),
+});
+
+const PRESENTATION_STATE_SCHEMA = Type.Object({
+  internalName: NON_EMPTY_STRING_SCHEMA,
+  renderName: NON_EMPTY_STRING_SCHEMA,
+  apparentAge: NON_EMPTY_STRING_SCHEMA,
+  outfit: OUTFIT_STATE_SCHEMA,
+  demeanor: NON_EMPTY_STRING_SCHEMA,
+});
+
+const WOUND_STATE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  severity: WOUND_SEVERITY_SCHEMA,
+  text: NON_EMPTY_STRING_SCHEMA,
+  recoverable: Type.Boolean(),
+  treatment: nullable(NON_EMPTY_STRING_SCHEMA),
+});
+
+const AFFLICTION_STATE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  source: NON_EMPTY_STRING_SCHEMA,
+  text: NON_EMPTY_STRING_SCHEMA,
+  expectedDuration: nullable(NON_EMPTY_STRING_SCHEMA),
+});
+
+const PERMANENT_EFFECT_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  source: NON_EMPTY_STRING_SCHEMA,
+  text: NON_EMPTY_STRING_SCHEMA,
+  mechanicalEffect: NON_EMPTY_STRING_SCHEMA,
+});
+
+const CONDITION_STATE_SCHEMA = Type.Object({
+  wounds: Type.Array(WOUND_STATE_SCHEMA),
+  afflictions: Type.Array(AFFLICTION_STATE_SCHEMA),
+  permanentEffects: Type.Array(PERMANENT_EFFECT_SCHEMA),
+});
+
+const INVENTORY_STATE_SCHEMA = Type.Object({
+  ordinaryItems: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
+
+const ABILITY_STATE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  label: NON_EMPTY_STRING_SCHEMA,
+  summary: NON_EMPTY_STRING_SCHEMA,
+});
+
+const TRUE_NAME_STATE_SCHEMA = Type.Object({
+  status: REVEAL_STATUS_SCHEMA,
+  display: NON_EMPTY_STRING_SCHEMA,
+});
+
+const SERVANT_IDENTITY_STATE_SCHEMA = Type.Object({
+  className: SERVANT_CLASS_SCHEMA,
+  trueName: TRUE_NAME_STATE_SCHEMA,
+  locked: Type.Literal(true),
+});
+
+const RESOURCE_TRACK_SCHEMA = Type.Object({ value: PERCENT_SCHEMA });
+
+const SERVANT_CONDITION_STATE_SCHEMA = Type.Object({
+  spiritualCore: RESOURCE_TRACK_SCHEMA,
+  mana: RESOURCE_TRACK_SCHEMA,
+  spiritualCondition: NON_EMPTY_STRING_SCHEMA,
+  permanentDefects: Type.Array(PERMANENT_EFFECT_SCHEMA),
+});
+
+const SERVANT_CONTRACT_STATE_SCHEMA = Type.Object({
+  masterActorId: nullable(NON_EMPTY_STRING_SCHEMA),
+  masterName: nullable(NON_EMPTY_STRING_SCHEMA),
+  status: CONTRACT_STATUS_SCHEMA,
+  manaSupply: MANA_SUPPLY_SCHEMA,
+});
+
+const PARAM_MODIFIER_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  source: NON_EMPTY_STRING_SCHEMA,
+  affectedParams: Type.Array(FATE_PARAM_KEY_SCHEMA),
+  summary: NON_EMPTY_STRING_SCHEMA,
+  expiresAt: nullable(ISO_INSTANT_SCHEMA),
+});
+
+const SERVANT_PARAMETER_STATE_SCHEMA = Type.Object({
+  base: FATE_PARAMS_SCHEMA,
+  modifiers: Type.Array(PARAM_MODIFIER_SCHEMA),
+  baseLocked: Type.Literal(true),
+});
+
+const SERVANT_SKILL_STATE_SCHEMA = Type.Object({
+  classSkills: Type.Array(SERVANT_SKILL_SCHEMA),
+  personalSkills: Type.Array(SERVANT_SKILL_SCHEMA),
+});
+
+export const SERVANT_CORE_STATE_SCHEMA = Type.Object({
+  identity: SERVANT_IDENTITY_STATE_SCHEMA,
+  condition: SERVANT_CONDITION_STATE_SCHEMA,
+  contract: SERVANT_CONTRACT_STATE_SCHEMA,
+  parameters: SERVANT_PARAMETER_STATE_SCHEMA,
+  skills: SERVANT_SKILL_STATE_SCHEMA,
+  noblePhantasms: Type.Array(NOBLE_PHANTASM_SCHEMA),
+  currentOrder: NON_EMPTY_STRING_SCHEMA,
+});
+
+const ACTOR_BASE_PROPERTIES = {
+  id: NON_EMPTY_STRING_SCHEMA,
+  roles: Type.Array(ACTOR_ROLE_SCHEMA),
+  magecraft: nullable(MAGECRAFT_CAPABILITY_SCHEMA),
+  servantForm: nullable(SERVANT_CORE_STATE_SCHEMA),
+  identity: IDENTITY_STATE_SCHEMA,
+  presentation: PRESENTATION_STATE_SCHEMA,
+  condition: CONDITION_STATE_SCHEMA,
+  inventory: INVENTORY_STATE_SCHEMA,
+  abilities: Type.Array(ABILITY_STATE_SCHEMA),
+  relationshipToProtagonist: RELATIONSHIP_STATE_SCHEMA,
+} as const;
+
+const HUMAN_ACTOR_STATE_SCHEMA = Type.Object({
+  ...ACTOR_BASE_PROPERTIES,
+  kind: Type.Literal("human"),
+});
+
+const OUTSIDER_ACTOR_STATE_SCHEMA = Type.Object({
+  ...ACTOR_BASE_PROPERTIES,
+  kind: Type.Literal("outsider"),
+  sourceProfile: NON_EMPTY_STRING_SCHEMA,
+  fateTranslation: NON_EMPTY_STRING_SCHEMA,
+  restrictions: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
+
+const SPIRIT_ACTOR_STATE_SCHEMA = Type.Object({
+  ...ACTOR_BASE_PROPERTIES,
+  kind: Type.Literal("spirit"),
+  origin: NON_EMPTY_STRING_SCHEMA,
+});
+
+const OTHER_ACTOR_STATE_SCHEMA = Type.Object({
+  ...ACTOR_BASE_PROPERTIES,
+  kind: Type.Literal("other"),
+  nature: NON_EMPTY_STRING_SCHEMA,
+});
+
+export const PUBLIC_ACTOR_STATE_SCHEMA = Type.Union([
+  HUMAN_ACTOR_STATE_SCHEMA,
+  OUTSIDER_ACTOR_STATE_SCHEMA,
+  SPIRIT_ACTOR_STATE_SCHEMA,
+  OTHER_ACTOR_STATE_SCHEMA,
+]);
+
+export const ACTOR_IMPRESSION_SCHEMA = Type.Object({
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  presence: NON_EMPTY_STRING_SCHEMA,
+  actionStyle: NON_EMPTY_STRING_SCHEMA,
+  relationshipPosture: NON_EMPTY_STRING_SCHEMA,
+  voiceMaterial: Type.String(),
+  updatedAt: ISO_INSTANT_SCHEMA,
+});
+
+export const RELATIONSHIP_SIGNAL_VISIBILITIES = ["player-known", "secret"] as const;
+const RELATIONSHIP_SIGNAL_VISIBILITY_SCHEMA = stringEnumSchema(RELATIONSHIP_SIGNAL_VISIBILITIES);
+
+export const RELATIONSHIP_SIGNAL_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  actorId: NON_EMPTY_STRING_SCHEMA,
+  targetActorId: NON_EMPTY_STRING_SCHEMA,
+  signal: NON_EMPTY_STRING_SCHEMA,
+  interpretation: NON_EMPTY_STRING_SCHEMA,
+  boundary: NON_EMPTY_STRING_SCHEMA,
+  sourceEventId: nullable(NON_EMPTY_STRING_SCHEMA),
+  visibility: RELATIONSHIP_SIGNAL_VISIBILITY_SCHEMA,
+});
+
+export const TRACKED_ITEM_STATE_SCHEMA = Type.Object({
+  id: NON_EMPTY_STRING_SCHEMA,
+  label: NON_EMPTY_STRING_SCHEMA,
+  kind: TRACKED_ITEM_KIND_SCHEMA,
+  ownerActorId: nullable(NON_EMPTY_STRING_SCHEMA),
+  holderActorId: nullable(NON_EMPTY_STRING_SCHEMA),
+  location: nullable(LOCATION_STATE_SCHEMA),
+  condition: TRACKED_ITEM_CONDITION_SCHEMA,
+  visibility: TRACKED_ITEM_VISIBILITY_SCHEMA,
+  notes: NON_EMPTY_STRING_ARRAY_SCHEMA,
+});
