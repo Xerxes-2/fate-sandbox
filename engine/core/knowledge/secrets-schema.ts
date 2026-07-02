@@ -157,21 +157,21 @@ export function parseRevealSecretToolInput(
 export const SECRET_REVEAL_STATES = ["hidden", "foreshadowed", "revealed"] as const;
 const SECRET_REVEAL_STATE_SCHEMA = stringEnumSchema(SECRET_REVEAL_STATES);
 
-const STRING_SECRET_SLOT_SCHEMA = Type.Object({
+export const STRING_SECRET_SLOT_SCHEMA = Type.Object({
   id: NON_EMPTY_STRING_SCHEMA,
   value: NON_EMPTY_STRING_SCHEMA,
   revealState: SECRET_REVEAL_STATE_SCHEMA,
   revealConditions: NON_EMPTY_STRING_ARRAY_SCHEMA,
 });
 
-const NOBLE_PHANTASM_SECRET_SLOT_SCHEMA = Type.Object({
+export const NOBLE_PHANTASM_SECRET_SLOT_SCHEMA = Type.Object({
   id: NON_EMPTY_STRING_SCHEMA,
   value: NOBLE_PHANTASM_SCHEMA,
   revealState: SECRET_REVEAL_STATE_SCHEMA,
   revealConditions: NON_EMPTY_STRING_ARRAY_SCHEMA,
 });
 
-const ACTOR_SECRET_SLOTS_SCHEMA = Type.Object({
+export const ACTOR_SECRET_SLOTS_SCHEMA = Type.Object({
   actorId: NON_EMPTY_STRING_SCHEMA,
   trueName: Type.Optional(STRING_SECRET_SLOT_SCHEMA),
   hiddenNoblePhantasms: Type.Array(NOBLE_PHANTASM_SECRET_SLOT_SCHEMA),
@@ -193,7 +193,7 @@ export const SECRET_EVENT_MEMORY_SCHEMA = Type.Object({
   relatedActorIds: NON_EMPTY_STRING_ARRAY_SCHEMA,
 });
 
-const ACTOR_AGENDA_STATE_SCHEMA = Type.Object({
+export const ACTOR_AGENDA_STATE_SCHEMA = Type.Object({
   actorId: NON_EMPTY_STRING_SCHEMA,
   goal: NON_EMPTY_STRING_SCHEMA,
   fear: NON_EMPTY_STRING_SCHEMA,
@@ -201,7 +201,7 @@ const ACTOR_AGENDA_STATE_SCHEMA = Type.Object({
   lastIndependentActionAt: nullable(ISO_INSTANT_SCHEMA),
 });
 
-const ACTOR_KNOWLEDGE_LENS_SCHEMA = Type.Object({
+export const ACTOR_KNOWLEDGE_LENS_SCHEMA = Type.Object({
   actorId: NON_EMPTY_STRING_SCHEMA,
   knows: Type.Array(NON_EMPTY_STRING_SCHEMA),
   suspects: Type.Array(NON_EMPTY_STRING_SCHEMA),
