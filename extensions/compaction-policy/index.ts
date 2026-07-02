@@ -4,6 +4,7 @@ import type {
   SessionBeforeCompactEvent,
 } from "@earendil-works/pi-coding-agent";
 
+import { dumpCompaction } from "../../engine/debug/api-trace.ts";
 import { buildSettlementCompactionSummary } from "../../engine/direction/settlement-compaction.ts";
 
 /**
@@ -44,6 +45,7 @@ function runFateCompaction(
     return undefined;
   }
   const summary = buildSettlementCompactionSummary(allMessages, previousSummary);
+  dumpCompaction(summary, { firstKeptEntryId, tokensBefore });
   return { compaction: { summary, firstKeptEntryId, tokensBefore } };
 }
 

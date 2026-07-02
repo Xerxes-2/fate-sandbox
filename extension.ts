@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { syncStateFromSessionManager } from "./engine/core/state/session-hydration.ts";
 import { exportState } from "./engine/core/state/state-store.ts";
 import { isRecord } from "./engine/core/utils/typebox-validation.ts";
+import { beginTurnTrace, dumpPassA } from "./engine/debug/api-trace.ts";
 import { PROSE_CUSTOM_TYPE } from "./engine/direction/render-turn.ts";
 import { stripLeakedSettlementProse } from "./engine/direction/settlement-prose-firewall.ts";
 import { buildSystemPrompt, injectGmPromptMessages } from "./engine/gm-prompt/injection.ts";
@@ -29,6 +30,7 @@ export default function extension(pi: ExtensionAPI): void {
   });
 
   pi.on("before_agent_start", async (event) => {
+    beginTurnTrace(new Date().toISOString());
     return { systemPrompt: buildSystemPrompt(event.systemPrompt) };
   });
 
@@ -52,12 +54,12 @@ export default function extension(pi: ExtensionAPI): void {
       // 喂给结算模型的 per-call 视图，不改存档。新存档由 message_end 源头收口，
       // 老存档靠这层兜底，二者互补。
       .map((message) => stripLeakedSettlementProse(message) ?? message);
-    return {
-      messages: injectGmPromptMessages<ContextEvent["messages"][number]>(
-        settlementMessages,
-        lastRenderedProse,
-      ),
-    };
+    const injected = injectGmPromptMessages<ContextEvent["messages"][number]>(
+      settlementMessages,
+      lastRenderedProse,
+    );
+    dumpPassA(ctx.getSystemPrompt(), injected);
+    return { messages: injected };
   });
 
   pi.on("session_start", async (_event, ctx) => {

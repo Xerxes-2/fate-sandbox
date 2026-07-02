@@ -19,6 +19,7 @@ import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts
 import { syncStateFromSessionManager } from "../../engine/core/state/session-hydration.ts";
 import { getState } from "../../engine/core/state/state-store.ts";
 import { isRecord } from "../../engine/core/utils/typebox-validation.ts";
+import { dumpPassB } from "../../engine/debug/api-trace.ts";
 import { loadProseDigests, saveProseDigest } from "../../engine/direction/prose-digest-store.ts";
 import {
   buildLintRetryMessages,
@@ -306,6 +307,7 @@ async function streamProse(
   // （400 "does not support assistant message prefill"）。Claude 原生 thinking 走
   // 独立通道、不会污染 text_delta，本就不需要这条 prefill；后置 stripThinkingResidue
   // 仍是兜底。故 anthropic 直接跳过 prefill，让对话以 user 消息结尾。
+  dumpPassB(systemPrompt, rendererMessages, label);
   const baseStreamMessages = rendererMessages.map((message) => toStreamMessage(message, model));
   const streamMessages = supportsAssistantPrefill(model)
     ? [
@@ -511,6 +513,11 @@ async function writeTurnDigest(
       prose,
     ].join("\n");
     // 摘要是纯压缩活：推理模型降到最低档，省 token 也更快；非推理模型不传。
+    dumpPassB(
+      "你是叙事存档员，只输出一行自然叙述的前情提要。",
+      [{ role: "user", text: prompt }],
+      "digest",
+    );
     const events = streamSimple(
       model,
       {
