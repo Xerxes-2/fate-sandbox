@@ -1,49 +1,22 @@
+import type { Static } from "typebox";
+
 import type {
-  ActorId,
-  LocationState,
-  SceneObjectiveId,
-  SceneThreatId,
-  StoryArcId,
-  StoryBeatId,
-} from "../state/core-types.ts";
-import type { SceneThreatSeverity, SituationKind } from "../state/state-enum-schemas.ts";
+  SCENE_OBJECTIVE_SCHEMA,
+  SCENE_OBJECTIVE_STATUSES,
+  SCENE_STATE_SCHEMA,
+  SCENE_THREAT_SCHEMA,
+  STORY_WINDOW_STATE_SCHEMA,
+} from "./scene-schema.ts";
 
 /**
- * Scene 领域状态类型（自 state.ts 分拆而来，仅类型）。
- * 对应 schema 在 scene-schema.ts；漂移由 state-schema.ts 的双向赋值检查拦截。
+ * Scene 领域状态类型：自 scene-schema.ts 的 TypeBox schema 派生，
+ * schema 是唯一事实源——改状态形状只改 schema，类型自动跟进。
  * 对外仍经 state.ts re-export 原名。
  */
 
-export type SceneObjectiveStatus = "active" | "blocked" | "resolved";
+export type SceneObjectiveStatus = (typeof SCENE_OBJECTIVE_STATUSES)[number];
 
-export interface SceneState {
-  location: LocationState;
-  situation: SituationKind;
-  storyWindow: StoryWindowState | null;
-  presentActorIds: ActorId[];
-  objectives: SceneObjective[];
-  threats: SceneThreat[];
-  lastResolvedAt: string;
-}
-
-export interface StoryWindowState {
-  currentArcId: StoryArcId;
-  currentBeatId: StoryBeatId;
-  title: string;
-  allowedActions: string[];
-  forbiddenEscalations: string[];
-  completionCriteria: string[];
-  nextBeatHints: string[];
-}
-
-export interface SceneObjective {
-  id: SceneObjectiveId;
-  summary: string;
-  status: SceneObjectiveStatus;
-}
-
-export interface SceneThreat {
-  id: SceneThreatId;
-  summary: string;
-  severity: SceneThreatSeverity;
-}
+export type SceneState = Static<typeof SCENE_STATE_SCHEMA>;
+export type StoryWindowState = Static<typeof STORY_WINDOW_STATE_SCHEMA>;
+export type SceneObjective = Static<typeof SCENE_OBJECTIVE_SCHEMA>;
+export type SceneThreat = Static<typeof SCENE_THREAT_SCHEMA>;
