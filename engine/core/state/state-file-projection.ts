@@ -1,7 +1,7 @@
-import type { TimelinePressureSlot } from "../../../data/timeline-pressure-palettes.ts";
+import type { TimelinePressureSlot } from "../../../world-data/timeline-pressure-palettes.ts";
 import type { TimeZoneId, TimelineId } from "./state.ts";
 
-import { getTimelinePressureSlots } from "../../../data/timeline-pressure-palettes.ts";
+import { getTimelinePressureSlots } from "../../../world-data/timeline-pressure-palettes.ts";
 import { formatHumanTime } from "../utils/date-time.ts";
 import { isRecord } from "../utils/typebox-validation.ts";
 import { TIMELINE_IDS, TIMEZONE_IDS } from "./state-enum-schemas.ts";

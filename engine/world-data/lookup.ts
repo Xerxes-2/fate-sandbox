@@ -108,16 +108,16 @@ function getWorldDataStore(): WorldDataStore {
 function loadWorldDataStore(): WorldDataStore {
   return {
     characters: readJsonRecord(
-      join(__dirname, "..", "..", "data", "characters.json"),
+      join(__dirname, "..", "..", "world-data", "characters.json"),
       assertCharacterEntry,
     ),
-    world: readWorldData(join(__dirname, "..", "..", "data", "world.json")),
+    world: readWorldData(join(__dirname, "..", "..", "world-data", "world.json")),
     timelines: readJsonRecord(
-      join(__dirname, "..", "..", "data", "timelines.json"),
+      join(__dirname, "..", "..", "world-data", "timelines.json"),
       assertStringValue,
     ),
-    servants: readServantData(join(__dirname, "..", "..", "data", "servants.json")),
-    locations: readLocationData(join(__dirname, "..", "..", "data", "locations.json")),
+    servants: readServantData(join(__dirname, "..", "..", "world-data", "servants.json")),
+    locations: readLocationData(join(__dirname, "..", "..", "world-data", "locations.json")),
   };
 }
 

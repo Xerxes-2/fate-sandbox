@@ -144,7 +144,7 @@ b) **Campaign memory 检索**：
 
 tool-policy 的 canon query（lookup → web_search → fetch_content）每次都在主上下文消化 wiki 正文，且跨 session 不复用。
 
-- 研究结果落盘为结构化角色卡缓存（如 `data/canon-cache/`）：外貌、口吻、参数、关系、版本边界，带来源 URL
+- 研究结果落盘为结构化角色卡缓存（如 `world-data/canon-cache/`）：外貌、口吻、参数、关系、版本边界，带来源 URL
 - 进阶：**casting 子代理**——输入「角色名 + timeline + 本局需要字段」，在自己的上下文里做 web 研究，返回窄结构卡片；主 GM 上下文只进卡片不进 wiki 正文
 - `lookup` 优先命中缓存，未命中才触发研究
 - 注意发布纪律：缓存目录属本地产物还是发布内容需要决定（含网络抓取文本，倾向不进 release zip）
@@ -364,11 +364,11 @@ interface RelationshipSignal {
 
 ## 17. Timeline pressure palette 数据化
 
-- [x] 状态：已完成基础落地（2026-06-14）。新增 `data/timeline-pressure-palettes.ts`，按 timeline 提供结构化 pressure slot（id/timelineId/label/pressureType/actorOrFactionHints/playerSafeProjectionKinds/cooldownTurns/forbiddenWhen）；`buildTimelineStateContextFromRaw` 注入当前 timeline 的 slot 与 recentUses/coolingDown；`parallel-line` 输入契约从字符串 palette 升级为结构化 slot hints，timeline 子代理注入文本与 prompt 改为读取 `pressurePalette.coolingDown`。后续可让 audit 脚本统计 pressureType 连续重复率。
+- [x] 状态：已完成基础落地（2026-06-14）。新增 `world-data/timeline-pressure-palettes.ts`，按 timeline 提供结构化 pressure slot（id/timelineId/label/pressureType/actorOrFactionHints/playerSafeProjectionKinds/cooldownTurns/forbiddenWhen）；`buildTimelineStateContextFromRaw` 注入当前 timeline 的 slot 与 recentUses/coolingDown；`parallel-line` 输入契约从字符串 palette 升级为结构化 slot hints，timeline 子代理注入文本与 prompt 改为读取 `pressurePalette.coolingDown`。后续可让 audit 脚本统计 pressureType 连续重复率。
 
 `parallel-line` 与 `timeline-showrunner` 已在 prompt 里列 timeline hook palette，但 palette 不是数据，无法做 cooldown、权重、审计或 per-campaign 覆盖。结果是某些生态位容易重复：新闻、巡逻、监控、官方封锁、同一个强势阵营。
 
-建议在 `data/` 建 timeline pressure palette：
+建议在 `world-data/` 建 timeline pressure palette：
 
 ```ts
 interface TimelinePressureSlot {
@@ -385,7 +385,7 @@ interface TimelinePressureSlot {
 
 落地路线：
 
-1. `data/timeline-pressure-palettes.ts` 定义 FSN / FSF / EXTRA / CCC 等基础生态位。
+1. `world-data/timeline-pressure-palettes.ts` 定义 FSN / FSF / EXTRA / CCC 等基础生态位。
 2. `buildTimelineStateContextFromRaw` 注入当前 timeline 的候选 slot 与最近使用记录。
 3. `parallel-line` 输入从 `activePressurePalette: string[]` 升级成结构化 slot hints。
 4. 审计脚本统计 pressureType 连续重复率与 no-novelty 复现。

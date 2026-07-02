@@ -1,4 +1,4 @@
-# data/ 许可声明
+# world-data/ 许可声明
 
 本目录下的文件（`characters.json`、`servants.json`、`locations.json`、`timelines.json`、`world.json`、`campaign-presets.ts` 等）包含基于 **Fate 系列 / TYPE-MOON 作品**整理的角色、从者、地点、世界线与设定描述，属于二次创作的同人整理内容。
 

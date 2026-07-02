@@ -8,7 +8,7 @@ You may improvise passersby, weather, shops, road surfaces, ordinary objects, an
 
 ## Local material scope
 
-Local `data/` is an index and guardrail. It helps identify the right character, location, timeline, and version. It does not guarantee full parameters, skills, Noble Phantasms, appearance, relationship tables, or route-specific timing.
+Local `world-data/` is an index and guardrail. It helps identify the right character, location, timeline, and version. It does not guarantee full parameters, skills, Noble Phantasms, appearance, relationship tables, or route-specific timing.
 
 ## Canon-reliability boundary
 

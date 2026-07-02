@@ -6,7 +6,7 @@
  * 减少泄密、降低懒得调子代理的门槛、稳定后台世界运动。
  */
 
-import type { TimelinePressureSlot } from "../../../data/timeline-pressure-palettes.ts";
+import type { TimelinePressureSlot } from "../../../world-data/timeline-pressure-palettes.ts";
 import type {
   ActorAgendaState,
   ParallelLineInput,
@@ -15,7 +15,7 @@ import type {
   State,
 } from "../state/state.ts";
 
-import { getTimelinePressureSlots } from "../../../data/timeline-pressure-palettes.ts";
+import { getTimelinePressureSlots } from "../../../world-data/timeline-pressure-palettes.ts";
 import { allActorAgendas } from "../secrets/secret-actor-state.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";
 

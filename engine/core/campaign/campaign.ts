@@ -1,7 +1,7 @@
 import type { State } from "../state/state.ts";
 import type { ConfigureCampaignInput } from "./campaign-schema.ts";
 
-import { getCampaignPreset } from "../../../data/campaign-presets.ts";
+import { getCampaignPreset } from "../../../world-data/campaign-presets.ts";
 import { normalizeIsoInstant } from "../utils/date-time.ts";
 import { createId } from "../utils/ids.ts";
 import { assertNonEmptyString } from "../utils/typebox-validation.ts";

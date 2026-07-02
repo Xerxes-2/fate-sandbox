@@ -99,16 +99,16 @@ backlog #12 自己记了：双 pass 延迟靠"结算器上下文缩水"对冲，
 
 ## 附录 A — SillyTavern → fsn 概念映射
 
-| ST 概念                  | fsn 对应                                                                                | 备注                                         |
-| ------------------------ | --------------------------------------------------------------------------------------- | -------------------------------------------- |
-| System prompt / 角色卡   | `prompts/system-*.md` + `prompts/gm-*.md` 分模块                                        | 按 pass 分组（settlement/render/both）       |
-| Jailbreak / prefill      | 两段式 render（洁净室渲染器）                                                           | 我们用结构隔离代替越狱，不喂 prefill         |
-| World Info / Lorebook    | `data/*.json`（characters/servants/locations/timelines/world）+ engine 按 presence 注入 | 注入是 engine 算的，不是关键词触发           |
-| Regex 后处理             | `engine/audit/lint-rules.ts`（纯函数 + 测试）                                           | 审计与渲染复用同一份                         |
-| Author's Note / 深度注入 | engine 装配的 turn context（mechanical_state / turn_reminder / direction_contract）     | 见 backlog #11 的 KV-cache 注入顺序          |
-| 变量 / MVU 状态栏        | `engine/core/state/state.ts` 的 public/secrets 分层 + 领域工具                          | 工具是领域事件，不是状态栏（AGENTS.md 戒律） |
-| 楼层记忆 / 摘要          | `prose-digest-store.ts` 双层滑窗 + packet 机械摘要（#13）                               | >32 轮仍会丢，arc-summary 层未做             |
-| 抽卡 / 骰子              | `engine/core/utils/seeded-rng.ts`（确定性，rewind 安全）                                |                                              |
+| ST 概念                  | fsn 对应                                                                                      | 备注                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| System prompt / 角色卡   | `prompts/system-*.md` + `prompts/gm-*.md` 分模块                                              | 按 pass 分组（settlement/render/both）       |
+| Jailbreak / prefill      | 两段式 render（洁净室渲染器）                                                                 | 我们用结构隔离代替越狱，不喂 prefill         |
+| World Info / Lorebook    | `world-data/*.json`（characters/servants/locations/timelines/world）+ engine 按 presence 注入 | 注入是 engine 算的，不是关键词触发           |
+| Regex 后处理             | `engine/audit/lint-rules.ts`（纯函数 + 测试）                                                 | 审计与渲染复用同一份                         |
+| Author's Note / 深度注入 | engine 装配的 turn context（mechanical_state / turn_reminder / direction_contract）           | 见 backlog #11 的 KV-cache 注入顺序          |
+| 变量 / MVU 状态栏        | `engine/core/state/state.ts` 的 public/secrets 分层 + 领域工具                                | 工具是领域事件，不是状态栏（AGENTS.md 戒律） |
+| 楼层记忆 / 摘要          | `prose-digest-store.ts` 双层滑窗 + packet 机械摘要（#13）                                     | >32 轮仍会丢，arc-summary 层未做             |
+| 抽卡 / 骰子              | `engine/core/utils/seeded-rng.ts`（确定性，rewind 安全）                                      |                                              |
 
 附录 B（按需）：`docs/adr/` 有 6 篇 ADR 记录关键架构决策（双 pass、public/secret 拆分、engine 账本执法、slim settlement、spawn seam、pending-harvest guard）——你质疑某个设计前先看对应 ADR，可能已经辩论过。
 

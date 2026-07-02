@@ -181,7 +181,7 @@ TAVERN2AGENT_DEV=1 ./start.sh
 
 GPL-3.0-or-later. See `LICENSE`. **GPL 仅覆盖代码**（引擎、扩展、工具、提示词框架）。
 
-`data/` 目录不适用 GPL：其中是基于 Fate / TYPE-MOON 作品整理的同人设定数据，版权归 TYPE-MOON 及各自权利方所有，仅供非商业同人用途，详见 `data/NOTICE.md`。这是同人实验项目。
+`world-data/` 目录不适用 GPL：其中是基于 Fate / TYPE-MOON 作品整理的同人设定数据，版权归 TYPE-MOON 及各自权利方所有，仅供非商业同人用途，详见 `world-data/NOTICE.md`。这是同人实验项目。
 
 ## Package
 

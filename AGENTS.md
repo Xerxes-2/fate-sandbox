@@ -14,7 +14,7 @@
 - `skills/start-game/`：新游戏初始化流程机。只负责新游戏/重新开始/创建角色，不负责续局或修档。
 - `engine/core/`：确定性领域引擎。state、scene、actor、servant、economy、memory、secret、offscreen 等逻辑在这里落地。
 - `tools/`：GM 领域事件工具。工具不是状态栏更新器，而是 GM 改变世界的接口。
-- `data/`：型月世界数据、lookup 数据、campaign preset、timeline contract。
+- `world-data/`：型月世界数据、lookup 数据、campaign preset、timeline contract。
 - `extensions/`：pi extension。玩家 UI panel、compaction policy、timeline subagent 注入都在这里。
 - `.pi/agents/`：项目作用域子代理定义。必须保持 project-only 语义，不依赖 user-scope agent。
 - `sessions/`、`state/`、`.pi/agent/`：运行产物/本地私有配置，不属于发布内容，不进 git。
@@ -244,7 +244,7 @@ engine/                # 确定性运行时引擎
   gm-prompt/           # prompt 组装、preset、render/injection 测试
   world-data/          # lookup 索引与世界数据读取
 
-data/                  # 结构化世界数据、campaign preset、timeline contract
+world-data/                  # 结构化世界数据、campaign preset、timeline contract
 
 tools/                 # 工具定义与注册
   registry.ts          # pi tool schema/description/execute 注册
@@ -380,7 +380,7 @@ YAGNI。只写当前需要的代码。多余的泛型参数、未调用的工厂
 
 - 未调用的导出函数 → 删
 - 注释掉的代码 → 删（git 里有历史）
-- 「先留着万一要用」的 `data/*.json` 字段 → 删
+- 「先留着万一要用」的 `world-data/*.json` 字段 → 删
 - 写了但没在 `tools/registry.ts` 注册的工具 → 删或注册
 
 ---
