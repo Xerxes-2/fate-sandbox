@@ -1,3 +1,5 @@
+import type { Static } from "typebox";
+
 import { Type } from "typebox";
 
 import {
@@ -16,7 +18,7 @@ import {
 /**
  * Backstage 状态树 schema（自 state-schema.ts 分拆而来）：
  * offscreen 事件账本、阵营时钟、到期事件、义务/复盘/压力/待收割。
- * 与 state.ts 手写接口一一对应；漂移由 state-schema.ts 的双向赋值检查拦截。
+ * 状态类型在 backstage-state.ts 从这里派生，schema 是唯一事实源。
  */
 
 export const OFFSCREEN_EVENT_SCHEMA = Type.Object({
@@ -50,9 +52,14 @@ export const SCHEDULED_EVENT_SCHEMA = Type.Object({
   summary: NON_EMPTY_STRING_SCHEMA,
 });
 
+/** 生成后台义务的触发源（v1 可检测核心集） */
+export const BACKSTAGE_TRIGGERS = ["time-advance", "beat-complete", "no-cost-streak"] as const;
+
+export type BackstageTrigger = (typeof BACKSTAGE_TRIGGERS)[number];
+
 export const BACKSTAGE_OBLIGATION_SCHEMA = Type.Object({
   id: NON_EMPTY_STRING_SCHEMA,
-  trigger: stringEnumSchema(["time-advance", "beat-complete", "no-cost-streak"]),
+  trigger: stringEnumSchema(BACKSTAGE_TRIGGERS),
   summary: NON_EMPTY_STRING_SCHEMA,
   createdAt: ISO_INSTANT_SCHEMA,
 });
@@ -63,11 +70,23 @@ export const BACKSTAGE_PENDING_HARVEST_SCHEMA = Type.Object({
   spawnedAt: ISO_INSTANT_SCHEMA,
 });
 
+/** 后台义务的清账结果：landed=落地候选；no-change/blocked=经审查的显式无推进 */
+export const BACKSTAGE_RESOLUTION_OUTCOMES = ["landed", "no-change", "blocked"] as const;
+
+export type BackstageResolutionOutcome = (typeof BACKSTAGE_RESOLUTION_OUTCOMES)[number];
+
 export const BACKSTAGE_REVIEW_ENTRY_SCHEMA = Type.Object({
   id: NON_EMPTY_STRING_SCHEMA,
   obligationId: NON_EMPTY_STRING_SCHEMA,
-  outcome: stringEnumSchema(["landed", "no-change", "blocked"]),
+  outcome: stringEnumSchema(BACKSTAGE_RESOLUTION_OUTCOMES),
   reasonCode: NON_EMPTY_STRING_SCHEMA,
   note: NON_EMPTY_STRING_SCHEMA,
   reviewedAt: ISO_INSTANT_SCHEMA,
 });
+
+/** 后台压力计数：跨回合的连续无代价计数器 */
+export const BACKSTAGE_PRESSURE_STATE_SCHEMA = Type.Object({
+  consecutiveNoCostTurns: Type.Integer({ minimum: 0 }),
+});
+
+export type BackstagePressureState = Static<typeof BACKSTAGE_PRESSURE_STATE_SCHEMA>;

@@ -15,6 +15,7 @@ import {
 import {
   BACKSTAGE_OBLIGATION_SCHEMA,
   BACKSTAGE_PENDING_HARVEST_SCHEMA,
+  BACKSTAGE_PRESSURE_STATE_SCHEMA,
   BACKSTAGE_REVIEW_ENTRY_SCHEMA,
   FACTION_CLOCK_SCHEMA,
   OFFSCREEN_EVENT_SCHEMA,
@@ -150,9 +151,7 @@ export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   relationshipSignals: Type.Array(RELATIONSHIP_SIGNAL_SCHEMA),
   backstageObligations: Type.Array(BACKSTAGE_OBLIGATION_SCHEMA),
   backstageReviewLog: Type.Array(BACKSTAGE_REVIEW_ENTRY_SCHEMA),
-  backstagePressure: Type.Object({
-    consecutiveNoCostTurns: Type.Integer({ minimum: 0 }),
-  }),
+  backstagePressure: BACKSTAGE_PRESSURE_STATE_SCHEMA,
   backstagePendingHarvests: Type.Array(BACKSTAGE_PENDING_HARVEST_SCHEMA),
 });
 
