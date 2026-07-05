@@ -52,14 +52,14 @@
     "@earendil-works/pi-coding-agent": "^0.80.3",
     "@earendil-works/pi-tui": "^0.80.3",
     "@js-temporal/polyfill": "^0.5.1",
-    "typebox": "^1.3.3"
+    "typebox": "^1.3.4"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
     "jiti": "^2.7.0",
     "oxfmt": "latest",
     "oxlint": "^1.72.0",
-    "oxlint-tsgolint": "^0.24.0",
+    "oxlint-tsgolint": "latest",
     "typescript": "^6.0.3"
   },
   "peerDependenciesMeta": {
