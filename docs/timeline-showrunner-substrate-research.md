@@ -51,15 +51,15 @@ pi-subagents（v0.34.0，`.pi/npm/node_modules/pi-subagents/package.json:3`）sr
 
 ### 1.4 裸 `pi` CLI 能力核对（`pi --help` 实测输出）
 
-| 需求 | 裸 `pi -p` 能否满足 | 依据 |
-| --- | --- | --- |
-| (i) 只加载 timeline extension | ✅ `--no-extensions -e extensions/subagents/timeline/index.ts` | `--extension, -e` / `--no-extensions, -ne`（help 输出；pi-subagents 自己就是这么拼的，`pi-args.ts:144-149`） |
-| (ii) 只有 `lookup` 工具 | ✅ `--no-builtin-tools`（保留 extension 工具）或 `--tools lookup` | `--no-builtin-tools, -nbt` / `--tools, -t`（help 输出） |
-| (iii) 同步返回 | ✅ 父进程 spawn（不 detach）等 exit；产物读 stdout（`--mode json` 结构化事件）或 session jsonl（引擎已有 `extractLastAssistantText`，`engine/core/backstage/backstage-session-read.ts:25-40`） | help 输出 + backstage 既有代码 |
-| 独立 persona | ✅ `--system-prompt <file>` | help 输出 |
-| 不吸项目上下文 | ✅ `--no-context-files --no-skills --no-prompt-templates` | help 输出 |
-| session 落点控制 | ✅ `--session-dir` + `--session-id`（或 `--no-session`） | help 输出；backstage 同款（`engine/core/backstage/backstage-spawn.ts:36-49`） |
-| 模型钉住 | ✅ `--model`（当前 backstage 选择继承默认主模型，ADR 0005 Amendment） | help 输出 |
+| 需求                          | 裸 `pi -p` 能否满足                                                                                                                                                                            | 依据                                                                                                         |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| (i) 只加载 timeline extension | ✅ `--no-extensions -e extensions/subagents/timeline/index.ts`                                                                                                                                 | `--extension, -e` / `--no-extensions, -ne`（help 输出；pi-subagents 自己就是这么拼的，`pi-args.ts:144-149`） |
+| (ii) 只有 `lookup` 工具       | ✅ `--no-builtin-tools`（保留 extension 工具）或 `--tools lookup`                                                                                                                              | `--no-builtin-tools, -nbt` / `--tools, -t`（help 输出）                                                      |
+| (iii) 同步返回                | ✅ 父进程 spawn（不 detach）等 exit；产物读 stdout（`--mode json` 结构化事件）或 session jsonl（引擎已有 `extractLastAssistantText`，`engine/core/backstage/backstage-session-read.ts:25-40`） | help 输出 + backstage 既有代码                                                                               |
+| 独立 persona                  | ✅ `--system-prompt <file>`                                                                                                                                                                    | help 输出                                                                                                    |
+| 不吸项目上下文                | ✅ `--no-context-files --no-skills --no-prompt-templates`                                                                                                                                      | help 输出                                                                                                    |
+| session 落点控制              | ✅ `--session-dir` + `--session-id`（或 `--no-session`）                                                                                                                                       | help 输出；backstage 同款（`engine/core/backstage/backstage-spawn.ts:36-49`）                                |
+| 模型钉住                      | ✅ `--model`（当前 backstage 选择继承默认主模型，ADR 0005 Amendment）                                                                                                                          | help 输出                                                                                                    |
 
 结论：**showrunner 对 pi-subagents 的全部消费，裸 `pi` CLI 一比一都有对应 flag**；pi-subagents 在这条路径上是一个 argv 翻译器 + 阻塞等待器 + 输出取回器。
 
@@ -77,19 +77,19 @@ pi-subagents（v0.34.0，`.pi/npm/node_modules/pi-subagents/package.json:3`）sr
 
 ## 二、能力矩阵
 
-| 能力 | showrunner 是否用 | pi-subagents 提供方式 | 裸 `pi -p` + 引擎 seam 对应物 |
-| --- | --- | --- | --- |
-| project-scope agent 发现 | ✅ | `.pi/agents/**/*.md` 扫描 + frontmatter | 不需要：persona 收进 engine（同 `backstage-director-persona.ts`）或引擎读 md 文件 |
-| 工具白名单（仅 lookup） | ✅ | frontmatter `tools` → `--tools lookup`（`pi-args.ts:120-137`） | `--no-builtin-tools` + timeline extension（或 `--tools lookup`） |
-| 按 agent 加载 extension | ✅ | frontmatter `extensions` → `--no-extensions -e ...`（`pi-args.ts:144-149`） | 同款 flag，引擎直接拼 |
-| systemPromptMode replace | ✅ | persona 落 tmp 文件 → `--system-prompt`（`pi-args.ts:160-166`） | `--system-prompt <file>` 或 prompt 全文作为 `-p` 输入 |
-| 剥项目上下文/skills | ✅ | prompt-runtime extension + `--no-skills`（`subagent-prompt-runtime.ts:11,51`） | `--no-context-files --no-skills` |
-| 同步阻塞 + 结果回填模型回合 | ✅ | 前台执行器（`execution.ts:191,290,565`） | spawn 不 detach + await exit + 读 session jsonl（`backstage-session-read.ts:25` 已有解析器） |
-| 超时/挂死子进程处理 | ✅（隐性受益） | `execution.ts:91-99,354-381` | **需自己写**（~30 行：timeout + kill） |
-| 输出 JSON schema 校验 | ❌（当前没有任何校验） | 有 `outputSchema` 能力但未启用 | 引擎 return-trip gate（同 `parallel-line-output-schema.ts` 模式）——**迁移反而补上这道防线** |
-| 模型覆盖/fallback（agentOverrides） | ❌（未配置） | settings `subagents.*` | `--model`（如需） |
-| chains/parallel/async/TUI/artifacts/intercom/RPC | ❌ | 框架主体 | 不需要 |
-| task 注入面（防 3 种输入形态） | ✅（被迫） | `tool_call` hook 改写 `subagent` 入参（`extension.ts:76-92`；`task-injection.ts:46-113`） | 消失：引擎在拼 prompt 时直接嵌上下文块，单一形态 |
+| 能力                                             | showrunner 是否用      | pi-subagents 提供方式                                                                     | 裸 `pi -p` + 引擎 seam 对应物                                                                |
+| ------------------------------------------------ | ---------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| project-scope agent 发现                         | ✅                     | `.pi/agents/**/*.md` 扫描 + frontmatter                                                   | 不需要：persona 收进 engine（同 `backstage-director-persona.ts`）或引擎读 md 文件            |
+| 工具白名单（仅 lookup）                          | ✅                     | frontmatter `tools` → `--tools lookup`（`pi-args.ts:120-137`）                            | `--no-builtin-tools` + timeline extension（或 `--tools lookup`）                             |
+| 按 agent 加载 extension                          | ✅                     | frontmatter `extensions` → `--no-extensions -e ...`（`pi-args.ts:144-149`）               | 同款 flag，引擎直接拼                                                                        |
+| systemPromptMode replace                         | ✅                     | persona 落 tmp 文件 → `--system-prompt`（`pi-args.ts:160-166`）                           | `--system-prompt <file>` 或 prompt 全文作为 `-p` 输入                                        |
+| 剥项目上下文/skills                              | ✅                     | prompt-runtime extension + `--no-skills`（`subagent-prompt-runtime.ts:11,51`）            | `--no-context-files --no-skills`                                                             |
+| 同步阻塞 + 结果回填模型回合                      | ✅                     | 前台执行器（`execution.ts:191,290,565`）                                                  | spawn 不 detach + await exit + 读 session jsonl（`backstage-session-read.ts:25` 已有解析器） |
+| 超时/挂死子进程处理                              | ✅（隐性受益）         | `execution.ts:91-99,354-381`                                                              | **需自己写**（~30 行：timeout + kill）                                                       |
+| 输出 JSON schema 校验                            | ❌（当前没有任何校验） | 有 `outputSchema` 能力但未启用                                                            | 引擎 return-trip gate（同 `parallel-line-output-schema.ts` 模式）——**迁移反而补上这道防线**  |
+| 模型覆盖/fallback（agentOverrides）              | ❌（未配置）           | settings `subagents.*`                                                                    | `--model`（如需）                                                                            |
+| chains/parallel/async/TUI/artifacts/intercom/RPC | ❌                     | 框架主体                                                                                  | 不需要                                                                                       |
+| task 注入面（防 3 种输入形态）                   | ✅（被迫）             | `tool_call` hook 改写 `subagent` 入参（`extension.ts:76-92`；`task-injection.ts:46-113`） | 消失：引擎在拼 prompt 时直接嵌上下文块，单一形态                                             |
 
 ---
 
@@ -143,12 +143,12 @@ rubric 的机械部分已经或可以下沉为引擎不变量，源码证据：
 
 showrunner 的不变量与 backstage 防火墙不同，逐条看框架是否承载：
 
-| showrunner 不变量 | pi-subagents 是否结构性保障 | 引擎 seam 下的保障 |
-| --- | --- | --- |
-| read-only / 零 canon 写入 | ✅（`--tools lookup`，child 无写工具、无 `read`） | 等价（`--no-builtin-tools` + 仅 lookup extension） |
-| executable-JSON-only 输出 | ❌ 纯 prompt（无 schema gate；框架的 `outputSchema` 未被使用） | ✅ 引擎 return-trip 校验（新增防线） |
-| 独立于 GM 路径依赖 | ✅（fresh context + replace prompt） | 等价（独立进程 + 引擎拼 prompt） |
-| 上下文投影保真（不陈旧、secrets 过滤在父侧） | ⚠️ 靠 `tool_call` hook 追着框架入参 schema 注入，失败静默降级（`extension.ts:87-90`） | ✅ 引擎拼 prompt 时内嵌，单形态、无猜测 |
+| showrunner 不变量                            | pi-subagents 是否结构性保障                                                           | 引擎 seam 下的保障                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| read-only / 零 canon 写入                    | ✅（`--tools lookup`，child 无写工具、无 `read`）                                     | 等价（`--no-builtin-tools` + 仅 lookup extension） |
+| executable-JSON-only 输出                    | ❌ 纯 prompt（无 schema gate；框架的 `outputSchema` 未被使用）                        | ✅ 引擎 return-trip 校验（新增防线）               |
+| 独立于 GM 路径依赖                           | ✅（fresh context + replace prompt）                                                  | 等价（独立进程 + 引擎拼 prompt）                   |
+| 上下文投影保真（不陈旧、secrets 过滤在父侧） | ⚠️ 靠 `tool_call` hook 追着框架入参 schema 注入，失败静默降级（`extension.ts:87-90`） | ✅ 引擎拼 prompt 时内嵌，单形态、无猜测            |
 
 **结论：原则指向同一方向，但推力弱于 backstage。** backstage 的迁移是"框架物理上给不了防火墙"（in-process 框架无法提供进程隔离 + 零工具，ADR 0005 第 3 段）；showrunner 这里 pi-subagents 没有能力缺口——它把两条不变量保障得不错，问题是（1）为此背 38K 行运行时依赖 + 一层追 schema 的注入胶水，（2）最要紧的输出不变量它虽有能力却没被接上，而引擎 gate 反正要自己写。用量 ~10%、胶水层是唯一活跃维护点、且迁移顺手补一道防线——净账倾向 thin seam，只是不像 backstage 那样是"必须"，更像"该"。
 
