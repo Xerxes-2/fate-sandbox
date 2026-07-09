@@ -53,7 +53,10 @@ export type RerollTarget =
   | { kind: "root-prose"; proseEntryId: string }
   | { kind: "no-packet"; proseEntryId: string };
 
-export function registerRerollCommand(pi: ExtensionAPI, callbacks: RerollCommandCallbacks): void {
+export function registerRerollCommand(
+  pi: Pick<ExtensionAPI, "registerCommand" | "sendMessage">,
+  callbacks: RerollCommandCallbacks,
+): void {
   pi.registerCommand("reroll", {
     description: "重新渲染最后一条正文：保留结算事实，只替换可见小说文本",
     handler: async (args, ctx) => {
@@ -118,7 +121,7 @@ export function isRerollTargetStillCurrent(
 }
 
 async function rerollLastProse(
-  pi: ExtensionAPI,
+  pi: Pick<ExtensionAPI, "sendMessage">,
   callbacks: RerollCommandCallbacks,
   ctx: ExtensionCommandContext,
 ): Promise<void> {
@@ -146,7 +149,7 @@ async function rerollLastProse(
 }
 
 async function renderAndReplaceProse(
-  pi: ExtensionAPI,
+  pi: Pick<ExtensionAPI, "sendMessage">,
   callbacks: RerollCommandCallbacks,
   ctx: ExtensionCommandContext,
   target: ReadyRerollTarget,
@@ -185,7 +188,7 @@ async function renderAndReplaceProse(
 }
 
 function sendRerolledProse(
-  pi: ExtensionAPI,
+  pi: Pick<ExtensionAPI, "sendMessage">,
   target: ReadyRerollTarget,
   prose: RerollRenderedProse,
   suggestedActions: RenderDirectionPacket["suggestedActions"],

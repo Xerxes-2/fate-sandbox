@@ -2,6 +2,7 @@
 
 ## v0.1.0 (未发布)
 
+- 升级 Pi 运行时依赖至 0.80.6；双 pass 正文改在 `agent_settled` 后追加，删除 25ms 轮询与 10 秒超时丢稿路径，同时保留 queued continuation 的多篇正文顺序。
 - 新增 `/reroll` 正文重 roll 命令（`extensions/two-pass-render/`）：复用上一轮结算包，
   只重跑渲染段并替换最后一条 `fsn-prose`，不改变游戏状态。
 - 新增 `/fuck [N]` 快速回退命令（`extensions/rewind/`）：中断当前生成、回到倒数第 N 条用户输入之前、从 session 文件物理删除废弃分支，原输入回填输入框便于修改重发；游戏状态由 session_tree 钩子自动从回退点快照重新水合。

@@ -1,10 +1,13 @@
 import type {
+  AgentEndEvent,
+  AgentSettledEvent,
   ExtensionAPI,
   ExtensionContext,
   MessageRenderer,
 } from "@earendil-works/pi-coding-agent";
 
 import type { RenderDirectionPacket, SuggestedAction } from "../../engine/render/packet-schema.ts";
+import type { SettledProseDelivery } from "./prose-delivery.ts";
 
 // pi-ai 0.80 把全局 stream()/streamSimple() 移到临时 compat 入口；
 // 待 coding-agent ModelManager 迁移完成后改用 createModels() + provider 工厂。
@@ -15,7 +18,6 @@ import { Markdown, Text } from "@earendil-works/pi-tui";
 import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts";
 import { syncStateFromSessionManager } from "../../engine/core/state/session-hydration.ts";
 import { getState } from "../../engine/core/state/state-store.ts";
-import { isRecord } from "../../engine/core/utils/typebox-validation.ts";
 import { dumpPassB } from "../../engine/debug/api-trace.ts";
 import { buildRendererSystemPrompt } from "../../engine/prompt-assembly/injection.ts";
 import { loadProseDigests, saveProseDigest } from "../../engine/render/prose-digest-store.ts";
@@ -32,6 +34,7 @@ import {
 import { stripLeakedSettlementProse } from "../../engine/render/settlement-prose-firewall.ts";
 import { stripThinkingResidue, THINKING_PREFILL_TEXT } from "../../engine/render/strip-thinking.ts";
 import { setChoiceWidget } from "../player-choices/index.ts";
+import { createProseDelivery, createSettledProseDelivery } from "./prose-delivery.ts";
 import { registerRerollCommand } from "./reroll.ts";
 
 const RENDERER_MAX_TOKENS = 8192;
@@ -40,19 +43,33 @@ const MAX_RENDER_LINT_RETRIES = 6;
 /** 伪流式预览 widget：只展示尾部若干行，避免长正文压满屏幕。 */
 const RENDER_WIDGET_KEY = "fsn-render-preview";
 const RENDER_WIDGET_TAIL_LINES = 12;
-/** 等待 run 真正空闲的轮询间隔与上限（约 10s）。 */
-const IDLE_POLL_INTERVAL_MS = 25;
-const IDLE_POLL_MAX_ATTEMPTS = 400;
 
 /**
  * 双 pass 第二段（Pass B）：结算循环以 submit_direction_packet 收尾后，
  * 在 agent_end 用洁净室 complete() 把 packet 渲染成玩家可见正文，
  * 以 fsn-prose custom message 落 session。结算投影的过滤在 extension.ts。
  *
- * 注意：agent_end 触发时 run 仍处于 streaming 态（finishRun 在监听器之后），
- * 此时 sendMessage 会被当成 steer 输入再唤醒结算器，形成自激振荡。
- * 所以发送必须延迟到 ctx.isIdle() 之后；另用 toolCallId 去重防双渲。
+ * agent_end 仍处于 streaming 态，发送 custom message 会重新唤醒结算器。
+ * 因此 agent_end 只备好正文；0.80.4+ 的 agent_settled 保证自动 retry、
+ * compaction 与 queued continuation 均已结束，此时 append 不会开启新轮。
  */
+export interface ProseMessageSink {
+  sendMessage(
+    message: {
+      customType: string;
+      content: string;
+      display: boolean;
+      details: Record<string, unknown>;
+    },
+    options: { triggerTurn: false },
+  ): void;
+}
+
+export interface TwoPassRenderLifecycleApi extends ProseMessageSink {
+  onAgentEnd(handler: (event: AgentEndEvent, ctx: ExtensionContext) => Promise<void>): void;
+  onAgentSettled(handler: (event: AgentSettledEvent, ctx: ExtensionContext) => void): void;
+}
+
 export default function twoPassRenderExtension(pi: ExtensionAPI): void {
   pi.registerMessageRenderer(PROSE_CUSTOM_TYPE, renderProseMessage);
   registerRerollCommand(pi, {
@@ -78,9 +95,18 @@ export default function twoPassRenderExtension(pi: ExtensionAPI): void {
     return stripped === undefined ? undefined : { message: stripped };
   });
 
-  const renderedToolCallIds = new Set<string>();
+  registerTwoPassRenderLifecycle({
+    onAgentEnd: (handler) => pi.on("agent_end", handler),
+    onAgentSettled: (handler) => pi.on("agent_settled", handler),
+    sendMessage: (message, options) => pi.sendMessage(message, options),
+  });
+}
 
-  pi.on("agent_end", async (event, ctx) => {
+export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): void {
+  const renderedToolCallIds = new Set<string>();
+  const proseDelivery = createSettledProseDelivery();
+
+  api.onAgentEnd(async (event, ctx) => {
     const pending = readPendingPacket(event.messages, ctx);
     if (pending === undefined || renderedToolCallIds.has(pending.toolCallId)) {
       return;
@@ -88,54 +114,44 @@ export default function twoPassRenderExtension(pi: ExtensionAPI): void {
     renderedToolCallIds.add(pending.toolCallId);
     const { packet } = pending;
     if (!packet.needsRender) {
-      sendProseWhenIdle(pi, ctx, packet.directReply, { kind: "direct-reply" });
+      proseDelivery.queue(createProseDelivery(packet));
       return;
     }
     syncStateFromSessionManager(ctx.sessionManager);
     const unrevealedSecrets = collectUnrevealedSecretStrings(getState().secrets);
     const prose = await renderProse(ctx, event.messages, packet, unrevealedSecrets);
     if (prose === undefined) {
-      sendProseWhenIdle(pi, ctx, buildFallbackProse(packet), { kind: "render-fallback" });
+      proseDelivery.queue(createProseDelivery(packet));
       return;
     }
-    sendProseWhenIdle(pi, ctx, prose.text, {
-      kind: "rendered",
-      lintRuleIds: prose.lintRuleIds,
-      suggestedActions: packet.suggestedActions,
-    });
+    proseDelivery.queue(createProseDelivery(packet, prose));
     // backlog #13：独立 writer 异步产出本轮高质量摘要，供后续轮次的摘要层使用。
     // 失败静默——机械 packet 摘要永远是兜底。
     void writeTurnDigest(ctx, pending, prose.text);
   });
+
+  api.onAgentSettled((_event, ctx) => {
+    deliverSettledProse(
+      api,
+      proseDelivery,
+      (actions) => setChoiceWidget(ctx, actions),
+      () => clearRenderWidget(ctx),
+    );
+  });
 }
 
-/**
- * 等 run 退出 streaming 态后再落 prose：此时 sendMessage 走「非 streaming +
- * 不触发」分支，只追加消息不开新轮。若玩家抢先开了新轮，则继续等到
- * 那轮结束，最多约 10s 后放弃并告警。
- */
-function sendProseWhenIdle(
-  pi: ExtensionAPI,
-  ctx: ExtensionContext,
-  text: string,
-  details: Record<string, unknown>,
-  attempt = 0,
+export function deliverSettledProse(
+  api: ProseMessageSink,
+  proseDelivery: SettledProseDelivery,
+  setChoices: (actions: readonly SuggestedAction[]) => void,
+  clearRenderPreview: () => void,
 ): void {
-  if (ctx.isIdle()) {
-    sendProse(pi, text, details);
-    const suggestedActions = readSuggestedActionsFromDetails(details);
-    setChoiceWidget(ctx, suggestedActions);
-    clearRenderWidget(ctx);
-    return;
-  }
-  if (attempt >= IDLE_POLL_MAX_ATTEMPTS) {
-    clearRenderWidget(ctx);
-    notify(ctx, "two-pass render: agent never went idle, dropping prose delivery", "error");
-    return;
-  }
-  setTimeout(() => {
-    sendProseWhenIdle(pi, ctx, text, details, attempt + 1);
-  }, IDLE_POLL_INTERVAL_MS);
+  proseDelivery.settle((delivery) => {
+    sendProse(api, delivery.text, delivery.details);
+    const actions = delivery.details.kind === "rendered" ? delivery.details.suggestedActions : [];
+    setChoices(actions);
+    clearRenderPreview();
+  });
 }
 
 interface RenderedProse {
@@ -651,36 +667,7 @@ function readPendingPacket(
   }
 }
 
-/** 渲染不可用时的兜底：binding 事实以平文列出，保证玩家至少看到结算结果。 */
-function buildFallbackProse(packet: RenderDirectionPacket): string {
-  return [
-    "（渲染器暂不可用，以下为本轮结算摘要）",
-    "",
-    ...packet.resolvedChanges.map((entry) => `- ${entry}`),
-    "",
-    `> ${packet.endWindow}`,
-  ].join("\n");
-}
-
-function readSuggestedActionsFromDetails(details: Record<string, unknown>): SuggestedAction[] {
-  const raw = details["suggestedActions"];
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-  const actions: SuggestedAction[] = [];
-  for (const action of raw) {
-    if (!isRecord(action)) {
-      continue;
-    }
-    const submitText = action["submitText"];
-    if (typeof submitText === "string") {
-      actions.push({ submitText });
-    }
-  }
-  return actions;
-}
-
-function sendProse(pi: ExtensionAPI, text: string, details: Record<string, unknown>): void {
+function sendProse(pi: ProseMessageSink, text: string, details: Record<string, unknown>): void {
   pi.sendMessage(
     { customType: PROSE_CUSTOM_TYPE, content: text, display: true, details },
     { triggerTurn: false },
