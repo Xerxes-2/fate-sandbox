@@ -77,86 +77,86 @@
 
 ### A. 扩展 API（extension events / ctx / 公共导出）
 
-| 版本 | 变更 | 相关性 |
-|---|---|---|
-| 0.77.0 | `InputEvent.streamingBehavior`（idle / steer / queued follow-up） | ~~可用~~ → **证伪**（见文末勘误；two-pass-render 轮询不可替代） |
-| 0.77.0 | `agent_end` 排队的 follow-up 在 agent idle 前 drain（#5115） | **受益**（two-pass-render 的 idle 假设） |
-| 0.77.0 | SIGTERM/SIGHUP 退出会先跑 `session_shutdown` 清理并还原终端（#5080） | **受益** |
-| 0.77.0 | `pi.getAllTools()` 暴露每个工具的 `promptGuidelines`（#4879） | 可用（低优先） |
-| 0.77.0 | session disposal 会 abort 在途 agent/compaction/branch summary/retry/bash（#5029） | **受益**（rewind 的 abort+waitForIdle 路径） |
-| 0.78.0 | 导出 `convertToPng`、`parseArgs` / `Args`（#5167、#5202） | 可用（低优先） |
-| 0.78.1 | `ctx.mode`（TUI/RPC/JSON/print） | ~~可用~~ → 基本无落点（timeline 无 UI 分支；见结论摘要第 6 项复核） |
-| 0.78.1 | `ctx.getSystemPromptOptions()`（#5306） | 可用 |
-| 0.78.1 | `renderShell: "self"` 渲染器空行修复（#5299） | **受益**（registerMessageRenderer 用户） |
-| 0.79.0 | `project_trust` 扩展事件；导出 RPC extension UI 请求/响应类型（#5455）、包资产路径 helpers（#5415） | 可用 |
-| 0.79.0 | **移除 `./hooks` 子路径导出** | 无关（本项目未用） |
-| 0.79.1 | `ctx.isProjectTrusted()`（#5523）；`ctx.ui.addAutocompleteProvider()` 触发字符（#4703）；`areExperimentalFeaturesEnabled` | **可用**（player-choices 的 `#` 触发补全） |
-| 0.79.7 | 导出 `CONFIG_DIR_NAME`（#5869）；导出 `generateDiffString` / `generateUnifiedPatch` / `EditDiffResult`（#5756） | **可用** |
-| 0.79.9 | 同目录 session 切换复用已 import 的扩展模块、保持新实例与生命周期事件（#5905） | **受益**（rewind / session 切换 + session_tree 再水合） |
-| 0.79.10 | `session_before_compact` / `session_compact` 增加 `reason` + `willRetry`（#5962） | **可用（首推）**（compaction-policy） |
-| 0.80.3 | `session_info_changed` 扩展事件（#6175） | 可用（低优先） |
-| 0.80.3 | 扩展工具变更在同一 run 的下次 provider 请求前生效且不丢 `before_agent_start` systemPrompt override（#6162） | **受益（重要）**（extension.ts） |
+| 版本    | 变更                                                                                                                      | 相关性                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 0.77.0  | `InputEvent.streamingBehavior`（idle / steer / queued follow-up）                                                         | ~~可用~~ → **证伪**（见文末勘误；two-pass-render 轮询不可替代）     |
+| 0.77.0  | `agent_end` 排队的 follow-up 在 agent idle 前 drain（#5115）                                                              | **受益**（two-pass-render 的 idle 假设）                            |
+| 0.77.0  | SIGTERM/SIGHUP 退出会先跑 `session_shutdown` 清理并还原终端（#5080）                                                      | **受益**                                                            |
+| 0.77.0  | `pi.getAllTools()` 暴露每个工具的 `promptGuidelines`（#4879）                                                             | 可用（低优先）                                                      |
+| 0.77.0  | session disposal 会 abort 在途 agent/compaction/branch summary/retry/bash（#5029）                                        | **受益**（rewind 的 abort+waitForIdle 路径）                        |
+| 0.78.0  | 导出 `convertToPng`、`parseArgs` / `Args`（#5167、#5202）                                                                 | 可用（低优先）                                                      |
+| 0.78.1  | `ctx.mode`（TUI/RPC/JSON/print）                                                                                          | ~~可用~~ → 基本无落点（timeline 无 UI 分支；见结论摘要第 6 项复核） |
+| 0.78.1  | `ctx.getSystemPromptOptions()`（#5306）                                                                                   | 可用                                                                |
+| 0.78.1  | `renderShell: "self"` 渲染器空行修复（#5299）                                                                             | **受益**（registerMessageRenderer 用户）                            |
+| 0.79.0  | `project_trust` 扩展事件；导出 RPC extension UI 请求/响应类型（#5455）、包资产路径 helpers（#5415）                       | 可用                                                                |
+| 0.79.0  | **移除 `./hooks` 子路径导出**                                                                                             | 无关（本项目未用）                                                  |
+| 0.79.1  | `ctx.isProjectTrusted()`（#5523）；`ctx.ui.addAutocompleteProvider()` 触发字符（#4703）；`areExperimentalFeaturesEnabled` | **可用**（player-choices 的 `#` 触发补全）                          |
+| 0.79.7  | 导出 `CONFIG_DIR_NAME`（#5869）；导出 `generateDiffString` / `generateUnifiedPatch` / `EditDiffResult`（#5756）           | **可用**                                                            |
+| 0.79.9  | 同目录 session 切换复用已 import 的扩展模块、保持新实例与生命周期事件（#5905）                                            | **受益**（rewind / session 切换 + session_tree 再水合）             |
+| 0.79.10 | `session_before_compact` / `session_compact` 增加 `reason` + `willRetry`（#5962）                                         | **可用（首推）**（compaction-policy）                               |
+| 0.80.3  | `session_info_changed` 扩展事件（#6175）                                                                                  | 可用（低优先）                                                      |
+| 0.80.3  | 扩展工具变更在同一 run 的下次 provider 请求前生效且不丢 `before_agent_start` systemPrompt override（#6162）               | **受益（重要）**（extension.ts）                                    |
 
 ### B. Compaction
 
-| 版本 | 变更 | 相关性 |
-|---|---|---|
-| 0.79.0 | compaction 摘要 system prompt 对非 coding agent 用中性措辞（#5401） | **受益**（叙事游戏；但本项目已自管 summary，仅兜底路径受益） |
-| 0.79.8 | compact 结果与 compaction 事件包含压缩后 token 估算（#5877） | **可用**（compaction-policy 的告警/调试落盘） |
-| 0.79.8 | 无可压缩消息时拒绝 compaction 而非产出空摘要（#4811）；overflow 触发的自动压缩成功后不再重试已完成的回复（#5720） | **受益** |
-| 0.79.10 | reason/willRetry（见上） | **可用** |
-| 0.80.3 | pre-prompt compaction 压缩后停止、不再立即继续（#6074） | **受益** |
+| 版本    | 变更                                                                                                              | 相关性                                                       |
+| ------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 0.79.0  | compaction 摘要 system prompt 对非 coding agent 用中性措辞（#5401）                                               | **受益**（叙事游戏；但本项目已自管 summary，仅兜底路径受益） |
+| 0.79.8  | compact 结果与 compaction 事件包含压缩后 token 估算（#5877）                                                      | **可用**（compaction-policy 的告警/调试落盘）                |
+| 0.79.8  | 无可压缩消息时拒绝 compaction 而非产出空摘要（#4811）；overflow 触发的自动压缩成功后不再重试已完成的回复（#5720） | **受益**                                                     |
+| 0.79.10 | reason/willRetry（见上）                                                                                          | **可用**                                                     |
+| 0.80.3  | pre-prompt compaction 压缩后停止、不再立即继续（#6074）                                                           | **受益**                                                     |
 
 ### C. Headless / CLI（`pi -p` 子进程 seam、start.sh）
 
-| 版本 | 变更 | 相关性 |
-|---|---|---|
-| 0.76.0 | `--session-id <id>`（#4874）；RPC `bash` 的 `excludeFromContext`（#5039）；`retry.provider.maxRetries` 设置 | **可用/已用**（backstage & showrunner spawn 已用 `--session-id`；RPC 项无关） |
-| 0.77.0 | `--exclude-tools` / `-xt` 选择性禁用工具（#5109） | 可用（spawn firewall 粒度备选；当前 `--no-tools`/`--no-builtin-tools` 更强，维持现状即可） |
-| 0.77.0 | Codex 订阅 device-code 登录（headless） | 无关 |
-| 0.78.0 | `--name` / `-n` 启动时设 session 显示名（#5153） | **可用**（backstage/showrunner session 可读性） |
-| 0.78.1 | 超大 JSONL session 改为逐行读取，避免 OOM（#5231） | **受益**（长对局 session；注意 `backstage-session-read.ts` 自己读 jsonl，不受此影响但可参照） |
-| 0.78.1 | SDK `createAgentSession()` 不再要求 bundle 旁有 package.json（#5226） | 无关（本项目不 bundle SDK） |
-| 0.79.0 | project trust + `--approve` / `--no-approve`（非交互模式） | **可用/已被动受益**（spawn argv 已带 `--no-approve`；start 脚本首启会多一次 trust 询问） |
-| 0.79.2 | 项目 trust 检测忽略 `$HOME` 下的全局状态（#5619） | 受益 |
-| 0.79.9 | 深分支 session 的 context/branch 构建从平方降为线性（#5909） | **受益**（rewind 频繁 getBranch/navigateTree、长对局树） |
-| 0.80.3 | `--no-session --session-id` ephemeral 确定性 session ID（#6070）；`--session` / `SessionManager.open()` 拒绝覆盖非法 session 文件（#6002） | **可用**（spawn seam 备选）/ 受益 |
-| 0.80.3 | 包级 `./rpc-entry` 导出、RPC `get_entries` / `get_tree`（#6078） | 无关（本项目不用 RPC 模式；若未来做外部前端则可用） |
+| 版本   | 变更                                                                                                                                       | 相关性                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| 0.76.0 | `--session-id <id>`（#4874）；RPC `bash` 的 `excludeFromContext`（#5039）；`retry.provider.maxRetries` 设置                                | **可用/已用**（backstage & showrunner spawn 已用 `--session-id`；RPC 项无关）                 |
+| 0.77.0 | `--exclude-tools` / `-xt` 选择性禁用工具（#5109）                                                                                          | 可用（spawn firewall 粒度备选；当前 `--no-tools`/`--no-builtin-tools` 更强，维持现状即可）    |
+| 0.77.0 | Codex 订阅 device-code 登录（headless）                                                                                                    | 无关                                                                                          |
+| 0.78.0 | `--name` / `-n` 启动时设 session 显示名（#5153）                                                                                           | **可用**（backstage/showrunner session 可读性）                                               |
+| 0.78.1 | 超大 JSONL session 改为逐行读取，避免 OOM（#5231）                                                                                         | **受益**（长对局 session；注意 `backstage-session-read.ts` 自己读 jsonl，不受此影响但可参照） |
+| 0.78.1 | SDK `createAgentSession()` 不再要求 bundle 旁有 package.json（#5226）                                                                      | 无关（本项目不 bundle SDK）                                                                   |
+| 0.79.0 | project trust + `--approve` / `--no-approve`（非交互模式）                                                                                 | **可用/已被动受益**（spawn argv 已带 `--no-approve`；start 脚本首启会多一次 trust 询问）      |
+| 0.79.2 | 项目 trust 检测忽略 `$HOME` 下的全局状态（#5619）                                                                                          | 受益                                                                                          |
+| 0.79.9 | 深分支 session 的 context/branch 构建从平方降为线性（#5909）                                                                               | **受益**（rewind 频繁 getBranch/navigateTree、长对局树）                                      |
+| 0.80.3 | `--no-session --session-id` ephemeral 确定性 session ID（#6070）；`--session` / `SessionManager.open()` 拒绝覆盖非法 session 文件（#6002） | **可用**（spawn seam 备选）/ 受益                                                             |
+| 0.80.3 | 包级 `./rpc-entry` 导出、RPC `get_entries` / `get_tree`（#6078）                                                                           | 无关（本项目不用 RPC 模式；若未来做外部前端则可用）                                           |
 
 ### D. TUI / 渲染（中文游戏体验相关）
 
-| 版本 | 变更 | 相关性 |
-|---|---|---|
-| 0.78.1 | overlay 焦点恢复（#5235）、tab 宽度合成（#5218） | **受益**（player-panel 的 `ctx.ui.custom` overlay） |
-| 0.79.1 | 中英混排 CJK 断行修复（#5495）；prompt 历史草稿恢复（#5494） | **受益**（全链路中文输入/输出） |
-| 0.79.2 | 编辑器 CJK 断行（#5585）、宽松列表空行（#5562） | **受益** |
-| 0.79.4 | overlay 覆盖 CJK 全宽字符时边框对齐（#5297） | **受益**（player-panel 面板边框） |
-| 0.79.7 | 自动主题模式（light/dark 跟随终端）；`/settings` 分别配置明暗主题 | 可用（start.sh 目前写死 `"theme": "dark"`，可改用自动模式） |
-| 0.79.9 | Markdown 流式代码围栏闪烁修复（#5846） | 受益 |
-| 0.80.3 | `outputPad` 输出内边距设置（#6168）；`externalEditor` 设置（#6122） | 可用（叙事正文排版微调）/ 无关 |
-| 0.80.3 | 用户消息转写保留 Markdown 反斜杠转义（#6105）；输出长度截停显式报错（#4290） | 受益 |
+| 版本   | 变更                                                                         | 相关性                                                      |
+| ------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 0.78.1 | overlay 焦点恢复（#5235）、tab 宽度合成（#5218）                             | **受益**（player-panel 的 `ctx.ui.custom` overlay）         |
+| 0.79.1 | 中英混排 CJK 断行修复（#5495）；prompt 历史草稿恢复（#5494）                 | **受益**（全链路中文输入/输出）                             |
+| 0.79.2 | 编辑器 CJK 断行（#5585）、宽松列表空行（#5562）                              | **受益**                                                    |
+| 0.79.4 | overlay 覆盖 CJK 全宽字符时边框对齐（#5297）                                 | **受益**（player-panel 面板边框）                           |
+| 0.79.7 | 自动主题模式（light/dark 跟随终端）；`/settings` 分别配置明暗主题            | 可用（start.sh 目前写死 `"theme": "dark"`，可改用自动模式） |
+| 0.79.9 | Markdown 流式代码围栏闪烁修复（#5846）                                       | 受益                                                        |
+| 0.80.3 | `outputPad` 输出内边距设置（#6168）；`externalEditor` 设置（#6122）          | 可用（叙事正文排版微调）/ 无关                              |
+| 0.80.3 | 用户消息转写保留 Markdown 反斜杠转义（#6105）；输出长度截停显式报错（#4290） | 受益                                                        |
 
 ### E. pi-ai / 模型层（two-pass-render 的裸 stream 调用）
 
-| 版本 | 变更 | 相关性 |
-|---|---|---|
-| 0.79.8 | `@earendil-works/pi-ai/base` 选择性 provider 入口（#5348） | 无关（**0.80.0 已移除**） |
-| 0.80.0 | **pi-ai 全局 API（`stream`/`complete`/`getModel`…）移至 `@earendil-works/pi-ai/compat`**；loader 对扩展做运行时 alias；compat 与 alias 未来将移除 | **可用/已迁移**（two-pass-render 已 import `/compat`；后续需按 migration guide 迁到 `createModels()`/provider 工厂） |
-| 0.80.0 | 移除 `/base` 入口 | 无关 |
-| 0.80.2 | `ApiKeyCredential` 判别符改 `type: "api_key"`；`ExecutionEnvExecOptions` 更名 `ShellExecOptions` | 无关（本项目不触这两个类型） |
-| 0.80.3 | `Usage.reasoning` token 计数（#6057）；provider HTTP 错误带响应体（#5832）；`streamSimple()` max-token 上限修复（#5595） | **受益**（two-pass-render 用 `stream`/`streamSimple`，错误可诊断性提升） |
-| 0.76.0–0.80.3 各版大量 provider/模型 metadata 修正（DeepSeek、GLM、Kimi、Claude、GPT-5.x、Bedrock、Azure 等） | 逐条从略 | 受益（按所用模型；extension.ts 注释标明 DeepSeek V4 特化，0.79.5/0.79.6/0.79.9 多条 DeepSeek thinking 兼容修复直接相关） |
+| 版本                                                                                                          | 变更                                                                                                                                              | 相关性                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 0.79.8                                                                                                        | `@earendil-works/pi-ai/base` 选择性 provider 入口（#5348）                                                                                        | 无关（**0.80.0 已移除**）                                                                                                |
+| 0.80.0                                                                                                        | **pi-ai 全局 API（`stream`/`complete`/`getModel`…）移至 `@earendil-works/pi-ai/compat`**；loader 对扩展做运行时 alias；compat 与 alias 未来将移除 | **可用/已迁移**（two-pass-render 已 import `/compat`；后续需按 migration guide 迁到 `createModels()`/provider 工厂）     |
+| 0.80.0                                                                                                        | 移除 `/base` 入口                                                                                                                                 | 无关                                                                                                                     |
+| 0.80.2                                                                                                        | `ApiKeyCredential` 判别符改 `type: "api_key"`；`ExecutionEnvExecOptions` 更名 `ShellExecOptions`                                                  | 无关（本项目不触这两个类型）                                                                                             |
+| 0.80.3                                                                                                        | `Usage.reasoning` token 计数（#6057）；provider HTTP 错误带响应体（#5832）；`streamSimple()` max-token 上限修复（#5595）                          | **受益**（two-pass-render 用 `stream`/`streamSimple`，错误可诊断性提升）                                                 |
+| 0.76.0–0.80.3 各版大量 provider/模型 metadata 修正（DeepSeek、GLM、Kimi、Claude、GPT-5.x、Bedrock、Azure 等） | 逐条从略                                                                                                                                          | 受益（按所用模型；extension.ts 注释标明 DeepSeek V4 特化，0.79.5/0.79.6/0.79.9 多条 DeepSeek thinking 兼容修复直接相关） |
 
 ### F. 配置 / 安全 / 打包
 
-| 版本 | 变更 | 相关性 |
-|---|---|---|
-| 0.76.0 | provider 重试/超时可控（`retry.provider.maxRetries`、`websocketConnectTimeoutMs`） | 可用（长渲染轮稳定性） |
-| 0.78.1 | 临时扩展安装目录改私有 `~/.pi/agent/tmp/extensions`（0700）；HTML 导出 XSS 修复；git 包来源安全化 | 受益 |
-| 0.79.5 | `auth.json` API key 条目支持 `env` 覆盖；全局 `httpProxy` 设置（#5790） | 可用（项目隔离的 `.pi/agent/auth.json` 可挂 provider 级 env） |
-| 0.79.4 | 自定义 provider 大写字面量不再被当环境变量引用（需显式 `$ENV_VAR`）（#5661） | 受益 |
-| 0.79.7 | 文档/运行时改用配置的 config dir 而非硬编码 `.pi`；`pi update` 默认只更自身 | 受益 |
-| 0.79.10 | `pi update` 安装精确校验版本 | 受益 |
+| 版本    | 变更                                                                                              | 相关性                                                        |
+| ------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 0.76.0  | provider 重试/超时可控（`retry.provider.maxRetries`、`websocketConnectTimeoutMs`）                | 可用（长渲染轮稳定性）                                        |
+| 0.78.1  | 临时扩展安装目录改私有 `~/.pi/agent/tmp/extensions`（0700）；HTML 导出 XSS 修复；git 包来源安全化 | 受益                                                          |
+| 0.79.5  | `auth.json` API key 条目支持 `env` 覆盖；全局 `httpProxy` 设置（#5790）                           | 可用（项目隔离的 `.pi/agent/auth.json` 可挂 provider 级 env） |
+| 0.79.4  | 自定义 provider 大写字面量不再被当环境变量引用（需显式 `$ENV_VAR`）（#5661）                      | 受益                                                          |
+| 0.79.7  | 文档/运行时改用配置的 config dir 而非硬编码 `.pi`；`pi update` 默认只更自身                       | 受益                                                          |
+| 0.79.10 | `pi update` 安装精确校验版本                                                                      | 受益                                                          |
 
 ---
 
@@ -181,11 +181,11 @@
 
 ### 假设与证据
 
-| 假设 | 结果 | 证据 |
-|---|---|---|
-| `pi.sendMessage(msg, {deliverAs:"followUp", triggerTurn:false})` 在 agent_end（仍 streaming）时可免等 idle、只追加不开新轮 | ❌ 证伪 | 活体：spike 子进程（`pi -p` + deepseek-v4-pro）中 custom message 交付后出现第二次完整 LLM 调用，其 thinking 明确在对 payload 做反应（自激振荡复现）。源码：`dist/core/agent-session.js` `sendCustomMessage()`——streaming 分支只有 `agent.followUp()` / `agent.steer()` 两条路，均进 agent 队列、drain 时继续 loop；`triggerTurn:false` 在 streaming 期被完全忽略。**streaming 期不存在 append-only 交付路径**。 |
-| `ctx.waitForIdle()` 可把轮询改成事件驱动等待 | ❌ 不可行 | 活体：`TypeError: ctx.waitForIdle is not a function`。源码：`dist/core/extensions/runner.js`——`waitForIdle`/`navigateTree`/`fork` 等仅在 `createCommandContext()` 上装配（故 rewind 的 `/fuck` 命令能用），**事件 handler 拿到的裸 `createContext()` 没有它**。另：即使可用，在 agent_end handler 内 await 它会死锁（`pi-agent-core/dist/agent.js`：`waitForIdle()` 返回 `activeRun.promise`，在 `finishRun()` 才 resolve，而 finishRun 在 agent_end listeners settle 之后），必须 detach。 |
-| 存在 idle 类事件可订阅 | ❌ 不存在 | 0.80.3 `types.d.ts` 全事件清单无 idle 事件；agent_end 触发时 `isStreaming` 仍为 true（finishRun 在后）。 |
+| 假设                                                                                                                       | 结果      | 证据                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pi.sendMessage(msg, {deliverAs:"followUp", triggerTurn:false})` 在 agent_end（仍 streaming）时可免等 idle、只追加不开新轮 | ❌ 证伪   | 活体：spike 子进程（`pi -p` + deepseek-v4-pro）中 custom message 交付后出现第二次完整 LLM 调用，其 thinking 明确在对 payload 做反应（自激振荡复现）。源码：`dist/core/agent-session.js` `sendCustomMessage()`——streaming 分支只有 `agent.followUp()` / `agent.steer()` 两条路，均进 agent 队列、drain 时继续 loop；`triggerTurn:false` 在 streaming 期被完全忽略。**streaming 期不存在 append-only 交付路径**。                                                                             |
+| `ctx.waitForIdle()` 可把轮询改成事件驱动等待                                                                               | ❌ 不可行 | 活体：`TypeError: ctx.waitForIdle is not a function`。源码：`dist/core/extensions/runner.js`——`waitForIdle`/`navigateTree`/`fork` 等仅在 `createCommandContext()` 上装配（故 rewind 的 `/fuck` 命令能用），**事件 handler 拿到的裸 `createContext()` 没有它**。另：即使可用，在 agent_end handler 内 await 它会死锁（`pi-agent-core/dist/agent.js`：`waitForIdle()` 返回 `activeRun.promise`，在 `finishRun()` 才 resolve，而 finishRun 在 agent_end listeners settle 之后），必须 detach。 |
+| 存在 idle 类事件可订阅                                                                                                     | ❌ 不存在 | 0.80.3 `types.d.ts` 全事件清单无 idle 事件；agent_end 触发时 `isStreaming` 仍为 true（finishRun 在后）。                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ### 副产品发现
 
