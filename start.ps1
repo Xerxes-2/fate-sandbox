@@ -69,40 +69,6 @@ function Repair-JsonEncodingIfNeeded {
   Write-Utf8NoBomFile -Path $Path -Content (Read-TextFileWithoutBom -Path $Path)
 }
 
-function ConvertTo-Hashtable {
-  param([AllowNull()]$Value)
-
-  if ($null -eq $Value) {
-    return $null
-  }
-
-  if ($Value -is [System.Collections.IDictionary]) {
-    $Result = @{}
-    foreach ($Key in $Value.Keys) {
-      $Result[$Key] = ConvertTo-Hashtable $Value[$Key]
-    }
-    return $Result
-  }
-
-  if ($Value -is [System.Management.Automation.PSCustomObject]) {
-    $Result = @{}
-    foreach ($Property in $Value.PSObject.Properties) {
-      $Result[$Property.Name] = ConvertTo-Hashtable $Property.Value
-    }
-    return $Result
-  }
-
-  if ($Value -is [System.Collections.IEnumerable] -and -not ($Value -is [string])) {
-    $Items = @()
-    foreach ($Item in $Value) {
-      $Items += ,(ConvertTo-Hashtable $Item)
-    }
-    return $Items
-  }
-
-  return $Value
-}
-
 Write-Host "Starting $(Split-Path -Leaf $ProjectRoot)..."
 
 New-Item -ItemType Directory -Force -Path $SessionsDir | Out-Null
@@ -133,43 +99,15 @@ if (-not (Test-Path -LiteralPath $SettingsPath)) {
 Repair-JsonEncodingIfNeeded -Path $SettingsPath
 Repair-JsonEncodingIfNeeded -Path $ProjectSettingsPath
 
-$DevMode = $env:TAVERN2AGENT_DEV -eq "1"
-$Settings = @{}
-
-if (Test-Path -LiteralPath $SettingsPath) {
-  try {
-    $RawSettings = Read-TextFileWithoutBom -Path $SettingsPath
-    if ($RawSettings.Trim().Length -gt 0) {
-      $Settings = ConvertTo-Hashtable ($RawSettings | ConvertFrom-Json)
-    }
-  } catch {
-    $Settings = @{}
-  }
-}
-
-if (-not $Settings.ContainsKey("theme")) {
-  $Settings["theme"] = "dark"
-}
-if (-not $Settings.ContainsKey("subagents") -or -not ($Settings["subagents"] -is [System.Collections.IDictionary])) {
-  $Settings["subagents"] = @{}
-}
-$Settings["subagents"]["disableBuiltins"] = -not $DevMode
-
-Write-Utf8NoBomFile -Path $SettingsPath -Content (($Settings | ConvertTo-Json -Depth 20) + [Environment]::NewLine)
-
-if ($DevMode) {
-  Write-Host "Dev mode: pi-subagents builtin agents are enabled."
-} else {
-  Write-Host "Player mode: pi-subagents builtin coding agents are disabled."
-  Write-Host "Dev mode: set `$env:TAVERN2AGENT_DEV='1'; then run .\start.ps1"
-}
-
-# Backstage director sessions. run_parallel_line forks the backstage director
-# directly from the engine (detached `pi -p`, see ADR 0005); its session (with
-# hidden facts) persists under the gitignored .pi/agent/backstage-sessions/. The
-# engine self-creates the dir on first spawn; pre-create it here only for clarity.
+# Backstage director / showrunner auditor sessions. The engine forks both worker
+# children directly (detached async director, ADR 0005; blocking sync auditor,
+# ADR 0007); their sessions (with hidden-canonical content) persist under the
+# gitignored .pi/agent/ tree. The engine self-creates the dirs on first spawn;
+# pre-create them here only for clarity.
 $BackstageSessionsDir = Join-Path $ProjectAgentDir 'backstage-sessions'
 New-Item -ItemType Directory -Force -Path $BackstageSessionsDir | Out-Null
+$ShowrunnerSessionsDir = Join-Path $ProjectAgentDir 'showrunner-sessions'
+New-Item -ItemType Directory -Force -Path $ShowrunnerSessionsDir | Out-Null
 
 if ($env:FATE_RENDER_MODEL) {
   Write-Host "Render pass model override: FATE_RENDER_MODEL=$env:FATE_RENDER_MODEL"
