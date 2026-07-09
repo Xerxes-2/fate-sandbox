@@ -251,9 +251,8 @@ tools/                 # 工具定义与注册
 
 prompts/                # GM prompt 分层模块
 skills/                # 玩家可调用技能，如 start-game
-extensions/            # pi extension 动态注入、UI panel、subagent context
+extensions/            # pi extension 动态注入、UI panel、审计子进程 lookup 载体
   subagents/
-.pi/agents/            # 项目作用域子代理
 scripts/               # 打包/发布脚本
 ```
 

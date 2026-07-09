@@ -96,12 +96,13 @@ void test("runShowrunnerAudit: 超时 → timeout 失败，绝不静默当审计
     setShowrunnerSpawnerForTest(null);
     rmSync(dir, { recursive: true, force: true });
   });
-  fakeSpawner(dir, { kind: "timeout", timeoutMs: 300000 });
+  fakeSpawner(dir, { kind: "killed", signal: "SIGKILL", timeoutMs: 300000 });
 
   const result = await runShowrunnerAudit(createInitialState(), INPUT, dir);
   assert.equal(result.kind, "failure");
   if (result.kind === "failure") {
     assert.equal(result.reason, "timeout");
+    assert.match(result.detail, /SIGKILL/);
     assert.match(result.detail, /300000ms/);
   }
 });

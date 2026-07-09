@@ -36,9 +36,10 @@ export function readShowrunnerOutputRaw(
   }
   try {
     return extractLastAssistantText(readFileSync(join(sessionDir, newest), "utf8"));
-  } catch {
+  } catch (cause) {
     throw new Error(
       `showrunner session 里没有 assistant 输出（子进程可能中途失败，查看 ${runId}.spawn.log）。`,
+      { cause },
     );
   }
 }

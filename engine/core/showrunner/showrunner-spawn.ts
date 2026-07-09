@@ -13,7 +13,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { mkdirSync, openSync } from "node:fs";
+import { closeSync, mkdirSync, openSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -50,7 +50,7 @@ export function buildShowrunnerSpawnArgs(prompt: string, persona: string, runId:
 
 export type ShowrunnerSpawnOutcome =
   | { kind: "exited"; exitCode: number | null }
-  | { kind: "timeout"; timeoutMs: number }
+  | { kind: "killed"; signal: string; timeoutMs: number }
   | { kind: "launch-error"; message: string };
 
 type ShowrunnerSpawner = (
@@ -65,6 +65,15 @@ const defaultSpawner: ShowrunnerSpawner = (prompt, persona, runId) =>
     // diagnosable (the verdict itself is read from the session jsonl, not stdout).
     mkdirSync(SHOWRUNNER_SESSION_DIR, { recursive: true });
     const logFd = openSync(join(SHOWRUNNER_SESSION_DIR, `${runId}.spawn.log`), "a");
+    // 阻塞调用在长寿 GM 进程里反复发生，log fd 必须随子进程终止关闭（error 与
+    // exit 可能先后都触发，只关一次）。
+    let logFdClosed = false;
+    const closeLogFd = (): void => {
+      if (!logFdClosed) {
+        logFdClosed = true;
+        closeSync(logFd);
+      }
+    };
     // node:child_process 原生 timeout：到点 SIGKILL，避免自管定时器。
     const child = spawn("pi", buildShowrunnerSpawnArgs(prompt, persona, runId), {
       stdio: ["ignore", logFd, logFd],
@@ -74,11 +83,15 @@ const defaultSpawner: ShowrunnerSpawner = (prompt, persona, runId) =>
       killSignal: "SIGKILL",
     });
     child.once("error", (error) => {
+      closeLogFd();
       resolve({ kind: "launch-error", message: error.message });
     });
     child.once("exit", (code, signal) => {
+      closeLogFd();
       if (signal !== null) {
-        resolve({ kind: "timeout", timeoutMs: SHOWRUNNER_TIMEOUT_MS });
+        // 信号终止不预设原因：SIGKILL 通常即本 seam 的超时强杀，但也可能是外部
+        // kill/OOM；把 signal 原样上报，由 orchestrator 组装诚实的失败详情。
+        resolve({ kind: "killed", signal, timeoutMs: SHOWRUNNER_TIMEOUT_MS });
         return;
       }
       resolve({ kind: "exited", exitCode: code });

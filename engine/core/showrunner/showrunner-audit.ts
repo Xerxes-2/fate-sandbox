@@ -47,8 +47,12 @@ export async function runShowrunnerAudit(
   if (outcome.kind === "launch-error") {
     return failure(runId, "spawn-failed", `审计子进程启动失败：${outcome.message}`);
   }
-  if (outcome.kind === "timeout") {
-    return failure(runId, "timeout", `审计子进程超过 ${outcome.timeoutMs}ms 未完成，已终止。`);
+  if (outcome.kind === "killed") {
+    return failure(
+      runId,
+      "timeout",
+      `审计子进程被 ${outcome.signal} 终止（超时上限 ${outcome.timeoutMs}ms；SIGKILL 通常即超时强杀，也可能是外部终止）。`,
+    );
   }
   if (outcome.exitCode !== 0) {
     return failure(

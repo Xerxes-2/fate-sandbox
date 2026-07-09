@@ -67,7 +67,11 @@ void test("runShowrunnerAuditTool: 失败分支返回结构化失败，不静默
     setShowrunnerSpawnerForTest(null);
     rmSync(dir, { recursive: true, force: true });
   });
-  setShowrunnerSpawnerForTest(async () => ({ kind: "timeout" as const, timeoutMs: 300000 }));
+  setShowrunnerSpawnerForTest(async () => ({
+    kind: "killed" as const,
+    signal: "SIGKILL",
+    timeoutMs: 300000,
+  }));
 
   const result = await runShowrunnerAuditTool(VALID_PARAMS, undefined, dir);
   const text = result.content[0]?.text ?? "";

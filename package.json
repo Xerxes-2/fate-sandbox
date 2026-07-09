@@ -16,7 +16,6 @@
     "extensions/",
     "skills/",
     "tools/",
-    ".pi/agents/",
     ".pi/settings.json",
     "extension.ts",
     "start.sh",
