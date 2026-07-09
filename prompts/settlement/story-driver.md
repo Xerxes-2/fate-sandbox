@@ -27,7 +27,7 @@ Before settling the turn, identify:
 
 ## Offscreen check
 
-- If tool policy says `timeline-showrunner` or `parallel-line` triggers here, run that check before ending the turn.
+- If tool policy says `run_showrunner_audit` or `run_parallel_line` triggers here, run that check before ending the turn.
 - Do not reuse the same offscreen pressure slot unless this turn changes state in a concrete way.
 
 ## Packet landing

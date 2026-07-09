@@ -2,16 +2,15 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 import { Type } from "typebox";
 
-export { buildTimelineStateContextFromRaw as buildTimelineStateContext } from "../../../engine/core/state/state-file-projection.ts";
 import { lookupTool } from "../../../tools/lookup/lookup.ts";
 
 /**
- * timeline 子代理运行时 extension：只提供 lookup 工具。
+ * showrunner 审计子进程的运行时 extension：只提供 lookup 工具。
  *
- * <timeline_state_context> 不再由本 extension 读 runtime/state.json 注入——
- * 那是会被测试/别的 session 砸坏的陈旧侧通道。现在由主 GM 进程在 subagent
- * 工具调用发出前，把调用瞬间的投影直接注入 task（见 task-injection.ts），
- * 子代理从输入末尾拿到上下文块。
+ * 引擎用 `--no-extensions -e <本文件> --no-builtin-tools` 拉起审计子进程
+ * （engine/core/showrunner/showrunner-spawn.ts，ADR 0007），所以 child 唯一的
+ * 工具就是这里注册的 lookup。<timeline_state_context> 由引擎在拼 audit prompt
+ * 时直接内嵌（showrunner-context-block.ts），不走任何侧通道。
  */
 export default function timelineSubagentsExtension(pi: ExtensionAPI): void {
   pi.registerTool({

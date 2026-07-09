@@ -4,9 +4,9 @@ import test from "node:test";
 import { recordActorKnowledgeFact, upsertActorAgenda } from "../engine/core/actor/actor-agenda.ts";
 import { recordRelationshipSignal } from "../engine/core/actor/relationship-signal.ts";
 import { configureCampaign } from "../engine/core/campaign/campaign.ts";
+import { buildTimelineStateContextFromRaw } from "../engine/core/state/state-file-projection.ts";
 import { createInitialState } from "../engine/core/state/state-store.ts";
 import { isRecord } from "../engine/core/utils/typebox-validation.ts";
-import { buildTimelineStateContext } from "../extensions/subagents/timeline/index.ts";
 
 void test("timeline subagent context renders campaign timezone local time", () => {
   const draft = createInitialState();
@@ -50,7 +50,7 @@ void test("timeline subagent context renders campaign timezone local time", () =
     throw new Error("serialized state must be an object");
   }
 
-  const context = buildTimelineStateContext(raw);
+  const context = buildTimelineStateContextFromRaw(raw);
 
   assert.equal(context.currentAt, "2008-06-03T03:00:00.000Z");
   assert.equal(context.currentAtUtc, "2008-06-03T03:00:00.000Z");

@@ -15,8 +15,7 @@
 - `engine/core/`：确定性领域引擎。state、scene、actor、servant、economy、memory、secret、offscreen 等逻辑在这里落地。
 - `tools/`：GM 领域事件工具。工具不是状态栏更新器，而是 GM 改变世界的接口。
 - `world-data/`：型月世界数据、lookup 数据、campaign preset、timeline contract。
-- `extensions/`：pi extension。玩家 UI panel、compaction policy、timeline subagent 注入都在这里。
-- `.pi/agents/`：项目作用域子代理定义。必须保持 project-only 语义，不依赖 user-scope agent。
+- `extensions/`：pi extension。玩家 UI panel、compaction policy、showrunner 审计子进程的 lookup 载体都在这里。
 - `sessions/`、`state/`、`.pi/agent/`：运行产物/本地私有配置，不属于发布内容，不进 git。
 
 ---
@@ -199,22 +198,21 @@ type SceneResult =
 
 ---
 
-## 子代理纪律
+## 后台工作进程纪律
 
-项目子代理是后台导演组/审计器，不是陪聊 NPC。
+后台工作进程是导演组/审计器，不是陪聊 NPC。两条都是引擎自有 spawn seam（`node:child_process` 直接 fork `pi -p`），不依赖任何子代理框架（理由见 `docs/adr/0005`、`docs/adr/0007`）；`.pi/agents/` 子代理定义已全部退役。
 
-当前核心项目子代理：
+当前两条引擎直起工作进程：
 
-- **后台平行线（引擎直起异步 hermetic 导演）**：persona/契约住在 engine（`engine/core/backstage/backstage-director-persona.ts`）；`run_parallel_line` 用 `buildBackstageDirectorPrompt` 拼出 hermetic director prompt，并【直接 fork 一个 detached `pi -p` 后台导演】（`engine/core/backstage/backstage-spawn.ts`，不经主 agent loop、不阻塞），只输出结构化 offscreen 候选，不改 state、不面向玩家写正文。隔轮用返回的 run_id 调 `harvest_backstage_candidate`（引擎按 run_id 定位 director session、取回+验收，见 `engine/core/backstage/backstage-session-read.ts`）后落地。忘了 harvest 不会静默丢：`run_parallel_line` 起飞即记 pending-harvest（`engine/core/backstage/backstage-pending.ts`），commit 逐轮催账，且 `resolve_backstage_line` 在有未 harvest run 时拒绝清账（防 no-change 丢弃已产出候选）。同步 `parallel-line` 子代理已退役；不依赖任何子代理框架（引擎用 `node:child_process` 直接 fork `pi -p`，理由见 `docs/adr/0005`），持久/swarm/协调增长路径都是这条缝上的小增量。
-- `.pi/agents/timeline-showrunner.md`：世界线/题材审计，检查 drift、hook 滥用、NPC autonomy、world motion、beat closure（仍走同步子代理）。
+- **后台平行线（异步 hermetic 导演）**：persona/契约住在 engine（`engine/core/backstage/backstage-director-persona.ts`）；`run_parallel_line` 用 `buildBackstageDirectorPrompt` 拼出 hermetic director prompt，并【直接 fork 一个 detached `pi -p` 后台导演】（`engine/core/backstage/backstage-spawn.ts`，不经主 agent loop、不阻塞），只输出结构化 offscreen 候选，不改 state、不面向玩家写正文。隔轮用返回的 run_id 调 `harvest_backstage_candidate`（引擎按 run_id 定位 director session、取回+验收，见 `engine/core/backstage/backstage-session-read.ts`）后落地。忘了 harvest 不会静默丢：`run_parallel_line` 起飞即记 pending-harvest（`engine/core/backstage/backstage-pending.ts`），commit 逐轮催账，且 `resolve_backstage_line` 在有未 harvest run 时拒绝清账（防 no-change 丢弃已产出候选）。
+- **showrunner 审计（同步 hermetic 审计员，ADR 0007）**：世界线/题材审计，检查 drift、hook 滥用、NPC autonomy、world motion、beat closure。persona 住在 engine（`engine/core/showrunner/showrunner-persona.ts`）；`run_showrunner_audit` 拼 persona + typed 输入 + Showrunner Projection（`showrunner-context-block.ts`，引擎内嵌，无任何侧通道/入参改写），【阻塞 fork 一个 `pi -p` 审计子进程】（`showrunner-spawn.ts`）等它跑完，verdict 过 `TimelineShowrunnerOutput` schema gate 才返回 GM。失败（启动/超时/无输出/结构非法）返回结构化失败，零引擎重试，绝不静默当通过。
 
 硬规则：
 
-- 主 GM 必须以 project scope 调用项目子代理；不要依赖 user-scope agent。
-- 子代理不得继承大块主项目上下文或技能目录：`inheritProjectContext: false`、`inheritSkills: false`。
-- 子代理必须显式配置 `tools` 和 `extensions`。不要 omitted `extensions`，否则可能加载普通扩展。
-- timeline 子代理只应加载 `extensions/subagents/timeline/index.ts`（提供 `lookup`）。`<timeline_state_context>` 由主 GM 进程在 subagent 工具调用发出前注入 task（`extensions/subagents/timeline/task-injection.ts`），不再读 runtime/state.json 侧通道。
-- 后台导演（parallel_line）输出必须是 bare JSON；不要 Markdown、解释、长 prose。回程由 `harvest_backstage_candidate` 过 engine 验收后才能落地。
+- 子进程隔离由 spawn 现场的 flags 结构性保障，不靠 prompt：导演 `--no-tools`；审计员 `--no-extensions -e extensions/subagents/timeline/index.ts --no-builtin-tools`（唯一工具是 `lookup`，无 `read`/`bash`/写工具）。两者都带 `--no-approve --no-context-files`（审计员另加 `--no-skills --no-prompt-templates`），不加载项目 `extension.ts`/AGENTS.md/skills。
+- 子进程 session 必须落 gitignored `.pi/agent/` 树（`backstage-sessions/`、`showrunner-sessions/`）：transcript 含 hidden-canonical 内容，不得进 git。
+- 子进程输出必须是 bare JSON；回程必须过 engine schema 验收（`parseParallelLineOutput` / `parseShowrunnerOutput`）才能回到 GM 或落地，验收失败只报字段路径、不回流裸文本。
+- spawn 失败/超时/无输出不得静默当成成功；导演失败不清 backstage 义务，审计失败不算审计通过。
 - 后台事件必须归属到 actor / faction / location / consequence，并给前台一个可行动痕迹；新闻、巡逻、门响、信件不能替代事件本体。
 
 ---
@@ -497,7 +495,7 @@ pnpm typecheck && pnpm lint && pnpm format:check && pnpm test
 - **改 state 结构** → bump `schemaVersion`，同步 initial state + schema + protected paths 白名单，新增逐版本 migration 和 migration 测试。只允许经 migration 后访问新字段，不做运行时 fallback。
 - **查 state 的代码** → 必须处理 `noUncheckedIndexedAccess` 带来的 `| undefined`——每个索引访问都有判空路径。
 - **改 lookup/data** → 保留 canonical fact skeleton，避免复制 wiki prose；不要引入非 TYPE-MOON 材料污染目标世界。
-- **改 subagent** → project-scope、explicit `tools`、explicit `extensions`、bare JSON 输出约束必须保留。
+- **改后台工作进程（director/showrunner）** → spawn flags 的隔离不变量、bare JSON + engine schema 验收、gitignored session 落点、失败不静默这四条必须保留；persona 改动只改 engine 内的 persona 模块。
 - **改 release 包** → 跑打包检查，确认不含 `sessions/`、`runtime/`、`.pi/agent/`、`prompts/user/`、`docs/`、`*.test.ts`。
 - **任何改动** → `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test` 全过。
 

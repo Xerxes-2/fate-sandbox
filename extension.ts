@@ -10,17 +10,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { syncStateFromSessionManager } from "./engine/core/state/session-hydration.ts";
-import { exportState } from "./engine/core/state/state-store.ts";
 import { isRecord } from "./engine/core/utils/typebox-validation.ts";
 import { beginTurnTrace, dumpPassA } from "./engine/debug/api-trace.ts";
 import { maybeForceCompact } from "./engine/debug/force-compact.ts";
 import { buildSystemPrompt, injectGmPromptMessages } from "./engine/prompt-assembly/injection.ts";
 import { PROSE_CUSTOM_TYPE } from "./engine/render/render-turn.ts";
 import { stripLeakedSettlementProse } from "./engine/render/settlement-prose-firewall.ts";
-import {
-  buildTimelineStateContextBlock,
-  injectTimelineContextIntoSubagentInput,
-} from "./extensions/subagents/timeline/task-injection.ts";
 import { registerAllTools } from "./tools/registry.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -73,22 +68,8 @@ export default function extension(pi: ExtensionAPI): void {
     syncStateFromSessionManager(ctx.sessionManager);
   });
 
-  pi.on("tool_call", async (event, ctx) => {
+  pi.on("tool_call", async (_event, ctx) => {
     syncStateFromSessionManager(ctx.sessionManager);
-    if (event.toolName === "subagent") {
-      // timeline 子代理是独立 pi 进程，看不到主进程的 canonical state；
-      // 这里在调用发出前把子代理安全投影改写进 task（event.input 官方可变），
-      // 取代旧的 state/state.json 侧通道。注入失败不阻断调用，
-      // 子代面按缺上下文的契约降级处理。
-      try {
-        injectTimelineContextIntoSubagentInput(
-          event.input,
-          buildTimelineStateContextBlock(exportState()),
-        );
-      } catch {
-        // 不让注入异常打断 subagent 调用本身。
-      }
-    }
   });
 
   registerAllTools(pi);

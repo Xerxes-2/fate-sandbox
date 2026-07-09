@@ -44,9 +44,9 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 
 ## Offscreen orchestration
 
-Project-scope subagents are auditors or candidate generators only; the main GM still lands canonical state.
+Offscreen workers (the backstage director and the showrunner auditor) are engine-forked hermetic processes; the main GM still lands canonical state.
 
-- Call `timeline-showrunner` when timeline tone drifts, a beat spins in place, a mystery hook is being forced back without novelty, or the next offscreen ecosystem is unclear.
+- Call `run_showrunner_audit` when timeline tone drifts, a beat spins in place, a mystery hook is being forced back without novelty, or the next offscreen ecosystem is unclear. The engine assembles the audit prompt, forks a blocking auditor child, and returns the schema-validated verdict in this same turn; apply `requiredCorrections` starting next turn. A failure result is NOT a pass — re-call or skip deliberately.
 - Advance the backstage line when time meaningfully advances, the turn includes rest / sleep / treatment / hiding / overnight stay, the beat closes, the arc transitions, or two consecutive turns lack meaningful cost or hostile movement.
 - Call `run_parallel_line` (lineId + timeWindow). The engine assembles the hermetic director prompt **and forks a detached `pi -p` backstage director itself** — you do NOT spawn anything, and the call does not block. Next turn, call `harvest_backstage_candidate` with the returned `run_id` (the engine locates the director session and validates the candidate for you — no manual file read, no `inspect`) → review → land with `record_offscreen_event` (pick a slot from `activePressurePalette` for `pressureType` / optional slot id). The synchronous `parallel-line` subagent is retired. **If you forget:** the engine duns the pending run every turn, and `resolve_backstage_line` refuses while an unharvested run exists — so a produced candidate can't be discarded by a stray no-change.
 
