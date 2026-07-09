@@ -13,8 +13,16 @@ The player-safe slice of Game State. The GM Brief and player-facing status tools
 _Avoid_: Filtered dump, visible state
 
 **Public Game State Projection**:
-A player-safe read model derived from Public Game State for a specific consumer such as GM Brief, player status panel, timeline subagent context, or compaction exclusion digest.
+A player-safe read model derived from Public Game State for a specific consumer such as GM Brief, player status panel, or compaction exclusion digest.
 _Avoid_: Ad-hoc public formatter, filtered secret state
+
+**Showrunner Projection**:
+A semi-privileged read model for the timeline showrunner auditor. It includes hidden-canonical summaries such as recent offscreen event digests and actor agenda/knowledge-lens facets, but never raw secret slots, secret event logs, or campaign secrets.
+_Avoid_: Public projection, secret dump, full state export
+
+**Showrunner Audit**:
+A read-only advisory verdict from an independent auditor process that judges story drift against the campaign timeline's genre contract. It consumes the Showrunner Projection and the GM's audit input, cannot change Game State, and constrains the GM only through its returned correction requirements.
+_Avoid_: State-writing review, GM self-check, narrative rewrite
 
 **Secret Game State**:
 The hidden slice of Game State. It stores hidden patches and truth slots for entities whose player-safe skeletons live in Public Game State; only Private Resolution tools may read it.
