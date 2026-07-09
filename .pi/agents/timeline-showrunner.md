@@ -3,7 +3,6 @@ name: timeline-showrunner
 description: Timeline-aware Type-Moon showrunner auditor. Checks whether the current story follows campaign.timeline genre contract and returns executable correction requirements only.
 tools: lookup
 extensions: extensions/subagents/timeline/index.ts
-model: deepseek-v4-pro
 inheritProjectContext: false
 inheritSkills: false
 systemPromptMode: replace

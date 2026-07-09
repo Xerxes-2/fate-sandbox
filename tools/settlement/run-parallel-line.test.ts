@@ -16,7 +16,6 @@ function captureSpawn(): { calls: Array<{ prompt: string; runId: string }> } {
     return {
       runId,
       pid: 4242,
-      model: "deepseek-v4-pro",
       sessionDir: ".pi/agent/backstage-sessions",
     };
   });

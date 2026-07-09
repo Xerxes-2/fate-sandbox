@@ -49,7 +49,6 @@ export function runParallelLineTool(params: unknown, sessionManager: unknown): T
     details: ({ handle: h, lineId, directorPrompt: prompt }) => ({
       runId: h.runId,
       lineId,
-      model: h.model,
       sessionDir: h.sessionDir,
       pid: h.pid,
       directorPrompt: prompt,
@@ -57,7 +56,7 @@ export function runParallelLineTool(params: unknown, sessionManager: unknown): T
     message: ({ handle: h }) =>
       [
         "后台 director 已【异步起飞】（engine 直接 fork hermetic pi -p，不经主循环、不阻塞本回合）：",
-        `  run_id=${h.runId}  model=${h.model}  session_dir=${h.sessionDir}  pid=${h.pid ?? "?"}`,
+        `  run_id=${h.runId}  model=默认主模型  session_dir=${h.sessionDir}  pid=${h.pid ?? "?"}`,
         "",
         `隔轮（约 10-20s 后）用 run_id=${h.runId} 调 harvest_backstage_candidate（engine 自动取回，无需手动读 session / inspect）→`,
         "审查 → record_offscreen_event（progress/escalation，落地即清义务）",

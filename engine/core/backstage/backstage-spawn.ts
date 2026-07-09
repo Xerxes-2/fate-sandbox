@@ -18,24 +18,25 @@ import { spawn } from "node:child_process";
 import { mkdirSync, openSync } from "node:fs";
 import { join } from "node:path";
 
-import { BACKSTAGE_MODEL, BACKSTAGE_SESSION_DIR } from "./backstage-substrate-config.ts";
+import { BACKSTAGE_SESSION_DIR } from "./backstage-substrate-config.ts";
 
 export interface BackstageDirectorHandle {
   runId: string;
   pid: number | undefined;
-  model: string;
   sessionDir: string;
 }
 
-/** Pure: the argv for the hermetic detached `pi -p` director child (prompt is last). */
+/**
+ * Pure: the argv for the hermetic detached `pi -p` director child (prompt is last).
+ * No `--model`: the child uses the settings default (the main model — see
+ * backstage-substrate-config.ts).
+ */
 export function buildDirectorSpawnArgs(prompt: string, runId: string): string[] {
   return [
     "-p",
     "--no-tools",
     "--no-approve",
     "--no-context-files",
-    "--model",
-    BACKSTAGE_MODEL,
     "--session-dir",
     BACKSTAGE_SESSION_DIR,
     "--session-id",
@@ -59,7 +60,7 @@ const defaultSpawner: DirectorSpawner = (prompt, runId) => {
     env: process.env,
   });
   child.unref();
-  return { runId, pid: child.pid, model: BACKSTAGE_MODEL, sessionDir: BACKSTAGE_SESSION_DIR };
+  return { runId, pid: child.pid, sessionDir: BACKSTAGE_SESSION_DIR };
 };
 
 let spawner: DirectorSpawner = defaultSpawner;

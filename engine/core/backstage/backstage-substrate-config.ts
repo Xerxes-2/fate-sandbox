@@ -8,12 +8,14 @@
  */
 
 /**
- * Pinned backstage model. Do NOT inherit {current_model}: a backstage director
- * must run on a cheap, known-good model with its own billing, independent of
- * whatever the GM is on (an inherited Opus billing failure was observed in the
- * spike). Matches the model the retired parallel-line agent already pinned.
+ * The backstage director is NOT pinned to a separate model anymore: the child
+ * `pi -p` runs WITHOUT `--model`, so it uses the default model from the game's
+ * settings (`.pi/agent/settings.json` `defaultModel` — the same "main model" the
+ * GM runs on). Call volume is low, so a separate cheap model (and its extra
+ * API-key setup) is not worth the configuration surface. If a provider/billing
+ * failure ever shows up in the spawn logs again, re-pin by adding `--model` back
+ * in backstage-spawn.ts.
  */
-export const BACKSTAGE_MODEL = "deepseek-v4-pro";
 
 /**
  * Durable session dir for director runs. The game runs under project isolation
