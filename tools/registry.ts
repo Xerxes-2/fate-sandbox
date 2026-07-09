@@ -26,6 +26,7 @@ import { resolveCombatExchangeToolDefinition } from "./settlement/resolve-combat
 import { retireActorToolDefinition } from "./settlement/retire-actor.ts";
 import { revealSecretToolDefinition } from "./settlement/reveal-secret.ts";
 import { runParallelLineToolDefinition } from "./settlement/run-parallel-line.ts";
+import { runShowrunnerAuditToolDefinition } from "./settlement/run-showrunner-audit.ts";
 import { setScenePresenceToolDefinition } from "./settlement/set-scene-presence.ts";
 import { submitDirectionPacketToolDefinition } from "./settlement/submit-direction-packet.ts";
 import { updateActorAgendaToolDefinition } from "./settlement/update-actor-agenda.ts";
@@ -59,6 +60,7 @@ const TOOL_DEFINITIONS: readonly FateToolDefinition[] = [
   revealSecretToolDefinition,
   resolveCombatExchangeToolDefinition,
   runParallelLineToolDefinition,
+  runShowrunnerAuditToolDefinition,
   harvestBackstageCandidateToolDefinition,
   resolveBackstageLineToolDefinition,
   privateResolveToolDefinition,
