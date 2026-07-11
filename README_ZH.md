@@ -2,7 +2,7 @@
 
 [English README](README.md)
 
-基于 pi coding agent 的本地型月世界观互动叙事 runtime。当前大量测试集中在 Fate/strange Fake 斯诺菲尔德的绫香线。
+基于 pi coding agent 的本地型月世界观互动叙事 runtime。
 
 ## Worldlines
 

@@ -2,7 +2,7 @@
 
 [中文说明](README_ZH.md)
 
-A local interactive narrative runtime for TYPE-MOON settings, built on the pi coding agent. The current test campaign focuses on Ayaka Sajyou's route in _Fate/strange Fake_.
+A local interactive narrative runtime for TYPE-MOON settings, built on the pi coding agent.
 
 `fate-sandbox` treats the language model as an unreliable planner rather than a state store. A deterministic TypeScript engine validates domain events, advances time, protects hidden information, and records an auditable turn history. The model handles decisions and prose; the engine owns the game state.
 
