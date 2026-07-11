@@ -1,28 +1,70 @@
 # fate-sandbox
 
-型月世界观沙盒 for pi coding agent。当前大量测试集中在 Fate/strange Fake 斯诺菲尔德的绫香线。
+[中文说明](README_ZH.md)
 
-## Worldlines
+A local interactive narrative runtime for TYPE-MOON settings, built on the pi coding agent. The current test campaign focuses on Ayaka Sajyou's route in _Fate/strange Fake_.
 
-开局可选 20 条世界线 preset（`/skill:start-game` 会引导选择）：
+`fate-sandbox` treats the language model as an unreliable planner rather than a state store. A deterministic TypeScript engine validates domain events, advances time, protects hidden information, and records an auditable turn history. The model handles decisions and prose; the engine owns the game state.
 
-- **Fate 圣杯战争系**：FSN 冬木（第五次）、Fate/Zero（第四次）、hollow ataraxia（五战半年后）、strange Fake 斯诺菲尔德、Apocrypha 大圣杯战争、EXTRA / EXTRA CCC、Prototype 蒼銀のフラグメンツ（第一次东京）/ Prototype OVA（第二次东京）、Samurai Remnant（江户盈月之仪）、type Redline（帝都圣杯奇谭）
-- **Fate 非战争系**：二世事件簿（时钟塔）、魔法少女伊莉雅（职阶卡回收）、Fate/Labyrinth（大圣杯迷宫）
-- **非 Fate 型月**：月姬（原作/重制两版）、空之境界、魔法使之夜
-- **特殊模式**：幻想嘉年华（全明星喜剧）
-- **自定义**：年代、城市、战争规模由开局问答确认
+> Experimental fan project. Fate and TYPE-MOON rights belong to their respective holders. See [License and fan-content notice](#license-and-fan-content-notice).
 
-所有世界线都是沙盒：只提供世界结构与原作设定底盘，不锁原作剧情；玩家身份、原作主线是否发生由开局确认。
+## Engineering overview
+
+Each player turn runs through separate settlement and rendering passes:
+
+```mermaid
+flowchart LR
+    A[Player input] --> B[Settlement model]
+    B --> C[Domain-event tools]
+    C --> D[Deterministic engine]
+    D --> E[(Versioned game state)]
+    D --> F[Direction packet]
+    F --> G[Render model]
+    G --> H[Prose lint and rewrite]
+    H --> I[Player-visible prose]
+```
+
+The runtime enforces the boundaries that prompts cannot guarantee:
+
+- **Domain events instead of raw patches.** Travel, wounds, purchases, secret reveals, scene beats, and offscreen actions enter through narrow tools with schema validation and engine invariants.
+- **Auditable time.** Every canonical turn carries an elapsed-time or travel envelope and records its start and end timestamps.
+- **Public and hidden state.** Public facts, protagonist knowledge, and hidden canonical facts remain separate. The renderer cannot reveal an unrevealed name or Noble Phantasm through prose alone.
+- **Atomic settlement.** A failed event rejects the turn batch instead of leaving a partially updated world.
+- **Versioned persistence.** Persisted state crosses schema versions through linear migrations before gameplay code can read it.
+- **Isolated background workers.** The backstage director and showrunner audit run in engine-owned `pi -p` subprocesses. Their bare JSON output must pass engine schemas before the main runtime accepts it.
+- **Recoverable interaction.** Rerendering preserves settled facts, while input rollback restores the matching state snapshot and removes the abandoned session branch.
+
+The repository currently uses strict TypeScript, oxlint with type-aware rules, oxfmt, and a deterministic Node test suite. Run all four quality gates with:
+
+```bash
+pnpm typecheck && pnpm lint && pnpm format:check && pnpm test
+```
+
+### Repository map
+
+| Path                      | Responsibility                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `engine/core/`            | State, turns, scenes, actors, economy, memory, secrets, backstage work, and showrunner audit       |
+| `engine/prompt-assembly/` | Settlement/render prompt assembly and preset loading                                               |
+| `tools/`                  | GM-facing domain-event tools and world-data lookup                                                 |
+| `prompts/settlement/`     | Settlement policy, world boundaries, tool routing, and direction contract                          |
+| `prompts/render/`         | Rendering protocol, prose rules, and output contract                                               |
+| `extensions/`             | pi UI panels, compaction policy, rerender/rollback integration, and audit lookup surface           |
+| `skills/start-game/`      | New-game and character-creation state machine                                                      |
+| `world-data/`             | Campaign presets and canonical TYPE-MOON fact skeletons                                            |
+| `docs/adr/`               | Architecture decisions for state separation, two-pass rendering, ledgers, and subprocess isolation |
 
 ## Requirements
 
-- Node.js >= 24
-- pnpm 11.3.0
-- pi coding agent
+- Node.js 24 or later
+- pnpm 11
+- pi coding agent with a configured model provider
 
-## Quick Start
+The game relies on disciplined tool calling. Choose a model that retries after actionable tool errors and does not skip tools when changing world state.
 
-### Linux / macOS
+## Quick start
+
+### Linux and macOS
 
 ```bash
 pnpm install
@@ -36,159 +78,131 @@ pnpm install
 .\start.ps1
 ```
 
-如果 PowerShell 执行策略拦截脚本，可在当前窗口临时放开：
+If PowerShell blocks the script, allow it for the current process:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\start.ps1
 ```
 
-进入 pi 界面后，先确认模型/API 已经配置好；如果没登录，先按自己的 pi 环境执行 `/login` 或配置 provider。
+Log in or configure a provider through your normal pi setup, then enter:
 
-然后在输入框里输入：
-
-```txt
+```text
 /skill:start-game
 ```
 
-或直接用自然语言说“开始游戏”。推荐用 `/skill:start-game`，它会按项目的开局流程初始化。
+You can also say “start game,” but the skill follows the full initialization flow.
 
-常用 UI 命令：
+## Playing
 
-```txt
-/status     查看当前时间、地点、目标、威胁和资源
-/inventory  查看当前玩家可见资金与物品
-/compact    手动压缩聊天上下文（项目已接管为 Fate 压缩策略，自动压缩同样生效）
-/reroll    重新渲染最后一条正文：保留结算事实，只替换可见小说文本
-/fuck [N]   快速回退到倒数第 N 次输入（默认 1）：中断生成、删除废弃分支、原输入回填输入框
+Common UI commands:
+
+```text
+/status      Show the current time, location, objectives, threats, and resources
+/inventory   Show player-visible money and items
+/compact     Compact the conversation with the Fate-specific policy
+/reroll      Render the last settled turn again without changing state
+/fuck [N]    Roll back to the input before the Nth most recent turn; default: 1
 ```
 
-`/reroll` 是“正文不满意重写”：只重跑双 pass 的渲染段，不重新结算、
-不推进时间、不改游戏状态；它只能作用于当前最后一条正文。
+`/reroll` only repeats the rendering pass. It does not rerun settlement, advance time, or modify game state.
 
-`/fuck` 是“坏输入急救”：刚发出去就后悔时用它回到输入前一刻，游戏状态会自动回滚到回退点快照。被废弃的分支会从 session 文件中物理删除，不可恢复；如果想保留分支对比不同走向，请用 pi 自带的 `/tree`。
+`/fuck` interrupts generation, restores the snapshot from before the selected input, removes the abandoned branch from the session file, and puts the original input back into the editor. Use pi's `/tree` instead when you want to keep both branches.
 
-`/status` 和 `/inventory` 是 UI 面板，不是剧情动作；它们用于命令行里查看自己当前知道/持有的东西。
+`/status` and `/inventory` open UI panels. They do not count as story actions.
 
-看到右下角类似 `0.0%` 和一个方块时，那通常是 pi 的上下文/状态 UI，不是下载进度条。首次启动如果没有 API/model 配置，界面可能看起来像“卡住”，但实际是在等你输入命令或配置模型渠道。
+## Worldlines
 
-## New to Fate?
+`/skill:start-game` can initialize 20 presets:
 
-可以玩。推荐选择“新手模式”：普通人或穿越者视角进入异常，让玩家角色和玩家本人一起理解魔术世界。
+- **Fate Holy Grail conflicts:** _Fate/stay night_, _Fate/Zero_, _Fate/hollow ataraxia_, _Fate/strange Fake_, _Fate/Apocrypha_, _Fate/EXTRA_ and _EXTRA CCC_, _Fate/Prototype_, _Fate/Samurai Remnant_, and _Fate/type Redline_
+- **Other Fate settings:** _The Case Files of Lord El-Melloi II_, _Fate/kaleid liner Prisma Illya_, and _Fate/Labyrinth_
+- **Other TYPE-MOON settings:** original and remake _Tsukihime_, _The Garden of Sinners_, and _Witch on the Holy Night_
+- **Special mode:** _Carnival Phantasm_
+- **Custom:** choose the period, city, and conflict scale during setup
 
-第一次玩不建议直接选择复杂 FSF 多阵营中心或从者开局。更稳的开局是：
+Presets provide a setting and canonical baseline. They do not force the original plot or protagonist.
 
-```txt
-2004 年冬木市，你是不了解魔术的普通学生或临时来客。某天放学后，你在旧仓库附近看见了不该存在的光。
+### New to Fate?
+
+Choose novice mode and enter as an ordinary person or outsider. The game introduces a term only when it affects your next decision; it does not use franchise terminology as an implicit puzzle prerequisite.
+
+A low-complexity first setup:
+
+```text
+Fuyuki City, 2004. You are a student or temporary visitor with no knowledge of magecraft.
+One evening, you see impossible light near an old storehouse.
 ```
 
-GM 应该只解释影响下一步行动的最小术语，不会要求玩家先懂 Fate 设定。
+## Settlement and render models
 
-## Model Notes
-
-本项目强依赖模型的工具调用纪律。它不是普通 prompt 角色卡：移动、过夜、花钱、受伤、揭示真名、推进 scene beat 等状态变化都应该通过工具落地。
-
-推荐使用能稳定 tool calling、愿意根据工具错误重试的模型。模型可以犯参数错，工具会拒绝坏状态并给出可用选项；但如果模型经常跳过工具直接续写，体验会退化成普通聊天卡，状态和剧情会开始分家。
-
-已重点测试：GPT-5.5。也测试过 Opus 4.5、DeepSeek V4 Pro。项目子代理默认使用 DeepSeek V4 Pro，可自行调整。
-
-### 双模型：结算与渲染分开
-
-每一轮分两段跑：结算轮（工具调用、规则裁决）和渲染轮（玩家可见正文）。两轮可以用不同模型：
+Settlement handles tool calls and rule adjudication. Rendering turns the validated direction packet into player-visible prose. You can assign a separate render model:
 
 ```bash
 FATE_RENDER_MODEL=provider/model-id ./start.sh
 ```
 
-例如 `FATE_RENDER_MODEL=anthropic/claude-opus-4-5`。未设置时渲染轮复用结算轮的当前模型；格式错误或模型未注册会告警并回退。结算轮吃工具调用纪律，渲染轮吃文笔——可以按需分开点菜。
+Without `FATE_RENDER_MODEL`, both passes use the active settlement model. Invalid or unavailable model IDs produce a warning and fall back to that model.
 
-实测推荐搭配（依据 2026-06-12 五模型盲评横评，2 turn × 每模型 3 轮，`scripts/render-bench.ts`）：
+Optional render controls:
 
-- **结算 GPT-5.5 + 渲染 Gemini 3.1 Pro**：盲评均分 4.3/5（六样本三个 5 分），lint 全清，篇幅克制不过写。失败模式是偼尔在结尾把伪菜单包进台词，已有 lint（`pseudo-menu-in-dialogue`）兜底。
-- **heavy 轮候补：Claude Opus 4.5**：均分 3.2 但方差全场最小（σ 0.47），从不塔轮，适合不容有失的高潮场面。
-- DeepSeek V4 Pro 速度与缓存最优（持久缓存、单轮成本低一个量级）但盲评垫底，且裸渲染 6/6 踩否定-反转句式靠 lint 重写兜底；适合预算优先的场合。
-
-双 pass 拆分后，两侧模型的思维链都可以直接开 `minimal`：结算的推理已被外化进工具序列与 packet schema，渲染的决策已由 packet 做完——省 token，首 token 延迟也更短。若发现 heavy 轮（战斗高潮、重大揭示）的 packet 质量下降，单独给结算侧升档即可，渲染侧保持 minimal 不动。
-
-渲染轮另有几个可选旋钮：
-
-- `FATE_RENDER_TEMPERATURE=0.9`：只作用于渲染/重写调用（结算轮不受影响）。默认不传——部分模型拒绝该参数，会导致每轮渲染回退机械摘要；确认你的渲染模型支持后再开。
-- digest writer（前情提要写手）在推理模型上自动降到 `minimal` 档思考：压缩摘要不需要推理，省 token 也更快。
-- `FATE_RENDER_CACHE=long|none`：渲染轮的 prompt cache 保留档，默认 `short`（Anthropic 5m TTL，命中免费续期）。实测 Claude OAuth 渠道不 honor 1h TTL，`long` 档只多付 2× 写价不换保留；走 API key 且渠道支持时再开。
-
-### 自定义正文 lint 规则
-
-渲染轮结束后会跑一层正则 lint，拦截泄密、Markdown、AI 腔开场白、空泛氛围词、报告句等。默认规则在：
-
-```txt
-engine/audit/lint-rules.ts
+```bash
+FATE_RENDER_TEMPERATURE=0.9   # Only set this when the provider supports temperature
+FATE_RENDER_CACHE=long        # Default: short; other value: none
 ```
 
-默认规则对应的提示词说明在：
+The digest writer uses minimal reasoning on reasoning-capable models. Both main passes can also run at minimal reasoning because the tool sequence and direction packet externalize most decisions; raise settlement reasoning for complex combat or major reveals if packet quality drops.
 
-```txt
+The project has seen focused testing with GPT-5.5, Claude Opus 4.5, DeepSeek V4 Pro, and Gemini 3.1 Pro. Provider behavior and model quality change, so treat these as test coverage rather than compatibility guarantees.
+
+## Prose lint
+
+After rendering, the runtime scans for secret leakage, Markdown, stock AI openings, vague atmosphere phrases, report-like narration, and other configured patterns. It requests one rewrite on a match and shows a UI warning if the rewrite still fails.
+
+Built-in rules and their prompt contracts live in:
+
+```text
+engine/audit/lint-rules.ts
 prompts/render/style-blacklist.md
 prompts/render/output-contract.md
 ```
 
-如果只是玩家本地想加自己的禁词/禁句，不要改源码，建这个文件即可（`prompts/user/` 已被 gitignore）：
-
-```txt
-prompts/user/prose-lint.json
-```
-
-示例：
+Add private rules without changing source by creating the gitignored file `prompts/user/prose-lint.json`:
 
 ```json
 {
   "rules": [
-    { "id": "local-cliche", "scope": "anywhere", "pattern": "月光如水" },
-    { "id": "no-opening-ah", "scope": "opening", "pattern": "^啊" }
+    { "id": "local-cliche", "scope": "anywhere", "pattern": "moonlight like water" },
+    { "id": "no-opening-ah", "scope": "opening", "pattern": "^Ah" }
   ]
 }
 ```
 
-字段说明：
+- `id`: starts with a lowercase letter and contains lowercase letters, digits, `-`, or `_`
+- `scope`: `opening`, `ending`, `anywhere`, or `per-line`
+- `pattern`: a JavaScript regular-expression string; the runtime adds the `g` and `u` flags
 
-- `id`：小写字母开头，只用小写字母、数字、`-`、`_`。
-- `scope`：`opening`（首个非空行）、`ending`（结尾窗口）、`anywhere`（全文）、`per-line`（逐行）。
-- `pattern`：JavaScript 正则字符串；运行时自动加 `g`/`u` flag。
+Local rules cannot disable the built-in blocks for unrevealed names and Noble Phantasms.
 
-规则命中后渲染器会重写一次；重写后仍命中会在 UI 里告警。未揭示真名/宝具泄密是内置 block 规则，不能用本地配置关闭。
+## Local data and testing
 
-## Local State
+The first run creates an isolated pi configuration under `.pi/agent/`. Local authentication files, subprocess transcripts, sessions, and runtime state stay out of release packages.
 
-首次运行会在项目内创建隔离配置目录：
+- `sessions/` contains play sessions.
+- `runtime/` contains state and debug exports.
+- `.pi/agent/auth.json` contains local credentials. Do not share it.
+- Backstage and showrunner subprocess sessions remain under the gitignored `.pi/agent/` tree.
 
-```txt
-.pi/agent/
-```
-
-如果没有可用认证，请按 pi 的正常流程登录或配置 provider。
-
-## Tester Notes
-
-- 游玩存档在 `sessions/`。
-- `state/` 是运行时 debug export / legacy fallback，不是发布内容。
-- `.pi/agent/auth.json` 包含本地认证信息，不要分享。
-- 后台导演与 showrunner 审计由引擎直接 fork `pi -p` 子进程（ADR 0005 / 0007），不依赖任何子代理框架；其 session 落在 gitignored 的 `.pi/agent/` 树下。
-
-## License
-
-GPL-3.0-or-later. See `LICENSE`. **GPL 仅覆盖代码**（引擎、扩展、工具、提示词框架）。
-
-`world-data/` 目录不适用 GPL：其中是基于 Fate / TYPE-MOON 作品整理的同人设定数据，版权归 TYPE-MOON 及各自权利方所有，仅供非商业同人用途，详见 `world-data/NOTICE.md`。这是同人实验项目。
-
-## Package
+Package a release with:
 
 ```bash
 pnpm run pack:release
 ```
 
-输出在：
+The archive appears under `dist/` and excludes dependencies, tests, local prompts, sessions, runtime state, development docs, and `.pi/agent/` data.
 
-```txt
-dist/
-```
+## License and fan-content notice
 
-发布包不包含 `node_modules/`、`sessions/`、`state/`、`.pi/agent/`、`.pi/npm/`。
+The engine, extensions, tools, and prompt framework use GPL-3.0-or-later. See [LICENSE](LICENSE).
+
+The GPL does not cover `world-data/`. That directory contains fan-maintained setting data derived from Fate and TYPE-MOON works. TYPE-MOON and the respective rights holders retain all rights to that material. The project provides it only for non-commercial fan use; see [world-data/NOTICE.md](world-data/NOTICE.md).
