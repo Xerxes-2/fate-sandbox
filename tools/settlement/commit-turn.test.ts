@@ -8,7 +8,7 @@ import {
   resetState,
 } from "../../engine/core/state/state-store.ts";
 import { recordObligation } from "../../engine/core/turn/obligations.ts";
-import { commitTurnTool } from "./commit-turn.ts";
+import { commitTurnTool, commitTurnToolDefinition } from "./commit-turn.ts";
 
 // objectives/threats 是 beat-scoped：需要在 active beat 里验证 scene objective 事件的用例先开 beat。
 // beat 开启现在走 commit_turn 的 begin-beat scene 子事件（backport lotm 8d72578）。
@@ -31,6 +31,21 @@ function beginBeatViaTool(objectives: string[]): void {
     createNoopSessionManager(),
   );
 }
+
+void test("commit_turn publishes nested event requirements to the model", () => {
+  const schema = JSON.stringify(commitTurnToolDefinition.parameters);
+
+  assert.ok(schema.includes('"event":{"type":"object"'));
+  assert.match(schema, /complete-beat/);
+  assert.match(schema, /claims/);
+  assert.match(schema, /record-daily-event/);
+  assert.match(
+    schema,
+    /daily \/ investigation \/ social \/ combat \/ ritual \/ escape \/ downtime/,
+  );
+  assert.match(schema, /add-objective \/ resolve-objective/);
+  assert.match(schema, /spend-money/);
+});
 
 void test("commitTurnTool requires top-level time", () => {
   resetState();

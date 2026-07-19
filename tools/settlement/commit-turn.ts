@@ -11,6 +11,7 @@ import {
 import { formatPendingHarvestReminder } from "../../engine/core/backstage/backstage-pending.ts";
 import { commitTurn } from "../../engine/core/turn/turn-commit.ts";
 import { normalizeTurnCommitInput } from "./commit-turn-normalizer.ts";
+import { commitTurnEventsToolSchema } from "./commit-turn-tool-schema.ts";
 import { resultDetails, runDomainEventTool } from "./domain-tool-runner.ts";
 import { timePolicySchema } from "./time-policy-tool-schema.ts";
 
@@ -68,7 +69,7 @@ export const commitTurnToolDefinition: FateToolDefinition = {
     "每轮叙事结束时一次性提交本轮所有状态变化。把这轮里发生的各种变化——经济收支、记忆记录、角色状态、场景更新、beat 开启/收口——打包放进 events 数组。\n\n" +
     "时间推进：顶层 time 必填（elapsedMinutes >= 1），时间独立于 events；地点移动用 time.kind=travel。\n\n" +
     "events 示例：\n" +
-    '  { kind: "economy", event: { purseId: "...", amount: 900, reason: "买药" } }\n' +
+    '  { kind: "economy", event: { kind: "spend-money", purseId: "...", amount: 900, reason: "买药" } }\n' +
     '  { kind: "memory", event: { kind: "record-daily-event", eventKind: "shopping", title: "...", summary: "..." } }\n' +
     '  { kind: "scene", event: { kind: "begin-beat", title: "潜入柳洞寺", purpose: "...", objectives: [...] } }\n' +
     '  { kind: "scene", event: { kind: "complete-beat", outcome: "...", nextBeat: {...} } }\n\n' +
@@ -89,21 +90,7 @@ export const commitTurnToolDefinition: FateToolDefinition = {
       }),
     ),
     time: timePolicySchema(),
-    events: Type.Array(
-      Type.Object({
-        kind: Type.String({
-          description: "scene / scene-presence / actor-condition / servant-form / economy / memory",
-        }),
-        event: Type.Unknown({
-          description:
-            "对应领域事件载荷，两层嵌套：外层 kind 声明领域，内层 event 含具体子类型。\n" +
-            "scene 子事件速查：\n" +
-            '  begin-beat → { kind:"begin-beat", title, objectives, purpose, beatId?, actionPolicy?, threats?, presence?, situation? }\n' +
-            '  complete-beat → { kind:"complete-beat", outcome, memory?, nextBeat?, presence?, situation? }\n' +
-            "scene event 不包含时间/移动；resolve-objective 只用于非最终目标",
-        }),
-      }),
-    ),
+    events: commitTurnEventsToolSchema(),
   }),
   execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
     commitTurnTool(params, ctx.sessionManager),
