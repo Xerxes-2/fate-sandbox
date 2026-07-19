@@ -6,7 +6,7 @@ After ADR 0005 moved the backstage director to a detached engine process, `run_p
 
 `harvest_backstage_candidate` now accepts the `run_id`. `engine/core/backstage/backstage-session-read.ts` finds `<sessionDir>/<ISO>_<runId>.jsonl`, selects the newest matching file by ISO prefix, and extracts the final assistant text.
 
-The existing backstage obligation still allowed one loss path. A GM could call `resolve_backstage_line` with `outcome=no-change` before harvesting a candidate, clearing the obligation even though the director had produced output.
+The existing backstage obligation hard-blocks the next canonical commit until the line is settled, but it is line-scoped rather than run-scoped. A GM could call `resolve_backstage_line` with `outcome=no-change` before harvesting, clearing the obligation while discarding output already produced for that run.
 
 ## Decision
 
