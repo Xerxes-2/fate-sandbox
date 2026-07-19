@@ -2,16 +2,24 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { SUBMIT_DIRECTION_PACKET_TOOL } from "./render-turn.ts";
-import { buildSettlementCompactionSummary } from "./settlement-compaction.ts";
+import {
+  buildSettlementCompactionSummary,
+  buildSettlementWorkingSetCapsules,
+} from "./settlement-compaction.ts";
 
 function userMessage(text: string): Record<string, unknown> {
   return { role: "user", content: [{ type: "text", text }], timestamp: 0 };
 }
 
-function packetCallMessage(args: Record<string, unknown>): Record<string, unknown> {
+function packetCallMessage(
+  args: Record<string, unknown>,
+  toolCallId = "tc",
+): Record<string, unknown> {
   return {
     role: "assistant",
-    content: [{ type: "toolCall", id: "tc", name: SUBMIT_DIRECTION_PACKET_TOOL, arguments: args }],
+    content: [
+      { type: "toolCall", id: toolCallId, name: SUBMIT_DIRECTION_PACKET_TOOL, arguments: args },
+    ],
     timestamp: 0,
   };
 }
@@ -136,6 +144,45 @@ void test("recent turns keep ruling details; older turns collapse to one line", 
   assert.doesNotMatch(summary, /⌛ 收尾窗口：窗口 4/);
   assert.doesNotMatch(summary, /☰ tohsaka-rin：主动动作 1$/mu);
   assert.match(summary, /- 玩家「行动 1」/);
+});
+
+void test("working-set capsules preserve plot causality without replay-only packet fields", () => {
+  const messages: Record<string, unknown>[] = [];
+  for (let index = 1; index <= 8; index++) {
+    messages.push(
+      userMessage(`行动 ${index}`),
+      packetCallMessage(
+        {
+          needsRender: true,
+          playerAction: `行动 ${index} 落地`,
+          resolvedChanges: [`变化 ${index}`],
+          endWindow: `窗口 ${index}`,
+          npcStances: [
+            {
+              actorId: "npc",
+              stance: "警惕",
+              wants: "情报",
+              move: `主动动作 ${index}`,
+              refusesToSay: "秘密",
+            },
+          ],
+          sensoryAnchors: [`只供渲染的意象 ${index}`],
+          canonFacts: [`只供渲染的原作事实 ${index}`],
+        },
+        `packet-${index}`,
+      ),
+    );
+  }
+
+  const capsules = buildSettlementWorkingSetCapsules(messages);
+
+  assert.equal(capsules.size, 8);
+  assert.match(capsules.get("packet-8") ?? "", /玩家「行动 8」｜行动 8 落地→ 变化 8/);
+  assert.match(capsules.get("packet-8") ?? "", /收尾窗口：窗口 8/);
+  assert.match(capsules.get("packet-8") ?? "", /npc：主动动作 8/);
+  assert.doesNotMatch(capsules.get("packet-8") ?? "", /只供渲染的意象/);
+  assert.doesNotMatch(capsules.get("packet-8") ?? "", /只供渲染的原作事实/);
+  assert.doesNotMatch(capsules.get("packet-2") ?? "", /收尾窗口/);
 });
 
 void test("detail lines degrade to one-line index when folded through a second compaction", () => {

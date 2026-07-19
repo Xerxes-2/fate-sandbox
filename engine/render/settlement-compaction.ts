@@ -20,6 +20,7 @@ const PLAYER_INPUT_EXCERPT_CHARS = 30;
  */
 const RECENT_FULL_TURNS = 6;
 const RECENT_PROSE_EXCERPT_CHARS = 200;
+const WORKING_SET_CAPSULE_HEADER = "[已结算剧情胶囊｜机械生成]";
 
 const SUMMARY_HEADER = [
   "[结算上下文截断摘要｜机械生成]",
@@ -56,7 +57,32 @@ export function buildSettlementCompactionSummary(
   return sections.join("\n");
 }
 
+/**
+ * Replace completed direction-packet calls with stable narrative capsules. Each capsule is derived
+ * only from its completed turn; adding tool calls inside the current player turn cannot rewrite it.
+ * The six-turn detail gradient matches compaction, so only the oldest rich capsule changes per turn.
+ */
+export function buildSettlementWorkingSetCapsules(
+  messages: ReadonlyArray<unknown>,
+): ReadonlyMap<string, string> {
+  const entries = extractTurnEntries(messages).filter(
+    (entry): entry is TurnDigestEntry & { toolCallId: string } => entry.toolCallId !== undefined,
+  );
+  const fullFrom = Math.max(0, entries.length - RECENT_FULL_TURNS);
+  return new Map(
+    entries.map((entry, index) => [
+      entry.toolCallId,
+      [
+        WORKING_SET_CAPSULE_HEADER,
+        entry.header,
+        ...(index >= fullFrom ? entry.details.filter((line) => !line.includes("▸ 正文")) : []),
+      ].join("\n"),
+    ]),
+  );
+}
+
 interface TurnDigestEntry {
+  toolCallId?: string;
   /** 单行索引（"- " 开头，自洽）。 */
   header: string;
   /** 裁决细节行（仅最近 RECENT_FULL_TURNS 轮输出；非 "- " 开头，再压缩时自动降级）。 */
@@ -78,15 +104,16 @@ function extractTurnEntries(messages: ReadonlyArray<unknown>): TurnDigestEntry[]
       pendingProse = prose;
       continue;
     }
-    const args = submitPacketArgs(message);
-    if (args !== undefined) {
+    const packetCall = submitPacketCall(message);
+    if (packetCall !== undefined) {
       entries.push({
+        toolCallId: packetCall.toolCallId,
         header: formatTurnLine(
           currentInputs,
-          args,
+          packetCall.args,
           pendingProse === undefined ? undefined : excerpt(pendingProse, PROSE_EXCERPT_CHARS),
         ),
-        details: formatTurnDetails(args, pendingProse),
+        details: formatTurnDetails(packetCall.args, pendingProse),
       });
       currentInputs = [];
       pendingProse = undefined;
@@ -178,7 +205,9 @@ function playerInputText(message: unknown): string | undefined {
   return text === "" ? undefined : text;
 }
 
-function submitPacketArgs(message: unknown): Record<string, unknown> | undefined {
+function submitPacketCall(
+  message: unknown,
+): { toolCallId: string; args: Record<string, unknown> } | undefined {
   if (!isRecord(message) || message["role"] !== "assistant") return undefined;
   const content = message["content"];
   if (!Array.isArray(content)) return undefined;
@@ -186,10 +215,11 @@ function submitPacketArgs(message: unknown): Record<string, unknown> | undefined
     if (
       isRecord(part) &&
       part["type"] === "toolCall" &&
+      typeof part["id"] === "string" &&
       part["name"] === SUBMIT_DIRECTION_PACKET_TOOL &&
       isRecord(part["arguments"])
     ) {
-      return part["arguments"];
+      return { toolCallId: part["id"], args: part["arguments"] };
     }
   }
   return undefined;

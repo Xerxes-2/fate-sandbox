@@ -9,10 +9,17 @@ function user(text: string): Record<string, unknown> {
   return { role: "user", content: [{ type: "text", text }] };
 }
 
-function assistantToolCall(id: string, name: string): Record<string, unknown> {
+function assistantToolCall(
+  id: string,
+  name: string,
+  args: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
     role: "assistant",
-    content: [{ type: "toolCall", id, name, arguments: {} }],
+    content: [
+      { type: "thinking", thinking: "scratch reasoning" },
+      { type: "toolCall", id, name, arguments: args },
+    ],
   };
 }
 
@@ -75,6 +82,9 @@ void test("projectSettlementWorkingSet retains only the latest replaceable hando
 
   assert.equal(projected.includes(oldAudit), false);
   assert.equal(projected.includes(latestAudit), true);
+  assert.deepEqual(projected[projected.indexOf(latestAudit) - 1]?.content, [
+    { type: "toolCall", id: "audit-new", name: "audit", arguments: {} },
+  ]);
 });
 
 void test("projectSettlementWorkingSet retains a workflow handoff until successful resolution", () => {
@@ -110,6 +120,92 @@ void test("projectSettlementWorkingSet drops a handoff after successful resoluti
   const projected = projectSettlementWorkingSet(messages, RETENTION_FOR);
 
   assert.equal(projected.includes(handoff), false);
+});
+
+void test("projectSettlementWorkingSet replaces completed packets with stable plot capsules", () => {
+  const oldPacket = assistantToolCall("packet-1", "submit_direction_packet", {
+    needsRender: true,
+    playerAction: "拒绝交出信件",
+    resolvedChanges: ["谈判破裂", "监察者转为跟踪"],
+    endWindow: "巷口出现第二组脚步声",
+    npcStances: [
+      {
+        actorId: "inspector",
+        stance: "强硬",
+        wants: "夺取信件",
+        move: "命令部下封住巷口",
+        refusesToSay: "雇主身份",
+      },
+    ],
+    sensoryAnchors: ["潮湿砖墙"],
+    canonFacts: ["一次性渲染事实"],
+  });
+  const currentUser = user("翻过围墙");
+  const messages = [user("不交"), oldPacket, toolResult("packet-1", "accepted"), currentUser];
+
+  const projected = projectSettlementWorkingSet(messages, RETENTION_FOR);
+  const capsuleMessage = projected[1];
+
+  assert.notEqual(capsuleMessage, oldPacket);
+  assert.deepEqual(capsuleMessage?.content, [
+    {
+      type: "text",
+      text: [
+        "[已结算剧情胶囊｜机械生成]",
+        "- 玩家「不交」｜拒绝交出信件→ 谈判破裂；监察者转为跟踪",
+        "  ⌛ 收尾窗口：巷口出现第二组脚步声",
+        "  ☰ inspector：命令部下封住巷口",
+      ].join("\n"),
+    },
+  ]);
+  assert.equal(JSON.stringify(projected).includes("scratch reasoning"), false);
+  assert.equal(JSON.stringify(projected).includes("潮湿砖墙"), false);
+  assert.equal(JSON.stringify(projected).includes("一次性渲染事实"), false);
+  assert.equal(projected.includes(currentUser), true);
+});
+
+void test("projectSettlementWorkingSet leaves the active player loop byte-stable", () => {
+  const currentUser = user("翻过围墙");
+  const currentCall = assistantToolCall("current", "lookup", { query: "巷道" });
+  const currentResult = toolResult("current", "lookup result");
+  const messages = [user("old"), currentUser, currentCall, currentResult];
+
+  const projected = projectSettlementWorkingSet(messages, RETENTION_FOR);
+
+  assert.equal(projected[1], currentUser);
+  assert.equal(projected[2], currentCall);
+  assert.equal(projected[3], currentResult);
+  assert.deepEqual(projected.slice(1), messages.slice(1));
+});
+
+void test("completed-turn prefix stays byte-stable while the active loop grows", () => {
+  const completed = [
+    user("先观察"),
+    assistantToolCall("packet-1", "submit_direction_packet", {
+      needsRender: true,
+      playerAction: "观察巷口",
+      resolvedChanges: ["发现脚印"],
+    }),
+    toolResult("packet-1", "accepted"),
+  ];
+  const currentUser = user("追上去");
+  const initial = projectSettlementWorkingSet([...completed, currentUser], RETENTION_FOR);
+  const grown = projectSettlementWorkingSet(
+    [
+      ...completed,
+      currentUser,
+      assistantToolCall("current", "lookup", { query: "脚印" }),
+      toolResult("current", "result"),
+    ],
+    RETENTION_FOR,
+  );
+  const initialBoundary = initial.indexOf(currentUser);
+  const grownBoundary = grown.indexOf(currentUser);
+
+  assert.equal(
+    JSON.stringify(initial.slice(0, initialBoundary)),
+    JSON.stringify(grown.slice(0, grownBoundary)),
+  );
 });
 
 void test("projectSettlementWorkingSet preserves all messages before any player input", () => {
