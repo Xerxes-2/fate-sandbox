@@ -14,22 +14,20 @@ import {
   upsertActorImpression,
   type UpsertActorImpressionInput,
 } from "../../engine/core/actor/actor-impression.ts";
-import { hydrateStateFromSessionManager } from "../../engine/core/state/session-hydration.ts";
-import { commitState, getState } from "../../engine/core/state/state-store.ts";
 import { isRecord } from "../../engine/core/utils/typebox-validation.ts";
-import { textResult } from "../runtime/tool-result.ts";
+import { runDomainEventTool } from "./domain-tool-runner.ts";
 
 export function updateActorImpressionTool(params: unknown, sessionManager: unknown): ToolResult {
-  if (sessionManager !== undefined) {
-    hydrateStateFromSessionManager(sessionManager);
-  }
-  const state = getState();
   const input = parseToolInput(params);
-  const card = upsertActorImpression(state, input);
-  commitState(state);
-  const name = state.public.actors[card.actorId]?.presentation.renderName ?? card.actorId;
-  return textResult(`${name} 印象卡已更新。卡片将在该 actor 在场时自动注入 pre-response。`, {
-    updatedImpression: card,
+  return runDomainEventTool({
+    sessionManager,
+    execute: (draft) => {
+      const card = upsertActorImpression(draft, input);
+      const name = draft.public.actors[card.actorId]?.presentation.renderName ?? card.actorId;
+      return { card, name };
+    },
+    details: ({ card }) => ({ updatedImpression: card }),
+    message: ({ name }) => `${name} 印象卡已更新。卡片将在该 actor 在场时自动注入 pre-response。`,
   });
 }
 
