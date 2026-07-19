@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-import type { FateToolDefinition } from "./runtime/tool-definition.ts";
+import type { FateToolDefinition, ToolResultRetention } from "./runtime/tool-definition.ts";
 
 import { getStateSchemaToolDefinition } from "./debug/get-state-schema.ts";
 import { migrateStateToolDefinition } from "./debug/migrate-state.ts";
@@ -74,8 +74,20 @@ const TOOL_DEFINITIONS: readonly FateToolDefinition[] = [
   getStateSchemaToolDefinition,
 ];
 
+export function toolResultRetention(toolName: string): ToolResultRetention {
+  return (
+    TOOL_DEFINITIONS.find((definition) => definition.name === toolName)?.resultRetention ??
+    "current-player-turn"
+  );
+}
+
 export function registerAllTools(pi: ExtensionAPI): void {
   for (const definition of TOOL_DEFINITIONS) {
-    pi.registerTool({ label: "FSN 叙事", renderResult: renderDomainToolResult, ...definition });
+    const { resultRetention: _resultRetention, ...toolDefinition } = definition;
+    pi.registerTool({
+      label: "FSN 叙事",
+      renderResult: renderDomainToolResult,
+      ...toolDefinition,
+    });
   }
 }

@@ -69,6 +69,7 @@ function buildGuidance(candidate: ParallelLineOutput): string {
 
 export const harvestBackstageCandidateToolDefinition: FateToolDefinition = {
   name: "harvest_backstage_candidate",
+  resultRetention: "cross-player-turn",
   description:
     "按 run_id 从 director 的持久 session 取回裸候选并过 engine 验收，返回结构合法的 ParallelLineOutput 供审查后落地。\n\n" +
     "【使用边界】\n" +

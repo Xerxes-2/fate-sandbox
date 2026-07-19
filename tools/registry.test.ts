@@ -3,6 +3,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
+import { toolResultRetention } from "./registry.ts";
+
 /**
  * 工具契约（name/description/parameters）与实现同文件维护；
  * entry schema 必须保持 loose——union 校验交给领域工具/normalizer，
@@ -39,6 +41,13 @@ void test("tool descriptions avoid checklist headings that bait reasoning", () =
       );
     }
   }
+});
+
+void test("registry exposes explicit cross-turn tool-result handoffs", () => {
+  assert.equal(toolResultRetention("commit_turn"), "current-player-turn");
+  assert.equal(toolResultRetention("harvest_backstage_candidate"), "cross-player-turn");
+  assert.equal(toolResultRetention("run_showrunner_audit"), "cross-player-turn");
+  assert.equal(toolResultRetention("unknown_tool"), "current-player-turn");
 });
 
 void test("registry stays a thin list without inline contracts", () => {

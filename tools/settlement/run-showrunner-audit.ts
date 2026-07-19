@@ -113,6 +113,7 @@ function failureResult(result: ShowrunnerAuditResult & { kind: "failure" }): Too
 
 export const runShowrunnerAuditToolDefinition: FateToolDefinition = {
   name: "run_showrunner_audit",
+  resultRetention: "cross-player-turn",
   description:
     "同步运行 showrunner 审计，判断故事是否偏离当前 timeline 题材契约。引擎通过仅提供 lookup、没有写工具的 pi -p 子进程执行审计；verdict 通过 schema 验收后才会返回。\n\n" +
     "使用边界：\n" +
