@@ -129,11 +129,12 @@ function optionalBoolean(value: unknown): boolean | undefined {
 export const runParallelLineToolDefinition: FateToolDefinition = {
   name: "run_parallel_line",
   description:
-    "engine 装配 hermetic director prompt 并【直接异步 fork 后台导演】（detached pi -p，不经主循环、不阻塞）。GM 只给 lineId + timeWindow + 可选偏好，一次调用即起异步后台线。\n\n" +
-    "【使用边界】\n" +
-    "- 需推进后台世界线，不想手写全部 ParallelLineInput\n" +
-    "- settlement/tool-policy.md 触发 parallel-line（跳时 >10-30min、beat 关闭、连续 2 轮无代价）\n" +
-    "流程：调 run_parallel_line（引擎自动起后台导演）→ 隔轮从 session_dir 取裸候选 → harvest_backstage_candidate 验收 → 审查 → record_offscreen_event / resolve_backstage_line 落地。你不需要手动 spawn。\n\n" +
+    "启动一条异步后台线。GM 提供 lineId、timeWindow 和可选偏好；引擎装配 director prompt，并通过 detached pi -p 启动后台导演，不阻塞当前回合。\n\n" +
+    "使用边界：\n" +
+    "- settlement/tool-policy.md 要求推进后台世界线时调用\n" +
+    "- 调用后的下一轮使用 harvest_backstage_candidate 验收候选，再由 GM 审查\n" +
+    "- 审查通过后用 record_offscreen_event 落地；无可推进内容时用 resolve_backstage_line 说明原因\n" +
+    "- 引擎负责启动子进程，无需手动 spawn 或编写 ParallelLineInput\n\n" +
     "禁区：\n" +
     "- 绕过 engine 装配手写完整 ParallelLineInput / director prompt\n" +
     "- 把 privateFacts / privateSummary 原样写进玩家可见正文\n" +

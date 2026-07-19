@@ -26,7 +26,9 @@ export function readShowrunnerOutputRaw(
   try {
     files = readdirSync(sessionDir);
   } catch {
-    throw new Error(`showrunner session 目录不存在：${sessionDir}（审计子进程未启动？）。`);
+    throw new Error(
+      `showrunner session 目录不存在：${sessionDir}。请确认审计子进程已启动，且 session 目录配置正确。`,
+    );
   }
   const suffix = `_${runId}.jsonl`;
   const matches = files.filter((name) => name.endsWith(suffix)).toSorted();

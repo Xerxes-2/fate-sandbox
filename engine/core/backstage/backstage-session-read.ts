@@ -70,7 +70,9 @@ export function readBackstageCandidateRaw(
   try {
     files = readdirSync(sessionDir);
   } catch {
-    throw new Error(`后台 session 目录不存在：${sessionDir}（run_parallel_line 起过导演吗？）。`);
+    throw new Error(
+      `后台 session 目录不存在：${sessionDir}。请确认 run_parallel_line 已启动，且后台 session 目录配置正确。`,
+    );
   }
   const suffix = `_${runId}.jsonl`;
   const matches = files.filter((name) => name.endsWith(suffix)).toSorted();

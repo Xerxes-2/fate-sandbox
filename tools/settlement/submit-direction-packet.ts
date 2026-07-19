@@ -137,7 +137,7 @@ export const submitDirectionPacketToolDefinition: FateToolDefinition = {
     canonFacts: Type.Optional(
       Type.Array(Type.String(), {
         description:
-          "渲染所需原作事实预填；渲染器没有 lookup，缺位它就会编（叙事轮必填，可为空数组）",
+          "渲染所需的原作事实；渲染器不提供 lookup。叙事轮必填，可为空数组；缺少必要事实会产生未经核对的原作内容。",
       }),
     ),
     directReply: Type.Optional(

@@ -11,7 +11,7 @@ export function timePolicySchema(): ReturnType<typeof Type.Object> {
       Type.Unknown({ description: "kind=elapsed/travel 必填；大于 0 的整数" }),
     ),
     location: Type.Optional(locationSchema()),
-    reason: Type.String({ description: "为什么本轮耗时、移动，或为什么没有耗时" }),
+    reason: Type.String({ description: "本轮耗时或移动的原因" }),
   });
 }
 

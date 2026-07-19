@@ -78,7 +78,7 @@ export const recordMemoryToolDefinition: FateToolDefinition = {
         Type.Object({
           kind: Type.String({
             description:
-              "claim 类型（仅 record-major-event 必填）。mundane=普通事实（legacy 兼容，日常记录建议改用 record-daily-event）；其余允许: identity / location / affiliation / motive / ability / resource / relationship / event-cause / world-fact",
+              "claim 类型（仅 record-major-event 必填）。mundane=无需 secret 关联的普通事实；日常事件使用 record-daily-event。其余允许: identity / location / affiliation / motive / ability / resource / relationship / event-cause / world-fact",
           }),
           statement: Type.String(),
           certainty: Type.String({

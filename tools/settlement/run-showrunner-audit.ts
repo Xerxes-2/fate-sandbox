@@ -114,8 +114,8 @@ function failureResult(result: ShowrunnerAuditResult & { kind: "failure" }): Too
 export const runShowrunnerAuditToolDefinition: FateToolDefinition = {
   name: "run_showrunner_audit",
   description:
-    "engine 拼 hermetic 审计 prompt 并【阻塞 fork 同步审计子进程】（pi -p，只有 lookup、零写工具），verdict 过 schema 验收后返回。判断当前故事是否偏离 timeline 题材契约。\n\n" +
-    "【使用边界】\n" +
+    "同步运行 showrunner 审计，判断故事是否偏离当前 timeline 题材契约。引擎通过仅提供 lookup、没有写工具的 pi -p 子进程执行审计；verdict 通过 schema 验收后才会返回。\n\n" +
+    "使用边界：\n" +
     "- settlement/tool-policy.md 触发 showrunner 审计（题材漂移、beat 原地打转、mystery hook 无新意复推、下一步 offscreen 生态不明）\n" +
     "- 调用会阻塞至审计完成（约 1-5 分钟）；verdict 的 requiredCorrections 面向下一回合执行\n" +
     "- 返回「审计失败」时由你决定重调或跳过；失败不算通过\n\n" +

@@ -36,7 +36,7 @@ Each `npcStances[].move` in the packet is binding: render it as that NPC's own i
 
 A character who only waits for the player has left the scene. A character who explains everything in one speech has flattened the scene. Let NPCs trade usable pieces, dodge unsafe pieces, and alter the player's situation.
 
-Voice over function. A `move` says what the NPC does; the line must still sound like that specific character, not a neutral narrator. Render every NPC line in the diction, rhythm, and deflection from its impression card's `语癖/对话范例`. A line that any character could have said — correct, fluent, on-the-nose — is the robotic-dialogue failure, even when it delivers the move. Do not narrate a move's hidden purpose (实际上/表面上/其实是在…); let the public line plus one physical tell carry the private reason, and avoid giving two NPCs the same "casual remark that is secretly tactical" shape in one turn.
+Keep each NPC's `move` in character. Use the diction, rhythm, and deflection from the impression card's `语癖/对话范例`. Rewrite any line that could be spoken unchanged by another character. Do not explain the move's hidden purpose (实际上/表面上/其实是在…). Show it through the public line and one physical tell. When several NPCs conceal motives, do not give two of them the same "casual remark that is secretly tactical" pattern in one turn.
 
 ## Multi-person scenes
 

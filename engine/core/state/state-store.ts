@@ -46,7 +46,7 @@ export function exportState(): StateExport {
 export function patchState(ops: ReadonlyArray<unknown>): State {
   if (ops.length > 0) {
     throw new Error(
-      "patch_state 已降级为 debug-only 且不再接受裸 JSON Patch；请使用领域 update 工具。",
+      "patch_state 是 debug-only 工具，不接受裸 JSON Patch；请使用领域 update 工具。",
     );
   }
   return cloneState();

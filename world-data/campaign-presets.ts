@@ -555,7 +555,8 @@ export const CAMPAIGN_PRESETS = {
     premise:
       "型月世界观下的自定义世界线：年代、城市、是否有圣杯战争及其规模全部由开局问答确认；本 preset 的时间、地点、货币仅为占位，初始化时应被覆盖。",
     openingHooks: {
-      custom: "由开局问答确定——入口锚点随世界线设计生成。",
+      custom:
+        "开局问答确认年代、城市、圣杯战争是否存在及其规模、主角类型和起始地点后，再生成具体入口锚点。",
     },
     activeRuleSetIds: ["fate-worldview-filter", "custom"],
     timezone: "UTC",
