@@ -522,7 +522,7 @@ export function measureParallelLine(turns: readonly AuditTurn[]): ParallelLineRe
  * 里记了实账——触发的义务必被结算才能继续。这里直接读实账，给出 ground truth：
  * 结算了多少、按 outcome/reasonCode 分布、结束时还欠多少。
  *
- * 新的「软」信号是 `nonLandedRatio`：硬阻断逼着 GM 清账，但 GM 可能用
+ * 新的「软」信号是 `nonLandedRatio`：硬阻断要求 GM 完成义务，但 GM 可能用
  * `resolve_backstage_line` 的 no-change 橡皮图章绕过，而非真的 record_offscreen_event 落地。
  */
 export interface BackstageLedgerReport {
@@ -677,9 +677,9 @@ export function renderAuditReport(report: SessionAuditReport): string {
   const bl = report.backstageLedger;
   lines.push("");
   lines.push("[backstage 义务账本（引擎实账）]");
-  lines.push(`  已结算义务: ${bl.reviewed}，session 结束仍未清账: ${bl.openAtEnd}`);
+  lines.push(`  已处理义务: ${bl.reviewed}，session 结束仍未完成: ${bl.openAtEnd}`);
   if (bl.openTriggers.length > 0) {
-    lines.push(`  未清账 trigger: ${bl.openTriggers.join(", ")}`);
+    lines.push(`  未处理 trigger: ${bl.openTriggers.join(", ")}`);
   }
   if (bl.reviewed > 0) {
     const outcomes = Object.entries(bl.byOutcome).toSorted((a, b) => b[1] - a[1]);

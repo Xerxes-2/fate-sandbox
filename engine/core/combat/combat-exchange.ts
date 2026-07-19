@@ -495,7 +495,7 @@ export function formatCombatSwing(swing: CombatSwing): string {
     case "bad-break":
       return "恶化变数：敌方抓到节奏或环境突然转坏。";
     case "pressure":
-      return "压力变数：火线、距离或误判让行动更吃紧。";
+      return "压力变数：火线、距离或误判增加了行动压力。";
     case "neutral":
       return "平稳变数：没有额外偏移，按参数、资源和目标裁决。";
     case "opening":

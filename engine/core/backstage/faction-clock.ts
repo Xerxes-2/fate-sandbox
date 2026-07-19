@@ -3,7 +3,7 @@
  *
  * 「世界不为玩家暂停」从 prompt 自觉变成机械载体：幕后势力的推进记在
  * secret state 的 factionClocks / scheduledEvents 里；canonical commit
- * 推进时间越过 dueAt 或时钟填满时，工具返回值直接催账——GM 不需要记得。
+ * 推进时间越过 dueAt 或时钟填满时，工具返回值直接列出待处理项，GM 无需自行记忆。
  */
 
 import type { FactionClock, ScheduledEvent, State } from "../state/state.ts";
@@ -156,7 +156,7 @@ export function extendScheduledEvent(
 }
 
 /**
- * canonical commit 的催账清单：已到期的 scheduledEvents + 已填满的时钟。
+ * canonical commit 的待处理清单：已到期的 scheduledEvents + 已填满的时钟。
  * 只生成提醒文本，不改 state——到期处理必须走 manage_faction_clock 显式动作。
  */
 export function collectBackstageDueNotices(draft: State): string[] {

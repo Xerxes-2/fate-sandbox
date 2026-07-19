@@ -24,17 +24,17 @@ export function resolveBackstageLineTool(params: unknown, sessionManager: unknow
   return runDomainEventTool({
     sessionManager,
     execute: (draft) => {
-      // 拦住 footgun：有已起但未 harvest 的 run 时，不准用 no-change 清账丢弃已产出的候选。
+      // 防止误用：有已启动但未 harvest 的 run 时，不允许用 no-change 关闭义务并丢弃候选。
       assertNoUnharvestedPending(draft);
       const settled = settleOldestBackstageObligation(draft, input);
       if (settled === undefined) {
-        throw new Error("当前没有未清账的后台世界推进义务，无需 resolve_backstage_line。");
+        throw new Error("当前没有未完成的后台世界推进义务，无需 resolve_backstage_line。");
       }
       return { settled, input };
     },
     details: ({ settled }) => ({ obligationId: settled.id }),
     message: ({ settled, input: resolved }) =>
-      `后台世界推进义务已清账（${resolved.outcome}）：${settled.summary}\n- ${resolved.reasonCode}：${resolved.note}`,
+      `后台世界推进义务已完成（${resolved.outcome}）：${settled.summary}\n- ${resolved.reasonCode}：${resolved.note}`,
   });
 }
 
@@ -60,12 +60,12 @@ function parseInput(params: unknown): BackstageResolutionInput {
 export const resolveBackstageLineToolDefinition: FateToolDefinition = {
   name: "resolve_backstage_line",
   description:
-    "清掉一条未清账的后台世界推进义务——仅用于经审查确认本轮后台无可落地推进的情形。\n\n" +
+    "关闭一条未完成的后台世界推进义务。仅用于经审查确认本轮后台无可落地推进的情形。\n\n" +
     "【使用边界】\n" +
     "- run_parallel_line / parallel-line 子代理审查后判定 no-change（确无新进展）或 blocked（被设定/beat 阻断）\n" +
     "- 有真实后台进展时不要用本工具，用 record_offscreen_event 落地\n\n" +
     "禁区：\n" +
-    "- 子代理失败/未调用就用本工具糊弄清账\n" +
+    "- 子代理失败或未调用时伪造处理结果\n" +
     "- 用它替代 record_offscreen_event 落地真实事件",
   parameters: Type.Object({
     outcome: Type.String({ description: "no-change / blocked" }),

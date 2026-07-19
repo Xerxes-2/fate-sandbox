@@ -87,9 +87,9 @@ export default function twoPassRenderExtension(pi: ExtensionAPI): void {
     cleanup: clearRenderWidget,
   });
 
-  // Pass A 漏稿源头收口：结算回合的 assistant 消息只该带工具调用，模型偶尔在
-  // 旁边漏出正文（玩家从未看到、却会落史回喂并与 canonical prose 分叉）。在消息
-  // 定稿时剥掉这类 text 部件。渲染器 Pass B 走裸 stream()，不触发本钩子。
+  // 从源头过滤 Pass A 误写正文：结算回合的 assistant 消息只该带工具调用，模型偶尔会
+  // 附带玩家从未看到的正文。这些文本若进入历史，会在后续回合再次传给模型并与 canonical prose 分叉。
+  // 消息定稿时删除这类 text 部件。渲染器 Pass B 走裸 stream()，不触发本钩子。
   pi.on("message_end", async (event) => {
     const stripped = stripLeakedSettlementProse(event.message);
     return stripped === undefined ? undefined : { message: stripped };
@@ -126,7 +126,7 @@ export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): 
     }
     proseDelivery.queue(createProseDelivery(packet, prose));
     // backlog #13：独立 writer 异步产出本轮高质量摘要，供后续轮次的摘要层使用。
-    // 失败静默——机械 packet 摘要永远是兜底。
+    // 失败时不影响主流程，机械 packet 摘要作为后备输出。
     void writeTurnDigest(ctx, pending, prose.text);
   });
 
@@ -288,9 +288,9 @@ function buildRerollRendererMessages(
 /**
  * Anthropic/Claude 渠道拒绝以 assistant 消息结尾的 prefill（400 "does not support
  * assistant message prefill"）。优先查模型名含 claude（覆盖 Claude 经 OpenRouter /
- * 其他代理的情况，此时 provider 未必是 anthropic），再补 provider==anthropic 兑底。
+ * 其他代理的情况，此时 provider 未必是 anthropic），再用 provider==anthropic 处理其余情况。
  * Claude 原生 thinking 走独立通道、不污染 text_delta，本就不需 prefill；后置
- * stripThinkingResidue 仍是兜底。
+ * stripThinkingResidue 仍提供最后保护。
  */
 export function supportsAssistantPrefill(model: { id: string; provider: string }): boolean {
   if (model.id.toLowerCase().includes("claude")) {
@@ -308,15 +308,15 @@ async function streamProse(
   label: string,
   usageKind: RenderCallKind,
 ): Promise<string> {
-  // 卡掉原生思维链（参 strip-thinking.ts 文档头）：在最终送入 stream() 前追加一条
+  // 过滤原生思维链（参 strip-thinking.ts 文档头）：在最终送入 stream() 前追加一条
   // assistant prefill。三条调用路径（首写、lint 重写、reroll 变体）都收敛在这里，
   // 避免多处分别维护。不动 buildRendererMessages 原件：reroll 路径会在后面接 user
-  // 请求，在那边插 prefill 会被后续 user 消息顶掉。
+  // 请求，在那边插入 prefill 会使其排在后续 user 消息之前，无法作为最终 assistant 消息。
   //
   // Anthropic/Claude 渠道（尤其 OAuth 适配器）拒绝以 assistant 消息结尾的 prefill
   // （400 "does not support assistant message prefill"）。Claude 原生 thinking 走
   // 独立通道、不会污染 text_delta，本就不需要这条 prefill；后置 stripThinkingResidue
-  // 仍是兜底。故 anthropic 直接跳过 prefill，让对话以 user 消息结尾。
+  // 仍提供最后保护。因此 anthropic 直接跳过 prefill，让对话以 user 消息结尾。
   dumpPassB(systemPrompt, rendererMessages, label);
   const baseStreamMessages = rendererMessages.map((message) => toStreamMessage(message, model));
   const streamMessages = supportsAssistantPrefill(model)
@@ -359,7 +359,7 @@ async function streamProse(
     clearRenderWidget(ctx);
     throw error instanceof Error ? error : new Error(String(error));
   }
-  // 后置剥离：prefill 被某些中转吞掉时的兜底，同时清掉模型自己写在中间的闭合
+  // 后置剥离：某些中转丢弃 prefill 时提供最后保护，同时清除模型写在中间的闭合
   // <think>…</think> 段。必须在 trim 前跳过：变成空串走上面的 empty 分支触发重试。
   const text = stripThinkingResidue(draft);
   if (text === "") {
@@ -495,7 +495,7 @@ const DIGEST_MAX_TOKENS = 512;
 
 /**
  * 独立 digest writer（backlog #13）：渲染完成后异步把本轮压成一行摘要
- * 写入 prose-digest store。不阻塞主循环，失败静默（机械摘要兑底）。
+ * 写入 prose-digest store。不阻塞主循环；失败时使用机械摘要。
  */
 async function writeTurnDigest(
   ctx: ExtensionContext,

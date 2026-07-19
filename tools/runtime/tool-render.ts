@@ -7,8 +7,8 @@ import { Markdown, Text, truncateToWidth } from "@earendil-works/pi-tui";
  * 所有 Domain Event Tool 共用的结果渲染：注册时由 registry 统一附加。
  *
  * 折叠态（默认，ctrl-O 收起）只显示首行摘要 + 行数，避免大块 GM brief / lookup
- * 结果摊满屏幕；展开态（ctrl-O）用 Markdown 渲染完整 text。工具本身仍返回扁平
- * text（喂给 LLM 的契约不变），这里只接管 TUI 呈现。
+ * 结果占满屏幕；展开态（ctrl-O）用 Markdown 渲染完整 text。工具本身仍返回扁平
+ * text（传给 LLM 的契约不变），这里只接管 TUI 呈现。
  */
 type ToolResultRenderer = NonNullable<ToolDefinition["renderResult"]>;
 

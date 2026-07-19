@@ -20,7 +20,7 @@ export function recordOffscreenEventTool(params: unknown, sessionManager: unknow
       assertNotPlayerKnown(params);
       const event = parseRecordOffscreenEventInput(params, "record_offscreen_event 参数");
       const result = recordOffscreenEvent(draft, event);
-      // 后台进展落地：清掉最旧一条未清账义务（若有），并打断 no-cost 连击。
+      // 后台进展落地：完成最旧一条未处理义务（若有），并打断 no-cost 连击。
       settleOldestBackstageObligation(draft, {
         outcome: "landed",
         reasonCode: "candidate-landed",

@@ -314,7 +314,7 @@ Fate/Labyrinth 注意：
 3. **开场地点** ——空间结构、氛围、可感知特征
 4. **从者**（如果开场就有从者在场）——职阶、参数、外貌、对御主的姿态
 
-将 lookup 结果中的版本特定信息（外貌、声线、人物关系、能力表现）填入 direction packet 的 `canonFacts` 字段。渲染器没有 lookup 权限，如果你不填，它就会脑补。
+将 lookup 结果中的版本特定信息（外貌、声线、人物关系、能力表现）填入 direction packet 的 `canonFacts` 字段。渲染器没有 lookup 权限；缺少这些信息时，它会自行推断并可能写错。
 
 如果 `lookup` 返回的本地数据不足（只有索引或边界），追加 `web_search`（`workflow: "none"`）获取版本特定的外貌/性格/关系。
 

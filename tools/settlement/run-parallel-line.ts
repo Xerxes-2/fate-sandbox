@@ -4,7 +4,7 @@
  * GM 只给 lineId + timeWindow + 可选偏好；engine 装配 hermetic director prompt 并
  * 【直接 fork 一个 detached `pi -p` 后台导演】——不经主 agent loop、不阻塞本回合。
  * 一次调用即起异步后台线；隔轮从 session 取裸候选 → harvest_backstage_candidate
- * 验收 → 审查 → record_offscreen_event / resolve_backstage_line 落地清账。
+ * 验收 → 审查 → record_offscreen_event 落地，或 resolve_backstage_line 关闭义务。
  */
 
 import type { FateToolDefinition } from "../runtime/tool-definition.ts";
@@ -39,7 +39,7 @@ export function runParallelLineTool(params: unknown, sessionManager: unknown): T
   const directorPrompt = buildBackstageDirectorPrompt(state, input);
   const runId = backstageRunId(input.lineId);
   const handle = spawnBackstageDirector(directorPrompt, runId);
-  // 持久化 pending-harvest 标记：忘了 harvest 会被催账，且 resolve_backstage_line 被拦住（不能丢弃已产出候选）。
+  // 持久化 pending-harvest 标记：未 harvest 时持续返回提醒，并阻止 resolve_backstage_line 丢弃已产出候选。
   return runDomainEventTool({
     sessionManager,
     execute: (draft) => {
@@ -60,7 +60,7 @@ export function runParallelLineTool(params: unknown, sessionManager: unknown): T
         "",
         `隔轮（约 10-20s 后）用 run_id=${h.runId} 调 harvest_backstage_candidate（engine 自动取回，无需手动读 session / inspect）→`,
         "审查 → record_offscreen_event（progress/escalation，落地即清义务）",
-        "或 resolve_backstage_line（no-change/blocked）。导演失败/未起不算清账。",
+        "或 resolve_backstage_line（no-change/blocked）。导演失败或未启动不算完成义务。",
       ].join("\n"),
   });
 }

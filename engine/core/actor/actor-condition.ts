@@ -16,7 +16,7 @@ export function updateActorCondition(
   event: ActorConditionEvent,
 ): ActorConditionEventResult {
   const result = applyActorConditionEvent(draft, event);
-  // 伤势/状态落地 = 裁决义务清账（FIFO 一次一条）
+  // 伤势或状态落地后，按 FIFO 完成一条裁决义务
   settleOldestObligation(draft, ["actor-condition"]);
   return result;
 }

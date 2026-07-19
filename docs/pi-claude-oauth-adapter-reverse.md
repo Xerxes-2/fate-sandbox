@@ -81,7 +81,7 @@ function buildBillingHeader(messages, entrypoint) {
 3. **注入 billing header**
    如果遍历完所有 blocks 后仍无 billing header，在最前面 `unshift` 一条。
 
-4. **(兜底) 确保至少有一个 prompt block**
+4. **(后备处理) 确保至少有一个 prompt block**
    `ensurePromptBlock()` — 如果所有 system blocks 都只是 billing header（极端情况），从 system prompt 提取剩余文本追加一条带 `cache_control` 的 block。
 
 ### 2.3 Pi Docs 的剥离-缓存-按需注入
@@ -222,7 +222,7 @@ function shouldApply(ctx) {
 
 ## 六、自我保护属性
 
-1. **可选 debug 日志** — `PI_CLAUDE_OAUTH_LOG_FILE` 开启，JSONL 格式，创建目录 `mkdir recursive`，写入失败 catch 静默吞掉
+1. **可选 debug 日志** — `PI_CLAUDE_OAUTH_LOG_FILE` 开启，JSONL 格式，创建目录 `mkdir recursive`，写入失败时 catch 并忽略错误
 2. **幂等注入** — `user-reminder` 模式检查 `startsWith("<system-reminder>")`
 3. **活跃状态保护** — `active` → `issue` 降级后只有 session 重启才能恢复
 4. **fallback 完整链** — 三层：system prompt 提取 → 环境变量文件 → 动态路径构造

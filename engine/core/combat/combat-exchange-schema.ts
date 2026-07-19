@@ -14,7 +14,7 @@ import { parseTypeBoxValue, trimStringsDeep } from "../utils/typebox-validation.
  * 枚举类型由此派生（combat-exchange.ts re-export 原名）。
  *
  * swing 保持 Optional 且无默认值：缺省时由工具层随机掷骰
- * （rollCombatSwing），引擎内部再兜底 neutral。
+ * （rollCombatSwing），引擎内部默认使用 neutral。
  */
 export const COMBAT_TACTICS = [
   "direct-attack",

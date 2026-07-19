@@ -94,7 +94,7 @@ function applyTurnEvent(draft: State, event: TurnCommitEvent): TurnCommitEventRe
 function collectWarnings(draft: State, input: TurnCommitInput): string[] {
   const warnings: string[] = [];
   warnings.push(...collectPacingWarnings(input));
-  // 幕后催账：时间推进越过 dueAt / 时钟填满时，engine 直接在返回值里提醒（backlog #3）
+  // 幕后待办：时间推进越过 dueAt / 时钟填满时，engine 直接在返回值里提醒（backlog #3）
   warnings.push(...collectBackstageDueNotices(draft));
   return warnings;
 }

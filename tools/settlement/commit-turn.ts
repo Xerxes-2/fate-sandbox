@@ -46,7 +46,7 @@ export function commitTurnTool(params: unknown, sessionManager: unknown): ToolRe
   return runDomainEventTool({
     sessionManager,
     execute: (draft) => {
-      // 延迟硬阻断：上一轮触发的后台推进义务未清账则拒绝本次 canonical turn。
+      // 延迟硬阻断：上一轮触发的后台推进义务未完成时拒绝本次 canonical turn。
       assertNoOpenBackstageObligation(draft);
       const result = commitTurn(draft, input);
       recordCanonicalTurnForBackstage(draft, {

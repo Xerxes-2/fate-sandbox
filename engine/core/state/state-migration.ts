@@ -326,7 +326,7 @@ function migrateGameStateV15ToV16(raw: Record<string, unknown>): Record<string, 
   return next;
 }
 
-// v17: backstage 世界推进账本（backlog #5 runtime 闭环）。
+// v17: backstage 世界推进账本（backlog #5 完整流程）。
 // 新增三个 secrets 字段：obligations 账本 / 审查记录 / 压力计数。
 function migrateGameStateV16ToV17(raw: Record<string, unknown>): Record<string, unknown> {
   const next = structuredClone(raw);

@@ -40,6 +40,6 @@ Fields marked `binding` must reach the rendered scene. Fields marked `free` are 
 
 ## Quality floor
 
-The packet is the renderer's only input. Missing settled changes disappear from the player's scene. Missing `npcStances` makes important NPCs inert. An `npcStances` entry whose `move` is vague, reactive, or environment-driven ("reacts to the danger", "walks carefully", "stays alert") also makes the NPC inert: write a concrete agenda-driven act the renderer can stage verbatim. A present important NPC who truly stays out of the action this turn goes in `npcOmissions`, not silently dropped; the tool rejects a packet that leaves one uncovered. Missing `canonFacts` makes the renderer guess canon.
+The packet is the renderer's only current-turn input. Missing settled changes disappear from the player's scene. Missing `npcStances` makes important NPCs inert. An `npcStances` entry whose `move` is vague, reactive, or environment-driven ("reacts to the danger", "walks carefully", "stays alert") also makes the NPC inert: write a concrete agenda-driven act the renderer can stage verbatim. A present important NPC who truly stays out of the action this turn goes in `npcOmissions`, not silently dropped; the tool rejects a packet that leaves one uncovered. Missing `canonFacts` makes the renderer guess canon.
 
 The tool defines a "present important NPC" as an on-scene non-protagonist actor who has an impression card, appears in a relationship signal, is an ally, or has a secret agenda. Coverage is enforced for exactly that set.

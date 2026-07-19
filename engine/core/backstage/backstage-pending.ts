@@ -1,5 +1,5 @@
 /**
- * Backstage pending-harvest ledger (engine-enforced — ADR 0003 dunning + ADR 0005 loop).
+ * Backstage pending-harvest ledger (engine-enforced pending reminders and ADR 0005 flow).
  *
  * run_parallel_line forks a director and records a pending-harvest marker here.
  * Until the GM harvests that run (harvest_backstage_candidate clears it) the engine
@@ -79,12 +79,12 @@ function formatUnharvestedPending(pending: readonly BackstagePendingHarvest[]): 
   ].join("\n");
 }
 
-/** Dunning line for canonical-commit returns; null when nothing is pending. */
+/** Pending reminder for canonical-commit returns; null when nothing is pending. */
 export function formatPendingHarvestReminder(draft: State): string | null {
   const pending = draft.secrets.backstagePendingHarvests;
   if (pending.length === 0) {
     return null;
   }
   const runs = pending.map((entry) => `${entry.runId}（line ${entry.lineId}）`).join("、");
-  return `⏳ 后台 director 已起、候选待 harvest：${runs}。隔轮用 run_id 调 harvest_backstage_candidate 取回审查后落地（record_offscreen_event）或清账（resolve_backstage_line）。`;
+  return `⏳ 后台 director 已启动，候选待 harvest：${runs}。下一轮用 run_id 调 harvest_backstage_candidate，取回并审查后使用 record_offscreen_event 落地，或使用 resolve_backstage_line 关闭义务。`;
 }

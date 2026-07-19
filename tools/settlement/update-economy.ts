@@ -46,7 +46,7 @@ export const updateEconomyToolDefinition: FateToolDefinition = {
   description:
     "更新当前 campaign 的资金状态；每笔资金事件须指定账户和 reason，资金增加还须注明可审计来源。\n\n" +
     "使用边界：消费、获得现金、增加/重命名资金账户、记录债务，或食宿/装备/服务/情报等交易。\n" +
-    "禁区：把同行者资金说成玩家随身现金、资金不足时免费兜底，或用 gain-money 设目标数值/凭空发财。",
+    "禁区：把同行者资金说成玩家随身现金、资金不足时免除费用/免费提供资源/无来源补足资金，或用 gain-money 设目标数值/凭空发财。",
   parameters: Type.Object({
     kind: Type.String({
       description: "允许: spend-money / gain-money / add-purse / rename-purse / add-debt",

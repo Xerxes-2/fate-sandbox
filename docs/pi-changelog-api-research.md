@@ -14,7 +14,7 @@
 
 2. **`InputEvent.streamingBehavior`（0.77.0）——【已证伪，见文末勘误】**
    - 是什么：扩展 input 事件可区分 idle prompt、mid-stream steer、queued follow-up。
-   - 原推荐（不成立）：用 `streamingBehavior` + 0.77.0 的「`agent_end` 队列 follow-up 在 idle 前 drain」修复（#5115）把 `sendProseWhenIdle` 的 25ms×400 轮询兜底收紧或简化。
+   - 原推荐（不成立）：用 `streamingBehavior` + 0.77.0 的「`agent_end` 队列 follow-up 在 idle 前 drain」修复（#5115）把 `sendProseWhenIdle` 的 25ms×400 轮询后备逻辑收紧或简化。
    - **勘误（2026-07-09 活体 spike + 源码验证）：轮询在 pi 0.80.3 上是结构性必需的，不可用 `deliverAs:"followUp"` 或任何现有 API 替代。详见文末「勘误：two-pass-render 轮询替代方案调查（证伪）」。**
 
 3. **`before_agent_start` systemPrompt 覆盖不再被工具变更冲掉（0.80.3 修复，#6162）**
@@ -101,7 +101,7 @@
 
 | 版本    | 变更                                                                                                              | 相关性                                                       |
 | ------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| 0.79.0  | compaction 摘要 system prompt 对非 coding agent 用中性措辞（#5401）                                               | **受益**（叙事游戏；但本项目已自管 summary，仅兜底路径受益） |
+| 0.79.0  | compaction 摘要 system prompt 对非 coding agent 用中性措辞（#5401）                                               | **受益**（叙事游戏；但本项目已自管 summary，仅后备路径受益） |
 | 0.79.8  | compact 结果与 compaction 事件包含压缩后 token 估算（#5877）                                                      | **可用**（compaction-policy 的告警/调试落盘）                |
 | 0.79.8  | 无可压缩消息时拒绝 compaction 而非产出空摘要（#4811）；overflow 触发的自动压缩成功后不再重试已完成的回复（#5720） | **受益**                                                     |
 | 0.79.10 | reason/willRetry（见上）                                                                                          | **可用**                                                     |

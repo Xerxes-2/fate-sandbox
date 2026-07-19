@@ -70,7 +70,7 @@ export const BACKSTAGE_PENDING_HARVEST_SCHEMA = Type.Object({
   spawnedAt: ISO_INSTANT_SCHEMA,
 });
 
-/** 后台义务的清账结果：landed=落地候选；no-change/blocked=经审查的显式无推进 */
+/** 后台义务的处理结果：landed=落地候选；no-change/blocked=经审查的显式无推进 */
 export const BACKSTAGE_RESOLUTION_OUTCOMES = ["landed", "no-change", "blocked"] as const;
 
 export type BackstageResolutionOutcome = (typeof BACKSTAGE_RESOLUTION_OUTCOMES)[number];

@@ -2,7 +2,7 @@
  * Offscreen pressure 分类（backlog #1）。
  *
  * pressureType 现在是 offscreen event 的 canonical 字段，由写入方显式提供。
- * 这个纯函数只在两处兜底：迁移旧档时回填缺失的 pressureType，以及需要
+ * 这个纯函数只用于两种情况：迁移旧档时回填缺失的 pressureType，以及需要
  * 从自由文本猜测时的最后手段。运行期的 cooldown/多样性纪律一律读 canonical
  * 字段，不再对 summary 做正则推断。
  */

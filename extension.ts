@@ -48,9 +48,9 @@ export default function extension(pi: ExtensionAPI): void {
         }
         return true;
       })
-      // 历史里已落盘的结算器漏稿（message_end 上线前的回合）在此就地中和：只整形
-      // 喂给结算模型的 per-call 视图，不改存档。新存档由 message_end 源头收口，
-      // 老存档靠这层兜底，二者互补。
+      // 在此过滤 message_end 上线前已写入历史的结算器误写正文：只整形
+      // 传给结算模型的 per-call 视图，不改存档。新存档由 message_end 源头收口，
+      // 这层负责处理老存档，二者互补。
       .map((message) => stripLeakedSettlementProse(message) ?? message);
     const injected = injectGmPromptMessages<ContextEvent["messages"][number]>(
       settlementMessages,

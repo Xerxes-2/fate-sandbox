@@ -73,7 +73,7 @@ function formatCombatExchangeResult(
     ...(recordedObligations > 0
       ? [
           "",
-          `⚠ 已登记 ${recordedObligations} 条必须落地的义务；本轮 canonical commit（commit_turn）前必须用对应状态事件清账，否则提交会被拒绝。`,
+          `⚠ 已登记 ${recordedObligations} 条必须落地的义务；本轮 canonical commit（commit_turn）前必须用对应状态事件完成义务，否则提交会被拒绝。`,
         ]
       : []),
   ].join("\n");
@@ -109,7 +109,7 @@ function uniqueLines(lines: readonly string[]): string[] {
 export const resolveCombatExchangeToolDefinition: FateToolDefinition = {
   name: "resolve_combat_exchange",
   description:
-    "裁决当前战斗交锋窗口；比较 Fate 参数/尺度、资源投入、已知优势/劣势和伤势压力，返回结果 band 与必须落地的状态约束。必须落地项会登记为义务账本，提交 turn 前必须清账。\n\n" +
+    "裁决当前战斗交锋窗口；比较 Fate 参数/尺度、资源投入、已知优势/劣势和伤势压力，返回结果 band 与必须落地的状态约束。必须落地项会登记为义务账本，提交 turn 前必须完成。\n\n" +
     "【使用边界】\n" +
     "- 战斗、撤退、保护、破除拘束、试探能力、宝具解放等高风险交锋\n" +
     "- 双方存在参数、伤势、地形、情报或资源投入差异，不能只靠口头裁决\n" +

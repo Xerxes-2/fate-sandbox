@@ -23,9 +23,9 @@ import { upsertActorTool } from "../tools/settlement/upsert-actor.ts";
  * 引擎集成走查（回流自 lonestar engine-integration 模式；确定性，不调真 LLM）——
  * 注意：这不是 playtest。
  *
- * 本文件只验证「引擎闭环」：工具层（唯一写入通道）接收合法输入后，跨领域账本
+ * 本文件只验证引擎完整流程：工具层（唯一写入通道）接收合法输入后，跨领域账本
  * 是否协同落账——开局 → 场景/beat → 混合领域 commit → 记忆三层 → 战斗 →
- * backstage 义务闭环 → 悬念/时钟/NPC 主动性 → 秘密防漏 → beat 收口。
+ * backstage 义务处理 → 悬念/时钟/NPC 主动性 → 秘密防漏 → beat 收口。
  * 模块级单测各自验证单域行为；本走查抓的是跨域回归（migration/invariant/
  * obligation 联动炸了而单域测试全绿的那类）。
  *
@@ -243,7 +243,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
   );
   assert.equal(getState().public.obligations.length, 0);
 
-  // ---- backstage 义务闭环：大时间推进 → 义务 → 阻塞 → offscreen 清账 ----
+  // ---- backstage 义务流程：大时间推进 → 义务 → 阻塞 → offscreen 处理 ----
   commitTurnTool(
     {
       summary: "守夜数小时。",
@@ -389,7 +389,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
     session,
   );
   assert.equal(getState().public.scene.storyWindow?.title, "返回据点整备");
-  // beat-complete 本身是 backstage 触发器：收口后应新增一条义务，再走一遍清账闭环。
+  // beat-complete 本身是 backstage 触发器：收口后应新增一条义务，再完成一次处理流程。
   assert.equal(getState().secrets.backstageObligations.length, 1);
   const later = getState().public.clock.currentAt;
   recordOffscreenEventTool(

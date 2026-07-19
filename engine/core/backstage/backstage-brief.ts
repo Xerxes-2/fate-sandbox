@@ -24,7 +24,7 @@ export function buildBackstageGmBrief(state: State): string {
 
   if (obligations.length > 0) {
     lines.push(
-      `未清后台义务 ${obligations.length} 条（canonical commit 前必须清账，否则硬阻断本轮提交）：`,
+      `未完成后台义务 ${obligations.length} 条（canonical commit 前必须完成，否则硬阻断本轮提交）：`,
     );
     for (const obligation of obligations) {
       lines.push(`- ${obligation.summary}`);

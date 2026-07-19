@@ -1,5 +1,5 @@
 /**
- * Backstage world-motion obligation ledger（backlog #5 runtime 闭环）。
+ * Backstage world-motion obligation ledger（backlog #5 完整流程）。
  *
  * 问题：parallel-line 触发条件命中很多次，实际调用 0 次——后台世界运动只靠
  * prompt/audit 自觉，无人看守。
@@ -7,9 +7,9 @@
  * 方案（纯账本 + 延迟硬阻断，全在 engine/tool 层，不依赖子代理同步调用）：
  * - canonical turn 收尾时按可检测核心集评估触发器，命中即生成一条 backstage
  *   obligation（独立于 public obligations，落在 secrets）。
- * - 下一 canonical turn 开始前若仍有未清账的 obligation，硬拒绝提交。
- * - 清账只能由显式动作完成：record_offscreen_event 落地候选（outcome=landed），
- *   或 resolve_backstage_line 记录经审查的 no-change / blocked。子代理失败不清账。
+ * - 下一 canonical turn 开始前若仍有未完成的 obligation，硬拒绝提交。
+ * - obligation 只能由显式动作完成：record_offscreen_event 落地候选（outcome=landed），
+ *   或 resolve_backstage_line 记录经审查的 no-change / blocked。子代理失败不算完成。
  */
 
 import type {
@@ -38,7 +38,7 @@ export interface CanonicalTurnBackstageInput {
 
 /**
  * canonical commit 开始前的硬阻断：账未清则拒绝整次提交。
- * 清账路径写进错误文案，引导 GM 先推进后台世界线。
+ * 处理路径写进错误文案，引导 GM 先推进后台世界线。
  */
 export function assertNoOpenBackstageObligation(draft: State): void {
   const open = draft.secrets.backstageObligations;
@@ -49,7 +49,7 @@ export function assertNoOpenBackstageObligation(draft: State): void {
 
 /**
  * canonical turn 收尾记账：更新 no-cost 连击计数，命中触发器则生成一条义务。
- * 已有未清账义务时不再叠加（同一时刻至多一条待办）。
+ * 已有未完成义务时不再叠加（同一时刻至多一条待办）。
  */
 export function recordCanonicalTurnForBackstage(
   draft: State,
@@ -74,7 +74,7 @@ export function recordCanonicalTurnForBackstage(
   if (trigger === null) {
     return null;
   }
-  // 已有未清账义务：不叠加，等它先被清掉。
+  // 已有未完成义务：不叠加，等待它处理完成。
   if (draft.secrets.backstageObligations.length > 0) {
     return null;
   }
@@ -85,7 +85,7 @@ export function recordCanonicalTurnForBackstage(
     createdAt: draft.public.clock.currentAt,
   };
   draft.secrets.backstageObligations.push(obligation);
-  // 生成后立即清零连击，避免下一轮还没清账就再次命中 no-cost-streak。
+  // 生成后立即清零连击，避免义务尚未处理时再次命中 no-cost-streak。
   pressure.consecutiveNoCostTurns = 0;
   return obligation;
 }
@@ -97,8 +97,8 @@ export interface BackstageResolutionInput {
 }
 
 /**
- * 清掉最旧的一条未清账义务（FIFO），写入审查记录，并重置 no-cost 连击。
- * 没有未清账义务时返回 undefined（调用方决定是否报错）。
+ * 完成最旧的一条未处理义务（FIFO），写入审查记录，并重置 no-cost 连击。
+ * 没有未处理义务时返回 undefined（调用方决定是否报错）。
  */
 export function settleOldestBackstageObligation(
   draft: State,
@@ -143,11 +143,11 @@ function formatTriggerSummary(
 
 function formatOpenBackstageObligations(obligations: readonly BackstageObligation[]): string {
   return [
-    "存在未清账的后台世界推进义务，拒绝开始新的 canonical turn。先推进后台世界线：",
+    "存在未完成的后台世界推进义务，拒绝开始新的 canonical turn。先推进后台世界线：",
     ...obligations.map((entry) => `- [${entry.trigger}] ${entry.summary}`),
-    "清账方式（任选其一）：",
+    "处理方式（任选其一）：",
     "1. run_parallel_line（引擎直接 fork 后台导演，不用手动 spawn）→ 隔轮用返回的 run_id 调 harvest_backstage_candidate（引擎自动取回+验收）→ record_offscreen_event 落地；",
     "2. 经审查确无可推进时，用 resolve_backstage_line 记录 no-change / blocked（窄结构化理由）。",
-    "导演失败/未调用不算清账。",
+    "导演失败或未调用不算完成义务。",
   ].join("\n");
 }

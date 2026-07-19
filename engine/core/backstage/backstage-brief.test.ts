@@ -29,7 +29,7 @@ void test("open obligations are surfaced with the hard-block warning", () => {
     createdAt: state.public.clock.currentAt,
   });
   const brief = buildBackstageGmBrief(state);
-  assert.match(brief, /未清后台义务 1 条/);
+  assert.match(brief, /未完成后台义务 1 条/);
   assert.match(brief, /硬阻断/);
 });
 

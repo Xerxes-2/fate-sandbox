@@ -97,7 +97,7 @@ export function validateRenderDirectionPacket(
       [
         `重要在场 NPC 未被覆盖：${uncovered.join("、")}。`,
         "每个重要在场 NPC 必须出现在 npcStances（有主动 beat）或 npcOmissions（被明确静置，附 reasonCode + playerSafeNote），",
-        "否则渲染器会把他们脑补成被动布景，破坏物理连续性。",
+        "否则渲染器会把他们无依据地补成被动布景，破坏物理连续性。",
       ].join("\n"),
     );
   }

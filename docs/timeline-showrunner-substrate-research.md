@@ -67,8 +67,8 @@ pi-subagents（v0.34.0，`.pi/npm/node_modules/pi-subagents/package.json:3`）sr
 
 任务书列的三条差异，核实结果：
 
-- **(a) 防火墙理由不同 — 部分成立**。backstage 子进程按设计吃全量 `privateFacts`（ADR 0005 第 3 段"the firewall is not 'the subagent has no secrets'"）；showrunner 的输入是 secrets 过滤后的投影，但**并非纯玩家可见**——含 offscreen 事件摘要与 actor agenda/knowledgeLens（`state-file-projection.ts:98,103-105`），属于 hidden-canonical 的摘要层。所以 showrunner 的隔离诉求弱于 backstage（无 secrets-at-rest 全量泄漏面），但其 transcript 也不是可以随便进玩家可读渠道的东西。
-- **(b) 同步 vs 异步 — 成立，但强度低于表述**。backstage 是 detached+unref、隔轮 harvest（`backstage-spawn.ts:59-66`；`tools/settlement/run-parallel-line.ts:38-47`）；showrunner 是前台阻塞工具调用、当回合取回（`execution.ts:191,290`）。但 verdict 的矫正指令本身面向"next turn"（`.pi/agents/timeline-showrunner.md` Audit discipline），story-driver 要求在"回合收尾前"跑检查（`story-driver.md:30`）——即"同回合必须消费"是当前实现形态，不是领域硬需求；异步+隔轮催账（backstage obligation 模式，`prompts/settlement/tool-policy.md:57-63`）在领域上也自洽，只是矫正延迟一拍。
+- **(a) 防火墙理由不同 — 部分成立**。backstage 子进程按设计接收完整 `privateFacts`（ADR 0005 第 3 段"the firewall is not 'the subagent has no secrets'"）；showrunner 的输入是 secrets 过滤后的投影，但**并非纯玩家可见**——含 offscreen 事件摘要与 actor agenda/knowledgeLens（`state-file-projection.ts:98,103-105`），属于 hidden-canonical 的摘要层。所以 showrunner 的隔离诉求弱于 backstage（无 secrets-at-rest 全量泄漏面），但其 transcript 也不是可以随便进玩家可读渠道的东西。
+- **(b) 同步 vs 异步 — 成立，但强度低于表述**。backstage 是 detached+unref、隔轮 harvest（`backstage-spawn.ts:59-66`；`tools/settlement/run-parallel-line.ts:38-47`）；showrunner 是前台阻塞工具调用、当回合取回（`execution.ts:191,290`）。但 verdict 的矫正指令本身面向"next turn"（`.pi/agents/timeline-showrunner.md` Audit discipline），story-driver 要求在"回合收尾前"跑检查（`story-driver.md:30`）——即"同回合必须消费"是当前实现形态，不是领域硬需求；异步执行并在下一轮返回待办提醒（backstage obligation 模式，`prompts/settlement/tool-policy.md:57-63`）在领域上也自洽，只是矫正延迟一拍。
 - **(c) `--no-tools` vs `lookup` — 成立**。backstage 子进程零工具（`backstage-spawn.ts:38`）；showrunner 需要 `lookup`（`.pi/agents/timeline-showrunner.md:4`，persona 明示 lookup 是仅有的三个信息源之一，`:54`）。这意味着 showrunner 的 spawn seam 不能照抄 `--no-tools`，要 `-e timeline-ext --no-builtin-tools`。
 
 另有一条重要背景：`context.md:88` 记录过一次 pi API 调查——**领域工具的 `execute` 拿不到 agent-spawn 官方 API，`subagent` 能力本身是模型调用的工具**。这只封死了"引擎经 pi-subagents 同步起子代理"这条路；引擎自己 `child_process.spawn("pi",...)` 不受此限（backstage 已在 `run_parallel_line` 的 execute 里 spawn，`tools/settlement/run-parallel-line.ts:41`）；同步版只是不 detach、await exit 而已。
@@ -85,7 +85,7 @@ pi-subagents（v0.34.0，`.pi/npm/node_modules/pi-subagents/package.json:3`）sr
 | systemPromptMode replace                         | ✅                     | persona 落 tmp 文件 → `--system-prompt`（`pi-args.ts:160-166`）                           | `--system-prompt <file>` 或 prompt 全文作为 `-p` 输入                                        |
 | 剥项目上下文/skills                              | ✅                     | prompt-runtime extension + `--no-skills`（`subagent-prompt-runtime.ts:11,51`）            | `--no-context-files --no-skills`                                                             |
 | 同步阻塞 + 结果回填模型回合                      | ✅                     | 前台执行器（`execution.ts:191,290,565`）                                                  | spawn 不 detach + await exit + 读 session jsonl（`backstage-session-read.ts:25` 已有解析器） |
-| 超时/挂死子进程处理                              | ✅（隐性受益）         | `execution.ts:91-99,354-381`                                                              | **需自己写**（~30 行：timeout + kill）                                                       |
+| 超时或无响应子进程处理                           | ✅（隐性受益）         | `execution.ts:91-99,354-381`                                                              | **需自己写**（~30 行：timeout + kill）                                                       |
 | 输出 JSON schema 校验                            | ❌（当前没有任何校验） | 有 `outputSchema` 能力但未启用                                                            | 引擎 return-trip gate（同 `parallel-line-output-schema.ts` 模式）——**迁移反而补上这道防线**  |
 | 模型覆盖/fallback（agentOverrides）              | ❌（未配置）           | settings `subagents.*`                                                                    | `--model`（如需）                                                                            |
 | chains/parallel/async/TUI/artifacts/intercom/RPC | ❌                     | 框架主体                                                                                  | 不需要                                                                                       |
@@ -97,7 +97,7 @@ pi-subagents（v0.34.0，`.pi/npm/node_modules/pi-subagents/package.json:3`）sr
 
 ### A. 维持现状（pi-subagents）
 
-- **成本**：0 新代码。但持续负债：`task-injection.ts`（113 行 + 84 行测试）本质是在**追踪 pi-subagents 的工具入参 schema**——上游改 SINGLE/PARALLEL/CHAIN 形态，注入静默失效（注入失败被 catch 吞掉、不阻断调用，`extension.ts:87-90`，此时子代理按"缺上下文"契约降级，`.pi/agents/timeline-showrunner.md:54`）。这是一条跨版本的隐式契约。
+- **成本**：0 新代码。但持续负债：`task-injection.ts`（113 行 + 84 行测试）本质是在**追踪 pi-subagents 的工具入参 schema**——上游改 SINGLE/PARALLEL/CHAIN 形态，注入静默失效（注入失败被 catch 忽略，不阻断调用，`extension.ts:87-90`，此时子代理按"缺上下文"契约降级，`.pi/agents/timeline-showrunner.md:54`）。这是一条跨版本的隐式契约。
 - **不变量**：read-only 靠 `tools: lookup` 白名单结构性成立（child 连 `read` 都没有——`pi-args.ts:121-123` 只在有 skills 时强加 `read`，此处 `inheritSkills: false`）；**executable-JSON-only 只有 prompt 约束，无引擎 gate**；独立性靠 `systemPromptMode: replace` + fresh context 成立。
 - **"移除是否真是收益"**：pi-subagents 同时是本仓库**开发期**编排工具（本次调研即经它运行，见 `.pi-subagents/artifacts/`），从 repo 移除不现实。收益应准确表述为：**游戏运行时路径与它解耦**——`.pi/settings.json:2` 的 packages 是发布给玩家的安装清单，若运行时不再需要，玩家安装面可少一个 38K 行外部依赖；且 `tool_call` hook 的入参形态耦合消失。
 - **LoC**：维持 113+84 行注入层 + 141 行 agent md + hook 块。
@@ -112,10 +112,10 @@ pi-subagents（v0.34.0，`.pi/npm/node_modules/pi-subagents/package.json:3`）sr
 4. 读 session jsonl 的最后 assistant 文本（复用 `extractLastAssistantText`，`backstage-session-read.ts:25`），过 TypeBox `TimelineShowrunnerOutput` schema 校验（新文件，模式同 `parallel-line-output-schema.ts`，73 行先例），校验通过才把 verdict 作为工具结果返回 GM。**这给 executable-JSON-only 不变量补上今天缺失的引擎 gate。**
 
 - **收益**：删除 `task-injection.ts` + 测试 + `extension.ts:76-92` hook 块；运行时零 pi-subagents 依赖；输出契约从 prompt 防线升级为 schema 防线（符合宪章"Prompt 不是防线"）；child flags 显式可审计；session 落点自控（放 gitignored 目录，容纳投影里的 hidden-canonical 摘要）。
-- **成本**：自己扛 timeout/挂死/spawn 失败诊断（backstage 用 per-run spawn log 解决，`backstage-spawn.ts:55-60`，可照搬）；工具 execute 阻塞 1-3 分钟（与今天前台 subagent 调用的体验等价，不是新增代价）；persona 从"玩家可直接编辑的 md"变成引擎源码（或保留 md、引擎读文件——发布打包需确认包含）；放弃 pi-subagents 的 UI 进度流与 agentOverrides 模型配置（当前均未使用）。
+- **成本**：自行处理 timeout、子进程无响应和 spawn 失败诊断（backstage 用 per-run spawn log 解决，`backstage-spawn.ts:55-60`，可照搬）；工具 execute 阻塞 1-3 分钟（与今天前台 subagent 调用的体验等价，不是新增代价）；persona 从"玩家可直接编辑的 md"变成引擎源码（或保留 md、引擎读文件——发布打包需确认包含）；放弃 pi-subagents 的 UI 进度流与 agentOverrides 模型配置（当前均未使用）。
 - **LoC 估算**：+persona 收编 ~140；+spawn/wait/read seam ~120（backstage-spawn 76 行 + wait/timeout ~40）；+输出 schema ~80；+工具注册 ~60；+测试（fake-spawn seam 先例已有，`backstage-spawn.ts:70-73`）~120。−task-injection 113 −测试 84 −hook 块 ~15 −agent md 141。**净增约 +350 行引擎代码，换掉运行时 38K 行外部依赖。**
 - **变体 B2（引擎决定 WHEN）**：仿 backstage obligation（`context.md:87` / `tool-policy.md:57-63`）让引擎按漂移信号强制审计。这改变结算流、且"漂移"不像"≥30 分钟推进"那样可机械判定——**超出本题范围，不建议与迁移捆绑**；B1 落地后它只是这条缝上的增量。
-- **变体 B-async**：完全照抄 backstage（detached + 隔轮 harvest + pending 催账）。领域上可行（verdict 本就 next-turn 导向，见 1.5(b)），且复用面最大；代价是矫正延迟一拍、GM 需两步操作。若 B1 的阻塞时长实测不可接受，这是现成退路。
+- **变体 B-async**：完全照抄 backstage（detached + 隔轮 harvest + pending 待办提醒）。领域上可行（verdict 本就 next-turn 导向，见 1.5(b)），且复用面最大；代价是矫正延迟一拍、GM 需两步操作。若 B1 的阻塞时长实测不可接受，这是现成退路。
 
 ### C. 内联审计（rubric 并入结算 prompt）
 
@@ -133,7 +133,7 @@ rubric 的机械部分已经或可以下沉为引擎不变量，源码证据：
 - "连续两轮无代价"已有引擎判定：backstage obligation 的 no-cost 触发器（`context.md:87`）。审计步骤 10 可直接读账。
 - 时间/UTC 检查（步骤 12）是纯格式校验，engine 已在 offscreen 落地处强制（`context.md:80`）。
 
-剩给 LLM 的是真正需要判断力的部分：题材契约、玩家优先级、NPC 主动性质感、压力形态。D 与 B 正交：先做 B（换底座），D 作为后续把审计输入从"读叙事"逐步换成"读账本"——backlog 已有此方向（`docs/system-potential-backlog.md:60`"审计从读对话变成对账"）。
+剩给 LLM 的是真正需要判断力的部分：题材契约、玩家优先级、NPC 主动性质感、压力形态。D 与 B 正交：先做 B（迁移执行方式），D 作为后续把审计输入从"读叙事"逐步换成"读账本"——backlog 已有此方向（`docs/system-potential-backlog.md:60`"审计从读对话变成对账"）。
 
 ---
 

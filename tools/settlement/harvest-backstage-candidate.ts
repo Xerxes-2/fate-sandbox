@@ -75,7 +75,7 @@ export const harvestBackstageCandidateToolDefinition: FateToolDefinition = {
     "- run_parallel_line 异步起 director 后，隔轮（约 10-20s）用其返回的 run_id 调本工具；engine 自动定位 session、抽取候选、做结构校验\n" +
     "- run 尚未产出候选 / run_id 不存在会报错：稍后重试或核对 run_id\n" +
     "- 验收失败（非法 JSON / 缺字段）会报错：重开 director 或修正后重试\n" +
-    "流程：run_parallel_line（异步）→ 隔轮 harvest_backstage_candidate(run_id) 验收 → 审查 → record_offscreen_event / resolve_backstage_line 落地清账。\n\n" +
+    "流程：run_parallel_line（异步）→ 下一轮 harvest_backstage_candidate(run_id) 验收 → 审查 → record_offscreen_event 落地，或 resolve_backstage_line 关闭义务。\n\n" +
     "禁区：\n" +
     "- 跳过验收直接落地未经结构校验的候选\n" +
     "- 把 privateSummary 原样展示给玩家\n" +

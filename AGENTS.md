@@ -26,7 +26,7 @@
 
 本文件是工程纪律的单一权威源。违反宪章的代码不叫「能跑就行」，叫「不合格」。
 
-### 硬切优先，schema 迁移兜底
+### 硬切优先，schema migration 负责持久化兼容
 
 项目没有用户兼容性负担。旧概念一旦被判定为错误，就必须从当前契约中消失：
 
@@ -156,7 +156,7 @@ type SceneResult =
 - Scene event 不承担时间推进；时间不是 `scene.kind` 的一个分支。
 - `turnLog` 是审计账本，必须能看出每轮 `startedAt -> endedAt`。
 
-如果 JSONL 显示 accepted tool call 大量没有推进时间，说明当前工具契约仍有逃生门；删契约，不要写提示。
+如果 JSONL 显示 accepted tool call 大量没有推进时间，说明当前工具契约仍有可绕过时间约束的路径；删契约，不要写提示。
 
 ### Public / secrets / player knowledge 分层
 
@@ -204,7 +204,7 @@ type SceneResult =
 
 当前两条引擎直起工作进程：
 
-- **后台平行线（异步 hermetic 导演）**：persona/契约住在 engine（`engine/core/backstage/backstage-director-persona.ts`）；`run_parallel_line` 用 `buildBackstageDirectorPrompt` 拼出 hermetic director prompt，并【直接 fork 一个 detached `pi -p` 后台导演】（`engine/core/backstage/backstage-spawn.ts`，不经主 agent loop、不阻塞），只输出结构化 offscreen 候选，不改 state、不面向玩家写正文。隔轮用返回的 run_id 调 `harvest_backstage_candidate`（引擎按 run_id 定位 director session、取回+验收，见 `engine/core/backstage/backstage-session-read.ts`）后落地。忘了 harvest 不会静默丢：`run_parallel_line` 启动后立即记录 pending-harvest（`engine/core/backstage/backstage-pending.ts`），commit 逐轮催账，且 `resolve_backstage_line` 在有未 harvest run 时拒绝清账（防 no-change 丢弃已产出候选）。
+- **后台平行线（异步 hermetic 导演）**：persona/契约住在 engine（`engine/core/backstage/backstage-director-persona.ts`）；`run_parallel_line` 用 `buildBackstageDirectorPrompt` 拼出 hermetic director prompt，并【直接 fork 一个 detached `pi -p` 后台导演】（`engine/core/backstage/backstage-spawn.ts`，不经主 agent loop、不阻塞），只输出结构化 offscreen 候选，不改 state、不面向玩家写正文。隔轮用返回的 run_id 调 `harvest_backstage_candidate`（引擎按 run_id 定位 director session、取回+验收，见 `engine/core/backstage/backstage-session-read.ts`）后落地。忘了 harvest 不会静默丢：`run_parallel_line` 启动后立即记录 pending-harvest（`engine/core/backstage/backstage-pending.ts`），commit 逐轮返回待办提醒，且 `resolve_backstage_line` 在有未 harvest run 时拒绝关闭义务（防 no-change 丢弃已产出候选）。
 - **showrunner 审计（同步 hermetic 审计员，ADR 0007）**：世界线/题材审计，检查 drift、hook 滥用、NPC autonomy、world motion、beat closure。persona 住在 engine（`engine/core/showrunner/showrunner-persona.ts`）；`run_showrunner_audit` 拼 persona + typed 输入 + Showrunner Projection（`showrunner-context-block.ts`，引擎内嵌，无任何侧通道/入参改写），【阻塞 fork 一个 `pi -p` 审计子进程】（`showrunner-spawn.ts`）等它跑完，verdict 过 `TimelineShowrunnerOutput` schema gate 才返回 GM。失败（启动/超时/无输出/结构非法）返回结构化失败，零引擎重试，绝不静默当通过。
 
 硬规则：
@@ -489,7 +489,7 @@ pnpm typecheck && pnpm lint && pnpm format:check && pnpm test
 
 - **改 GM prompt** → 保持模块分工：`settlement/system.md` 与 `render/system.md` 只放身份与最高契约；世界边界在 `world-context.md`；硬规则在 `hard-rules.md`；工具路由在 `tool-policy.md`；剧情推进纪律在 `story-driver.md`；渲染在 `render/protocol.md`；输入解释在 `input-guide.md`；输出格式在 `output-contract.md`。不要把所有规则塞进 system 层。
 - **改 `/skill:start-game`** → 它只处理新游戏/重新开始/创建角色。必须保持流程机、public/secrets/player knowledge 分层、protagonist 从者真名防泄露、新手模式。
-- **新增工具** → 在 `tools/registry.ts` 注册；description 写成紧凑的「一行用途 + 使用边界 bullet + 禁区 bullet」，避免「必须调用场景/严禁行为」长清单这种 reasoning-bait。工具应是领域事件，不是状态栏 setter。不要在当前工具契约里提旧字段、旧 kind 或旧入口。
+- **新增工具** → 在 `tools/registry.ts` 注册；description 写成紧凑的「一行用途 + 使用边界 bullet + 禁区 bullet」，避免「必须调用场景/严禁行为」长清单诱导模型过度推理。工具应是领域事件，不是状态栏 setter。不要在当前工具契约里提旧字段、旧 kind 或旧入口。
 - **模型常犯错** → 先写回归测试或 JSONL 统计复现，再加工具拒绝/领域 invariant/schema 约束/迁移。不要只补 prompt。
 - **改 state 结构** → bump `schemaVersion`，同步 initial state + schema + protected paths 白名单，新增逐版本 migration 和 migration 测试。只允许经 migration 后访问新字段，不做运行时 fallback。
 - **查 state 的代码** → 必须处理 `noUncheckedIndexedAccess` 带来的 `| undefined`——每个索引访问都有判空路径。

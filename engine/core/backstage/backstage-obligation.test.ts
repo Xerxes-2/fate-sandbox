@@ -85,7 +85,7 @@ void test("assertNoOpenBackstageObligation throws when one is open", () => {
     hasCost: true,
     beatBoundary: false,
   });
-  assert.throws(() => assertNoOpenBackstageObligation(draft), /未清账的后台世界推进义务/);
+  assert.throws(() => assertNoOpenBackstageObligation(draft), /未完成的后台世界推进义务/);
 });
 
 void test("settleOldestBackstageObligation clears and logs a review entry", () => {

@@ -4,7 +4,7 @@
  * 裁决类工具（如 resolve_combat_exchange）只判定不改状态，伤势/威胁等
  * 「必须落地」项以前靠 GM 自觉跟进——这是无人看守的缝隙。
  * 现在裁决产生的 mandatory landing 记入账本，对应领域事件成功执行时
- * 自动清账（FIFO，一次事件清一条），canonical commit（commit_turn /
+ * 自动完成义务（FIFO，一次事件完成一条），canonical commit（commit_turn /
  * commit_turn）在收尾时对账：账未清则拒绝提交。
  */
 
@@ -31,7 +31,7 @@ export function recordObligation(draft: State, input: RecordObligationInput): Tu
 }
 
 /**
- * 清账：领域事件成功执行后调用。FIFO，一次只清一条同类义务——
+ * 完成义务：领域事件成功执行后调用。FIFO，一次只处理一条同类义务，
  * 一次落地动作不应抵销多条欠账。
  */
 export function settleOldestObligation(

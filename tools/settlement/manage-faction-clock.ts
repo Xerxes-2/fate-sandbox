@@ -153,12 +153,12 @@ const EXTEND_DUE_VALIDATOR = Compile(EXTEND_DUE_SCHEMA);
 export const manageFactionClockToolDefinition: FateToolDefinition = {
   name: "manage_faction_clock",
   description:
-    "管理幕后阵营进度钟与到期义务。时钟与到期事件对玩家不可见；到期或填满时 canonical commit 会催账。\n\n" +
+    "管理幕后阵营进度钟与到期义务。时钟与到期事件对玩家不可见；到期或填满时 canonical commit 会列出待处理项。\n\n" +
     "【使用边界】\n" +
     "- 幕后势力开始持续行动线：upsert-clock\n" +
     "- 幕后势力有实质进展：advance-clock\n" +
     "- 未来某时必然发生的事：schedule-event\n" +
-    "- commit 返回催账时：resolve-due 或 extend-due\n" +
+    "- commit 返回到期提醒时：resolve-due 或 extend-due\n" +
     "- 时钟填满后：先兑现格局变化，再 reset-clock 或 retire-clock\n\n" +
     "禁区：\n" +
     "- 直接把时钟内容或到期事件写给玩家\n" +

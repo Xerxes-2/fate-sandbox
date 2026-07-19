@@ -160,13 +160,13 @@ export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   offscreenEventLog: Type.Array(OFFSCREEN_EVENT_SCHEMA),
   /** BITD 式阵营进度钟：世界不为玩家暂停的机械载体 */
   factionClocks: Type.Array(FACTION_CLOCK_SCHEMA),
-  /** 到期义务：越过 dueAt 后 canonical commit 会在返回值里催账 */
+  /** 到期义务：越过 dueAt 后 canonical commit 会在返回值里列出待处理项 */
   scheduledEvents: Type.Array(SCHEDULED_EVENT_SCHEMA),
   /** 玩家未确认的关系信号与误判，只给 GM/private resolve/subagent 使用 */
   relationshipSignals: Type.Array(RELATIONSHIP_SIGNAL_SCHEMA),
   /**
-   * 后台世界推进义务账本（backlog #5 runtime 闭环）：触发器命中时生成，
-   * 下一 canonical turn 前必须清账（延迟硬阻断）。与 public obligations 独立。
+   * 后台世界推进义务账本（backlog #5 完整流程）：触发器命中时生成，
+   * 下一 canonical turn 前必须处理完成（延迟硬阻断）。与 public obligations 独立。
    */
   backstageObligations: Type.Array(BACKSTAGE_OBLIGATION_SCHEMA),
   /** 后台义务的审查记录：candidate 落地 / no-change / blocked 都在此留痕，不污染 public */
@@ -175,8 +175,8 @@ export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   backstagePressure: BACKSTAGE_PRESSURE_STATE_SCHEMA,
   /**
    * 待 harvest 的后台 director run（run_parallel_line 启动后立即记录，harvest 后清除）。
-   * 引擎据此在 canonical commit 催账，并让 resolve_backstage_line 在有未 harvest run 时
-   * 拒绝清账——防止已产出的候选被一句 no-change 静默丢弃。
+   * 引擎据此在 canonical commit 中返回提醒，并让 resolve_backstage_line 在有未 harvest run 时
+   * 拒绝关闭义务，防止已产出的候选被一句 no-change 静默丢弃。
    */
   backstagePendingHarvests: Type.Array(BACKSTAGE_PENDING_HARVEST_SCHEMA),
 });

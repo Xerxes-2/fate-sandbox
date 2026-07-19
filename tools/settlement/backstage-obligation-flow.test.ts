@@ -38,7 +38,7 @@ void test("a >=30min commit_turn raises a backstage obligation and blocks the ne
   assert.equal(getState().secrets.backstageObligations[0]?.trigger, "time-advance");
   assert.throws(
     () => commitTurnTool({ summary: "继续。", time: MIN_TIME, events: [] }, noopSessionManager()),
-    /未清账的后台世界推进义务/,
+    /未完成的后台世界推进义务/,
   );
 });
 
@@ -78,7 +78,7 @@ void test("resolve_backstage_line throws when there is no open obligation", () =
         { outcome: "no-change", reasonCode: "advanced-recently", note: "x。" },
         noopSessionManager(),
       ),
-    /没有未清账/,
+    /没有未完成/,
   );
 });
 

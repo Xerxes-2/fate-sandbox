@@ -94,7 +94,7 @@ void test("resolve_backstage_line REFUSES while an unharvested run is pending, t
     commitTurnTool({ summary: "守夜。", time: BIG_TIME, events: [] }, noopSessionManager());
     spawnLine("caster-ryudou");
 
-    // footgun guard: cannot discard the produced candidate via no-change
+    // Guard against discarding a produced candidate via no-change.
     assert.throws(
       () =>
         resolveBackstageLineTool(
