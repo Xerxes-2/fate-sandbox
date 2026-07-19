@@ -140,6 +140,18 @@ _Avoid_: Hidden prompt injection, spoiler brief
 A short per-turn operational summary for the game master. It is derived from Game State but is not itself the Game State.
 _Avoid_: State dump, JSON snapshot, status panel
 
+**Session Log**:
+The durable session tree retained for audit, rewind, repair, and debugging. It records interaction and execution history but is not an authoritative campaign fact store and is not automatically the context shown to the game master.
+_Avoid_: Model context, Game State, canonical event ledger
+
+**Settlement Working Set**:
+The bounded operational context given to the settlement pass for the active player turn. It is derived from the active Session Log branch, current Game State projections, unresolved workflow handoffs, Settlement Turn Capsules, and the latest prose anchor; it is not a persistence layer or a complete transcript.
+_Avoid_: Session history, compaction summary, prompt state
+
+**Settlement Turn Capsule**:
+A deterministic, lossy account of a completed turn that preserves plot causality needed by later settlement: the player's action, resolved consequences, active closing pressure, and relevant NPC moves. It provides narrative context but cannot override Game State or serve as an execution record.
+_Avoid_: Direction packet archive, prose summary, canonical fact store
+
 ## Example dialogue
 
 Dev: Archer's true name is known to the campaign, but the player has not discovered it. Is that in Game State?
