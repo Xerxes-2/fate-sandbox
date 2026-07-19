@@ -45,8 +45,9 @@ export function settleOldestObligation(
 }
 
 const OBLIGATION_KIND_GUIDANCE: Record<TurnObligationKind, string> = {
-  "scene-objective": "commit_turn 的 scene 事件（add-objective / resolve-objective）",
-  "scene-threat": "commit_turn 的 scene 事件（add-threat / clear-threat）",
+  "scene-objective": "commit_turn 的 scene 事件（resolve-objective / complete-beat）",
+  "scene-threat":
+    "commit_turn 的 scene 事件（add-threat / clear-threat，或带 threats 的 begin-beat / complete-beat.nextBeat）",
   "actor-condition": "actor-condition 事件（update_actor_condition 或 commit_turn）",
   "servant-form": "servant-form 事件（update_servant_form 或 commit_turn）",
   memory: "memory 事件（record_memory 或 commit_turn）",

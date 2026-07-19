@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getState, resetState } from "../../engine/core/state/state-store.ts";
+import {
+  cloneState,
+  commitState,
+  getState,
+  resetState,
+} from "../../engine/core/state/state-store.ts";
+import { recordObligation } from "../../engine/core/turn/obligations.ts";
 import { commitTurnTool } from "./commit-turn.ts";
 
 // objectives/threats 是 beat-scoped：需要在 active beat 里验证 scene objective 事件的用例先开 beat。
@@ -151,6 +157,81 @@ void test("commitTurnTool ignores blank objectiveId when objectiveSummary is pre
   );
 
   assert.match(result.content[0]?.text ?? "", /回合已提交/);
+});
+
+void test("complete-beat settles objective and continued-threat obligations", () => {
+  resetState();
+  beginBeatViaTool(["Reach the exit."]);
+  const draft = cloneState();
+  recordObligation(draft, {
+    source: "combat-exchange",
+    kind: "scene-objective",
+    summary: "Land the objective.",
+  });
+  recordObligation(draft, {
+    source: "combat-exchange",
+    kind: "scene-threat",
+    summary: "Preserve pressure.",
+  });
+  commitState(draft);
+
+  const result = commitTurnTool(
+    {
+      time: { kind: "elapsed", elapsedMinutes: 1, reason: "Escape succeeds at a cost." },
+      events: [
+        {
+          kind: "scene",
+          event: {
+            kind: "complete-beat",
+            outcome: "The pair reaches the exit while pursuit continues.",
+            nextBeat: {
+              title: "Outside, still pursued",
+              objectives: ["Create distance."],
+              threats: [{ summary: "The pursuer takes a flanking route.", severity: "high" }],
+              situation: "escape",
+            },
+          },
+        },
+      ],
+    },
+    createNoopSessionManager(),
+  );
+
+  assert.match(result.content[0]?.text ?? "", /回合已提交/);
+  assert.deepEqual(getState().public.obligations, []);
+});
+
+void test("complete-beat does not erase an unlanded threat obligation", () => {
+  resetState();
+  beginBeatViaTool(["Reach the exit."]);
+  const draft = cloneState();
+  recordObligation(draft, {
+    source: "combat-exchange",
+    kind: "scene-threat",
+    summary: "Preserve pressure.",
+  });
+  commitState(draft);
+
+  assert.throws(
+    () =>
+      commitTurnTool(
+        {
+          time: { kind: "elapsed", elapsedMinutes: 1, reason: "The beat closes." },
+          events: [
+            {
+              kind: "scene",
+              event: {
+                kind: "complete-beat",
+                outcome: "The pair reaches the exit.",
+                nextBeat: null,
+              },
+            },
+          ],
+        },
+        createNoopSessionManager(),
+      ),
+    /scene-threat/,
+  );
 });
 
 void test("commitTurnTool does not commit state when a later domain event fails", () => {

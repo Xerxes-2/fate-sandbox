@@ -176,12 +176,26 @@ export function updateScene(draft: State, event: SceneEvent): SceneEventResult {
     assertNonEmptyString(event.reason, "reason");
   }
   const result = applySceneEvent(draft, event);
-  if (event.kind === "add-objective" || event.kind === "resolve-objective") {
+  settleSceneEventObligations(draft, event);
+  return result;
+}
+
+function settleSceneEventObligations(draft: State, event: SceneEvent): void {
+  if (
+    event.kind === "add-objective" ||
+    event.kind === "resolve-objective" ||
+    event.kind === "complete-beat"
+  ) {
     settleOldestObligation(draft, ["scene-objective"]);
-  } else if (event.kind === "add-threat" || event.kind === "clear-threat") {
+  }
+  if (
+    event.kind === "add-threat" ||
+    event.kind === "clear-threat" ||
+    (event.kind === "begin-beat" && (event.threats?.length ?? 0) > 0) ||
+    (event.kind === "complete-beat" && (event.nextBeat?.threats?.length ?? 0) > 0)
+  ) {
     settleOldestObligation(draft, ["scene-threat"]);
   }
-  return result;
 }
 
 function applySceneEvent(draft: State, event: SceneEvent): SceneEventResult {
