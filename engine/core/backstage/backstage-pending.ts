@@ -86,5 +86,5 @@ export function formatPendingHarvestReminder(draft: State): string | null {
     return null;
   }
   const runs = pending.map((entry) => `${entry.runId}（line ${entry.lineId}）`).join("、");
-  return `⏳ 后台 director 已启动，候选待 harvest：${runs}。下一轮用 run_id 调 harvest_backstage_candidate，取回并审查后使用 record_offscreen_event 落地，或使用 resolve_backstage_line 关闭义务。`;
+  return `⏳ 后台 director 已启动，候选待 harvest：${runs}。用 run_id 单次调用 harvest_backstage_candidate（内部最长等待 45s），取回并审查后使用 record_offscreen_event 落地，或使用 resolve_backstage_line 关闭义务。`;
 }

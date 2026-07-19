@@ -48,13 +48,13 @@ Offscreen workers (the backstage director and the showrunner auditor) are engine
 
 - Call `run_showrunner_audit` when timeline tone drifts, a beat spins in place, a mystery hook is being forced back without novelty, or the next offscreen ecosystem is unclear. The engine assembles the audit prompt, forks a blocking auditor child, and returns the schema-validated verdict in this same turn; apply `requiredCorrections` starting next turn. A failure result is NOT a pass — re-call or skip deliberately.
 - Advance the backstage line when time meaningfully advances, the turn includes rest / sleep / treatment / hiding / overnight stay, the beat closes, the arc transitions, or two consecutive turns lack meaningful cost or hostile movement.
-- Call `run_parallel_line` with `lineId` and `timeWindow`. The engine starts a detached `pi -p` backstage director and returns without blocking. On the next turn, call `harvest_backstage_candidate` with the returned `run_id`; the engine locates the director session and validates the candidate without manual file access. Review the candidate, then land approved facts with `record_offscreen_event`, using `activePressurePalette` for `pressureType` and the optional slot id. `resolve_backstage_line` rejects while a harvest is pending.
+- Call `run_parallel_line` with `lineId` and `timeWindow`. The engine starts a detached `pi -p` backstage director and returns without blocking. When settling that run, call `harvest_backstage_candidate` exactly once with the returned `run_id`; it waits up to 45 seconds, locates the director session, and validates the candidate without manual file access. Do not tight-loop harvest calls. Review the candidate, then land approved facts with `record_offscreen_event`, using `activePressurePalette` for `pressureType` and the optional slot id. `resolve_backstage_line` rejects while a harvest is pending.
 
 ### Backstage obligation (hard-blocked)
 
 The engine now enforces this discipline instead of trusting prompt self-discipline. A canonical turn that advances ≥30 minutes, completes a Scene Beat (`complete-beat` scene event), or is the second consecutive no-cost turn raises a **backstage obligation**. While one is open, the NEXT `commit_turn` is hard-rejected until you discharge it:
 
-- Real backstage movement → `run_parallel_line` (engine forks the async director itself) → next turn `harvest_backstage_candidate` with the `run_id` (engine auto-retrieves + validates) → land with `record_offscreen_event` (this clears the obligation and the pending-harvest marker).
+- Real backstage movement → `run_parallel_line` (engine forks the async director itself) → one `harvest_backstage_candidate` call with the `run_id` (engine waits, retrieves, and validates) → land with `record_offscreen_event` (this clears the obligation and the pending-harvest marker).
 - Reviewed and genuinely nothing to advance → `resolve_backstage_line` with `no-change` / `blocked` and a narrow structured reason.
 - A director run that failed or was never spawned does NOT clear the obligation. Do not fake a discharge.
 

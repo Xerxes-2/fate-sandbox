@@ -3,7 +3,7 @@
  *
  * GM 只给 lineId + timeWindow + 可选偏好；engine 装配 hermetic director prompt 并
  * 【直接 fork 一个 detached `pi -p` 后台导演】——不经主 agent loop、不阻塞本回合。
- * 一次调用即起异步后台线；隔轮从 session 取裸候选 → harvest_backstage_candidate
+ * 一次调用即起异步后台线；harvest_backstage_candidate 单次等待 session 候选并
  * 验收 → 审查 → record_offscreen_event 落地，或 resolve_backstage_line 关闭义务。
  */
 
@@ -58,7 +58,7 @@ export function runParallelLineTool(params: unknown, sessionManager: unknown): T
         "后台 director 已异步启动（engine 直接 fork hermetic pi -p，不经主循环、不阻塞本回合）：",
         `  run_id=${h.runId}  model=默认主模型  session_dir=${h.sessionDir}  pid=${h.pid ?? "?"}`,
         "",
-        `隔轮（约 10-20s 后）用 run_id=${h.runId} 调 harvest_backstage_candidate（engine 自动取回，无需手动读 session / inspect）→`,
+        `用 run_id=${h.runId} 单次调用 harvest_backstage_candidate（工具内部最长等待 45s；不要紧密重复调用）→`,
         "审查 → record_offscreen_event（progress/escalation，落地即清义务）",
         "或 resolve_backstage_line（no-change/blocked）。导演失败或未启动不算完成义务。",
       ].join("\n"),
