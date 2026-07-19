@@ -174,7 +174,7 @@ export const SECRET_GAME_STATE_SCHEMA = Type.Object({
   /** 后台压力计数：跨回合的连续无代价计数器 */
   backstagePressure: BACKSTAGE_PRESSURE_STATE_SCHEMA,
   /**
-   * 待 harvest 的后台 director run（run_parallel_line 起飞即记，harvest 即清）。
+   * 待 harvest 的后台 director run（run_parallel_line 启动后立即记录，harvest 后清除）。
    * 引擎据此在 canonical commit 催账，并让 resolve_backstage_line 在有未 harvest run 时
    * 拒绝清账——防止已产出的候选被一句 no-change 静默丢弃。
    */

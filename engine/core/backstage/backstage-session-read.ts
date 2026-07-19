@@ -78,7 +78,7 @@ export function readBackstageCandidateRaw(
   const matches = files.filter((name) => name.endsWith(suffix)).toSorted();
   const newest = matches.length > 0 ? matches[matches.length - 1] : undefined;
   if (newest === undefined) {
-    throw new Error(`找不到 run_id=${runId} 的后台 director session（未起飞，或 run_id 拼错）。`);
+    throw new Error(`找不到 run_id=${runId} 的后台 director session（未启动，或 run_id 拼错）。`);
   }
   return extractLastAssistantText(readFileSync(join(sessionDir, newest), "utf8"));
 }

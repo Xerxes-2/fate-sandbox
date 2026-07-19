@@ -71,7 +71,7 @@ export function assertNoUnharvestedPending(draft: State): void {
 
 function formatUnharvestedPending(pending: readonly BackstagePendingHarvest[]): string {
   return [
-    "有已起飞但尚未 harvest 的后台 director run，拒绝 resolve_backstage_line（避免把已产出的候选当 no-change 丢弃）：",
+    "有已启动但尚未 harvest 的后台 director run，拒绝 resolve_backstage_line（避免把已产出的候选当 no-change 丢弃）：",
     ...pending.map((entry) => `- run_id=${entry.runId}（line ${entry.lineId}）`),
     "先 harvest_backstage_candidate(run_id) 取回候选审查：",
     "- 有 progress/escalation → record_offscreen_event 落地；",
