@@ -31,6 +31,16 @@ function proseMessage(text: string): Record<string, unknown> {
   return { role: "custom", customType: PROSE_CUSTOM_TYPE, content: text, display: true };
 }
 
+function directReplyMessage(text: string): Record<string, unknown> {
+  return {
+    role: "custom",
+    customType: PROSE_CUSTOM_TYPE,
+    content: text,
+    display: true,
+    details: { kind: "direct-reply" },
+  };
+}
+
 function proseCustomEntry(text: string): Record<string, unknown> {
   return { type: "custom_message", customType: PROSE_CUSTOM_TYPE, content: text, display: true };
 }
@@ -114,6 +124,7 @@ void test("buildRendererMessages builds an append-only conversation shape", () =
   assert.equal(messages[1]?.text, "第一轮正文。");
   const final = messages[2]?.text ?? "";
   assert.match(final, /# Current Player Input/);
+  assert.doesNotMatch(final, /# Render Mode/);
   assert.match(final, /贴上去！/);
   assert.match(final, /# Direction Packet/);
   assert.match(final, /Saber 突进受阻/);
@@ -122,6 +133,52 @@ void test("buildRendererMessages builds an append-only conversation shape", () =
   assert.match(final, /eventWeight=normal; resolvedChanges=1; npcStances=0/);
   assert.match(final, /First turn # Current Player Input into in-scene action or speech/);
   assert.match(final, /Output only Chinese body prose/);
+});
+
+void test("buildRendererMessages starts the first rendered scene without direct-reply history", () => {
+  const messages = buildRendererMessages(
+    [
+      userMessage("开始游戏"),
+      packetCallMessage({ needsRender: false, directReply: "请选择开局。" }, "collect"),
+      directReplyMessage("请选择开局。"),
+      userMessage("FSF，新手模式。"),
+      packetCallMessage(PACKET_ARGS, "opening"),
+    ],
+    parseDirectionPacket(PACKET_ARGS, "packet"),
+  );
+
+  assert.equal(messages.length, 1);
+  const openingPrompt = messages[0]?.text ?? "";
+  assert.match(openingPrompt, /# Render Mode\n\nOpening Scene/);
+  assert.match(openingPrompt, /Write the complete opening scene from its first visible line/);
+  assert.match(openingPrompt, /FSF，新手模式。/);
+  assert.doesNotMatch(openingPrompt, /请选择开局/);
+  assert.doesNotMatch(openingPrompt, /开始游戏/);
+});
+
+void test("buildRendererMessages excludes direct replies between rendered turns", () => {
+  const messages = buildRendererMessages(
+    [
+      userMessage("第一轮输入"),
+      packetCallMessage(PACKET_ARGS, "render-1"),
+      proseMessage("第一轮正文。"),
+      userMessage("规则问题"),
+      packetCallMessage({ needsRender: false, directReply: "规则回答。" }, "direct"),
+      directReplyMessage("规则回答。"),
+      userMessage("继续行动"),
+      packetCallMessage(PACKET_ARGS, "render-2"),
+    ],
+    parseDirectionPacket(PACKET_ARGS, "packet"),
+  );
+
+  assert.deepEqual(
+    messages.map((message) => message.role),
+    ["user", "assistant", "user"],
+  );
+  assert.equal(messages[0]?.text, "第一轮输入");
+  assert.equal(messages[1]?.text, "第一轮正文。");
+  assert.match(messages[2]?.text ?? "", /继续行动/);
+  assert.doesNotMatch(messages[2]?.text ?? "", /规则问题|规则回答/);
 });
 
 void test("buildRendererMessages includes persisted custom_message prose history", () => {

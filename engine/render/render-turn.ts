@@ -119,7 +119,18 @@ export function buildRendererMessages(
     currentInputs.length > 0
       ? currentInputs.join("\n\n")
       : "(No current player input was captured. Use packet.playerAction only.)";
-  const finalSections: string[] = ["# Current Player Input", "", currentPlayerInput, ""];
+  const finalSections: string[] = [];
+  if (turns.length === 0) {
+    finalSections.push(
+      "# Render Mode",
+      "",
+      "Opening Scene",
+      "",
+      "There is no prior narrative body to continue. Write the complete opening scene from its first visible line; do not answer or continue any earlier setup prompt.",
+      "",
+    );
+  }
+  finalSections.push("# Current Player Input", "", currentPlayerInput, "");
   finalSections.push(...buildRendererNameSection(nameEntries));
   finalSections.push(
     "# Direction Packet",
@@ -194,6 +205,11 @@ function collectRenderedTurns(
     const call = findSubmitPacketCall(message);
     if (call !== undefined) {
       pendingPacket = call;
+    }
+    if (isDirectReplyMessage(message)) {
+      currentInputs = [];
+      pendingPacket = undefined;
+      continue;
     }
     if (isProseMessage(message)) {
       const turn = turns.length + 1;
@@ -318,6 +334,14 @@ export function buildLintRetryMessages(
 
 function isProseMessage(message: unknown): message is Record<string, unknown> {
   return isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE;
+}
+
+function isDirectReplyMessage(message: unknown): boolean {
+  if (!isProseMessage(message)) {
+    return false;
+  }
+  const details = message["details"];
+  return isRecord(details) && details["kind"] === "direct-reply";
 }
 
 function customMessageText(message: Record<string, unknown>): string {
