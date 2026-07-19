@@ -71,6 +71,9 @@ void test("buildRendererSystemPrompt assembles clean-room render stack", () => {
   assert.match(prompt, /<render_protocol>/);
   assert.match(prompt, /<protagonist_impression>/);
   assert.match(prompt, /<output_contract>/);
+  assert.match(prompt, /Opening Scene — Story Beginning/);
+  assert.match(prompt, /current input is setup premise rather than prior in-world dialogue/);
+  assert.match(prompt, /first orient a new reader as required by that opening contract/);
   // 渲染器看不到工具/机械模块
   assert.doesNotMatch(
     prompt,

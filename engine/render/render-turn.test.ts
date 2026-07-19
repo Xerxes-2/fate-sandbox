@@ -149,8 +149,16 @@ void test("buildRendererMessages starts the first rendered scene without direct-
 
   assert.equal(messages.length, 1);
   const openingPrompt = messages[0]?.text ?? "";
-  assert.match(openingPrompt, /# Render Mode\n\nOpening Scene/);
-  assert.match(openingPrompt, /Write the complete opening scene from its first visible line/);
+  assert.match(openingPrompt, /# Render Mode\n\nOpening Scene — Story Beginning/);
+  assert.match(openingPrompt, /the beginning of a complete story/);
+  assert.match(openingPrompt, /Assume the reader has seen none of the setup conversation/);
+  assert.match(openingPrompt, /the protagonist's lived identity and ordinary role/);
+  assert.match(openingPrompt, /the concrete time and place/);
+  assert.match(openingPrompt, /the normal baseline before supernatural pressure distorts it/);
+  assert.match(openingPrompt, /Introduce each important present character/);
+  assert.match(openingPrompt, /Concise opening orientation is required/);
+  assert.match(openingPrompt, /Do not invent background beyond Current Player Input/);
+  assert.match(openingPrompt, /opening-scene seed, not necessarily the literal first sentence/);
   assert.match(openingPrompt, /FSF，新手模式。/);
   assert.doesNotMatch(openingPrompt, /请选择开局/);
   assert.doesNotMatch(openingPrompt, /开始游戏/);

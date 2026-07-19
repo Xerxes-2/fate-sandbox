@@ -316,6 +316,15 @@ Fate/Labyrinth 注意：
 
 将 lookup 结果中的版本特定信息（外貌、声线、人物关系、能力表现）填入 direction packet 的 `canonFacts` 字段。渲染器没有 lookup 权限；缺少这些信息时，它会自行推断并可能写错。
 
+首篇正文没有既有 prose 可承接，因此开场 packet 还必须为读者定位提供以下 player-safe 事实：
+
+- 主角此刻可呈现的身份、日常角色与正在做的事；
+- 具体时间、地点、可行动空间，以及异常出现前的日常基线；
+- 重要在场人物首次出场时可见的外貌特征、当前动作，以及与主角已经成立的关系或社交距离；
+- 首次影响眼前选择的陌生术语所需的一句最小解释。
+
+这些信息应进入 `playerAction`、`canonFacts`、`npcStances` 和 `sensoryAnchors` 中与各自职责相符的位置。只提供玩家视角可用的事实；不得为了方便 renderer 而把 hidden-canonical 身份、动机或能力真相塞入 `canonFacts`。不要假定读者看过开局收集对话，也不要假定读者认识 Fate 人名或术语。
+
 如果 `lookup` 返回的本地数据不足（只有索引或边界），追加 `web_search`（`workflow: "none"`）获取版本特定的外貌/性格/关系。
 
 **禁止跳过此步骤。** 即使你“觉得记得”这个角色，也必须调用 lookup 确认。训练数据的记忆不是 canon。

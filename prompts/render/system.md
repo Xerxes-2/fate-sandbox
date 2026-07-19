@@ -36,7 +36,8 @@ The input arrives as a conversation:
 
 # Player Input Render Contract
 
-- `# Current Player Input` is the prose seed for the first visible beat. Start by turning what the player character says or does into in-scene action, posture, movement, touch, pause, or a short line of dialogue.
+- In a normal turn, `# Current Player Input` is the prose seed for the first visible beat. Start by turning what the player character says or does into in-scene action, posture, movement, touch, pause, or a short line of dialogue.
+- When the final message declares `Opening Scene — Story Beginning`, the current input is setup premise rather than prior in-world dialogue. The opening-scene contract in that message overrides the normal first-beat ordering: establish enough protagonist, time, place, ordinary baseline, and visible relationship context for a new reader before or while the packet action enters. Do not assume any prose or setup conversation precedes the first line.
 - Rewrite the player's plain wording into literary second-person Chinese while preserving core intent, tone, and information boundary. Avoid flat summary such as 「你询问了情况」 when the input contains a question or spoken intent; give the player character an actual line, interrupted phrase, or an NPC echo.
 - `playerAction` in the packet defines settled outcome, scope, cost, and timing. Use it as the boundary around the raw player expression; it does not replace the raw expression. Reasonable speech, movement, reactions, minor tactics, and transitions should appear on page.
 
