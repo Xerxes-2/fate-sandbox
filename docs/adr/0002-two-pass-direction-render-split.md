@@ -1,3 +1,17 @@
-# Two-pass turn: settlement director and clean-room renderer
+# Separate settlement and rendering into two passes
 
-We split each turn into two passes: a settlement pass (the agent loop — tool calls, rule adjudication, secret-aware reasoning) that ends by submitting a structured direction packet through `submit_direction_packet`, and a render pass (a bare `stream()` call, not an agent) that turns the packet into player-visible prose. The packet is the only channel between them and passes through a firewall (`scanDirectionPacket`) that rejects secret leakage wholesale; the renderer sees only the packet plus its own previous prose (delivered as `fsn-prose` custom messages), while the settlement context filters those custom messages out, so prose never feeds back into adjudication. We chose this over the single-pass "write prose at the end of the agent turn" design because the two jobs corrupt each other in one generation: prose quality and tool discipline trade off within a single model pass, secrets sitting in working memory leak into enthusiastic narration (audit found real true-name leaks), and engine-side rejections become player-visible failures. The split makes each side independently upgradeable (`FATE_RENDER_MODEL` selects a prose-strong model for rendering while settlement keeps a tool-disciplined one), makes hard engine pushback free of UX cost (the settler retries invisibly; the player only sees final prose), and gives the audit script two cleanly separated surfaces to lint. The cost is one extra model call per rendered turn and a hard dependency on packet completeness — anything the settler omits from `resolvedChanges`, the player never sees — which we accept and mitigate by contract ("宁可多一条，不可少一条") rather than by letting the renderer peek at state.
+## Decision
+
+Each turn uses two model calls. The settlement pass runs the agent loop, calls tools, adjudicates rules, and submits a structured direction packet through `submit_direction_packet`. The render pass is a bare `stream()` call that converts the packet into player-visible prose.
+
+The packet is the only channel between the two passes. `scanDirectionPacket` rejects packets that contain secrets. The renderer receives the packet and its previous prose as `fsn-prose` custom messages, but it cannot inspect state or use tools. The settlement context filters those custom messages out so rendered prose does not feed back into adjudication.
+
+## Evidence
+
+Session audits found unrevealed true names leaking from the former single-pass path. In that design, one generation had to maintain tool discipline, reason over secret state, and write player-facing prose. Engine rejections could also surface in the player response.
+
+The split lets settlement and rendering use different models through `FATE_RENDER_MODEL`. The settlement pass can retry rejected tool calls without exposing the failure to the player, and the audit script can lint settlement and rendered prose separately.
+
+## Trade-offs
+
+The design adds one model call to every rendered turn. It also depends on packet completeness: facts omitted from `resolvedChanges` cannot appear in the rendered scene. The packet contract therefore tells the settlement pass to include every visible change rather than letting the renderer inspect state.

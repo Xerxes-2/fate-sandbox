@@ -1,3 +1,17 @@
-# Engine-enforced ledgers instead of prompt discipline
+# Enforce GM obligations through engine ledgers
 
-We moved three classes of GM discipline out of prompts and into state-backed ledgers with engine enforcement: the turn obligations ledger (`public.obligations` — adjudications like `resolve_combat_exchange` register mandatory state landings, domain events settle them FIFO, and `commit_turn`/`progress_scene_beat` reject the whole commit while any debt is open), faction clocks and scheduled events (`secrets.factionClocks`/`scheduledEvents` — BITD-style progress clocks whose due/filled items are dunned in canonical-commit return values), and the mystery hook ledger (`public.hooks` — lifecycle via `update_hook`, a hard cap of 2 simultaneous pressure hooks, and mandatory novelty on every reappearance). The shared rationale is the project rule "Prompt 不是防线": prompt-level discipline dies at compaction, cannot be audited, and degrades silently as context grows, whereas ledgers survive compaction by construction and give audit tooling accounts to reconcile instead of transcripts to read. Enforcement strength is deliberately matched to verifiability — obligations hard-reject because a missing `add-wound` event is machine-checkable, while clock/hook follow-through is narrative and gets dunning text and forced paper trails (`outcomeSummary`, `novelty`, `reason`) instead of rejection, since hard gates on unverifiable claims would only train the settler to write hollow filler. The two-pass split (ADR 0002) is what makes hard rejection affordable: the settler absorbs engine pushback and retries behind the curtain, so strict enforcement carries no player-visible cost.
+## Decision
+
+Three classes of GM discipline live in state-backed ledgers rather than prompt instructions:
+
+- `public.obligations` records required adjudications. Events such as `resolve_combat_exchange` register state changes that must land. Domain events settle them in FIFO order, and `commit_turn` or `progress_scene_beat` rejects the commit while any obligation remains open.
+- `secrets.factionClocks` and `scheduledEvents` record offscreen progress. Canonical commit results remind the GM when an item is due or filled.
+- `public.hooks` records mystery-hook lifecycle through `update_hook`, limits active pressure hooks to two, and requires novelty whenever a hook returns.
+
+## Rationale
+
+Prompt instructions may disappear during compaction and cannot be reconciled mechanically. State-backed ledgers survive compaction and give audit tools explicit records to check.
+
+Enforcement depends on what the engine can verify. Obligations reject commits because a missing domain event, such as `add-wound`, is machine-checkable. Clock and hook follow-up remains a narrative judgment, so those ledgers require summaries and reasons and return reminders instead of rejecting the turn. A hard gate on an unverifiable narrative claim would encourage filler rather than reliable state.
+
+ADR 0002 makes hard rejection practical. The settlement pass handles the error and retries before the render pass produces player-visible prose.

@@ -1,5 +1,9 @@
 # Slim the settlement prompt stack and tool descriptions instead of trimming dynamically
 
-非 GPT 模型在结算（Pass A / settlement director）回合普遍跑得很慢、思维链异常冗长，根因是结算侧的 prompt 栈过重（主干约 42558 字符）加上工具 description 大量采用「【必须调用的场景】/【严禁的行为】」式的长清单——这种 checklist 体例本身就是 reasoning-bait，会诱导模型在动手前先把整套规约逐条复述一遍。我们的处置是**纯静态瘦身**：把结算 preset 的 `social-guide` 模块禁用（它属于渲染层关注点，结算用不到），压缩七个 prompt 文件（`settlement/story-driver.md`、`settlement/tool-policy.md`、`settlement/direction-contract.md`、`settlement/hard-rules.md`、`settlement/world-context.md`、`settlement/input-guide.md`、`settlement/system.md`），并把 19 个偏重的工具 description 从「操作手册」收成「一行用途 + 使用边界 bullet + 严禁 bullet」的紧凑格式。结果是结算 prompt 主干 42558 → 16768（约 -60.6%），工具 description 总量 14931 → 9965（约 -33.3%），全程 470 项测试与 typecheck/lint/format 保持全绿，工具行为与 schema 字段集（由 `packet-contract.test.ts` 与各工具 schema 测试锁定）零改动。
+非 GPT 模型在结算回合中速度较慢，且思维链偏长。结算 prompt 主干当时约有 42558 个字符，工具 description 也大量使用「必须调用的场景」和「严禁的行为」长清单。模型容易在调用工具前复述这些清单。
 
-关键约束是**绝不引入动态前缀 / 按输入裁剪 prompt**：任何根据当轮输入改变 prompt 前缀的逻辑都会击穿 prompt 缓存，让每回合重新计费整段系统提示，得不偿失。实现期间曾试做「meta-turn 动态裁剪」（`isLikelyMetaTurn`、`chooseSettlementPromptProfile` 等），随后整体回退——结算注入回到固定 11 模块的静态栈（`buildSlotMessages` 的 pre-history / pre-response / final-contract 三个 slot 顺序不变），`injection.test.ts` 也据此锁定 `injected.length === 11`。这条线与 ADR 0003「Prompt 不是防线」一脉相承：真正的纪律应落在 engine ledger 上，prompt 只需把规则讲清楚一次，不必靠反复堆叠清单来「加固」，因为堆叠出的体量既拖慢非 GPT 模型，又在 compaction 后照样失效。瘦身的安全边界由测试体系兜底——packet 契约、工具 schema 的宽松性、注入栈结构都是机器可校验的，因此「删文字」这类改动一旦越界会立即被 gate 拦下。
+本次改动采用静态精简：停用结算 preset 中只与渲染有关的 `social-guide`，压缩七个 settlement prompt 文件，并将 19 个工具 description 收为「一行用途 + 使用边界 + 禁区」。结算 prompt 主干从 42558 个字符降到 16768 个，减少约 60.6%；工具 description 从 14931 个字符降到 9965 个，减少约 33.3%。改动没有改变工具行为或 schema 字段集。`packet-contract.test.ts`、工具 schema 测试和当时的 470 项测试覆盖这些契约。
+
+输入相关的动态 prompt 裁剪会改变缓存前缀，使每回合重新计费系统提示，因此没有采用。实现期间曾试做 `isLikelyMetaTurn` 和 `chooseSettlementPromptProfile`，随后整体回退。结算注入保持固定的 11 个模块，`buildSlotMessages` 的 pre-history、pre-response 和 final-contract 顺序不变；`injection.test.ts` 锁定 `injected.length === 11`。
+
+可机械验证的规则应由 engine ledger、schema 和测试承担。Prompt 只保留模型执行当前任务所需的说明，不通过重复清单承担正确性。

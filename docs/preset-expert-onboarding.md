@@ -1,20 +1,18 @@
-# Preset Expert Onboarding — 前沿攻坚 brief
+# Preset reviewer onboarding
 
-写给一位同时精通 **SillyTavern 预设 / TypeScript / agent 工程** 的同侪 reviewer。
+本文面向熟悉 SillyTavern preset、TypeScript 和 agent 系统的 reviewer，概述项目的设计意图、未决问题和评测工具。附录提供 SillyTavern 与本项目概念的对照。
 
-你不是来"调提示词"的临时工，是来攻边界的。本文不解释已解决的东西（那会浪费你时间），只交付三样：**设计意图 → 未决张力 → 评测台**。翻译表在附录，扫一眼省你逆向时间即可。
-
-全仓库读写权限。产出走 PR 或建议文档，结论用 `render-bench` 背书。
+Reviewer 可以读取和修改整个仓库。请通过 PR 或建议文档提交结论，并用 `render-bench` 或其它可复现结果说明依据。
 
 ---
 
-## 0. 一句话定位
+## 0. 项目定位
 
-这是一个 Fate/stay-night 跑团引擎，跑在 pi agent 上。核心赌注：**「Prompt 不是防线」**（见 `AGENTS.md` 宪章段）——能机械验证的纪律一律下沉为 TypeScript schema / 账本 / lint，prompt 只负责机器证明不了的东西（笔触、声音、节奏、临场判断）。
+这是一个运行在 pi agent 上的 Fate/stay night 跑团引擎。项目遵循 `AGENTS.md` 中的「Prompt 不是防线」原则：能机械验证的规则应落在 TypeScript schema、账本或 lint 中。Prompt 负责笔触、声音、节奏和临场判断等无法稳定机械验证的部分。
 
-所以你来之前先内化一件事：**如果一条规则能写成正则或 invariant，它就不该活在 prompt 里**。你看到 prompt 里还有这种东西 = 你找到了一个下沉机会（这正是我们想要你贡献的）。
+审查 prompt 时，请标出可以改为正则、schema 或 engine invariant 的规则，并说明适合的落点。
 
-## 1. 架构骨架（30 秒）
+## 1. 架构概览
 
 两段式 turn：
 
@@ -30,46 +28,46 @@
 - packet 的字段分 `binding`（必须到达成品场景）/ `free`（建议）/ `player-safe`（已过秘密防火墙）。
 - 关键文件：`prompts/settlement/direction-contract.md`（packet 契约）、`prompts/render/protocol.md`（渲染协议）、`prompts/render/system.md`（渲染器身份）、`prompts/render/style-rules.md`（23KB 笔触圣经）、`extensions/two-pass-render/`（接线）、`engine/audit/lint-rules.ts`（机械 lint，审计与渲染复用同一份）。
 
-## 2. 阅读路径（不要读整个 repo）
+## 2. 建议阅读顺序
 
 1. `AGENTS.md` 宪章段：Prompt 不是防线 / public-secrets-knowledge 三层 / 真名防线 / 硬切优先。
-2. `prompts/settlement/direction-contract.md` + `prompts/render/protocol.md`：吃透 direction↔render 的职责切分（下面 §3 的主战场就在这条缝）。
+2. `prompts/settlement/direction-contract.md` + `prompts/render/protocol.md`：确认 direction 与 render 的职责切分，§3 的多数问题来自这条边界。
 3. 跑一遍 `docs/render-bench/`：看现有渲染水准的盲样对比，建立 baseline 体感。
-4. `docs/system-potential-backlog.md`：18 项里大部分已 `[x]`，**只看 `[ ]` 的和每节末尾「后续 / 进阶（未做）」**——那是已知未挖的矿。
+4. `docs/system-potential-backlog.md`：18 项里大部分已 `[x]`。优先阅读 `[ ]` 项和每节末尾的「后续 / 进阶（未做）」。
 
-读完上面四步你就有完整作战图了。剩下按需钻 `engine/core/*`。
+完成以上步骤后，再按具体问题查看 `engine/core/*`。
 
 ---
 
-## 3. 未决张力（你的主战场）
+## 3. 未决问题
 
-按"值得攻"排序。每条都给了战线两端（prompt 侧 / code 侧），灰区正是你三料背景的价值点。
+以下问题按预期影响排序，并分别列出 prompt 侧和 code 侧的约束。
 
-### T1 — direction↔render 的职责边界是否最优【最高价值】
+### T1: direction 与 render 的职责边界
 
-这是整个系统最大的灰区。`direction-contract.md` 规定结算器把 NPC 行为压成 `npcStances[].move`（一句话的"主动行为"），`render/protocol.md` 再把它展开成有声音的场景。问题：
+这是当前影响范围最大、验证最不充分的边界。`direction-contract.md` 规定结算器把 NPC 行为压成 `npcStances[].move`（一句话的"主动行为"），`render/protocol.md` 再把它展开成有声音的场景。问题：
 
 - **哪些决策该在 direction（可被审计/账本约束），哪些该留给 render 自由发挥？** 现在 `move` 是结算器写死的，渲染器只许"演出不许改写"。这条线划在这里对吗？放太多到 direction → 渲染僵硬；放太多到 render → 失去机械可验证性，违反第一性原则。
 - `npcStances` / `npcOmissions` 的"在场重要 NPC 必须二选一覆盖"是 tool 硬执法的。这个 coverage 模型会不会逼出"为了填字段而填"的假 move？（`direction-contract.md` 自己列了一堆 Bad 例子在防这个——说明这是活的痛点。）
 - packet 是 language-neutral 的，中文 canon 走 `canonFacts`。这层"英文意图 → 中文成品"的翻译损耗有多大？酒馆预设里 prefill / 深度注入是直接喂目标语言的，我们故意没这么做——你判断这个 trade-off 值不值。
 
-**交付形态**：对几个真实 turn 的 packet→成品做拆解，指出哪些质感损失发生在 direction 过度规约、哪些发生在 render 自由度不足，给出移动这条线的实验。
+**建议输出**：拆解几个真实 turn 的 packet 和成品，分别标出 direction 过度规约与 render 自由度不足造成的问题，并设计调整边界的对照实验。
 
 ### T2 — `style-rules.md` 23KB 的下沉率
 
 这是最大的静态 prompt block。backlog #1 进阶里已经点名一个例子：**"同一意象簇 3 轮内不得重复"可以机械化**——对最近 3 轮正文做意象关键词计数，超限就在下一轮 pre-response 动态注入"本轮禁用意象：X、Y"，把静态黑名单变成带违规上下文的动态注入。
 
-问题给你：这 23KB 里**还有多少是"能机械检测 / 能动态注入"的，多少是"只能靠模型理解的真·风格"**？前者该下沉到 `lint-rules.ts` 或动态注入；后者留着但要精简。你做一次"可机械化 / 不可机械化"的二分标注，就是一份高价值产出。
+请将这 23KB 规则分为「可机械检测或动态注入」与「只能由模型判断」两类。前者应下沉到 `lint-rules.ts` 或动态注入，后者保留在 prompt 中并精简重复内容。
 
 ### T3 — 真名防线 / secrets 在 render 侧的 prompt 冗余
 
 秘密泄漏已经是**三重防御**：packet 防火墙（结算器侧过滤）+ render lint 扫描真名串 + 账本（`secrets.revealState`）。那么 render 侧 prompt 里关于"别说真名"的文字还需要多少？prompt 和 code 在这里是否有冗余执法（违反"Prompt 不是防线"——既然 code 兜底了，prompt 不该再当防线，最多当"提示语气"）。判断：哪些 prompt 句子是 code 已经保证的，可以删。
 
-### T4 — backlog 明确未做项（可直接认领）
+### T4: backlog 中尚未完成的项目
 
-- **#14 heavy 轮并行渲染选优**（`[ ]`）：Max Mode 歪用——对 `eventWeight: heavy` 的 turn 并行采样多份渲染 + judge 选优（灵感来自 SWE-Bench +10-20%）。需要 pi-subagents result-intercom 桥。这是 agent 工程 + 渲染质量的交叉点，正中你的三料。
+- **#14 heavy 轮并行渲染选优**（`[ ]`）：对 `eventWeight: heavy` 的 turn 并行采样多份渲染，再由 judge 选择结果。该方案需要结果回传机制，并应先验证额外延迟和成本。
 - **#7 canon 研究缓存**（`[ ]`）：casting 子代理的研究结果缓存，未开始。
-- **#19 actor id opaque 化 + name→id resolver**（`[ ]`）：关掉 firewall key 的侧信道，同时是"换主角"的地基。偏 TS/schema 活。
+- **#19 actor id opaque 化 + name-to-id resolver**（`[ ]`）：消除 firewall key 泄露真名的路径，并支持更换主角。主要涉及 TypeScript 和 schema。
 - 各节末尾的「后续 / 进阶（未做）」：如 #6 的"brief 按当前 location 自动关联注入 2-3 条旧记忆"、#13 的 arc-summary 层（>32 轮摘要滑出后的长程记忆）、#17 的 audit 统计 pressureType 连续重复率。
 
 ### T5 — 双 pass 的延迟/成本与 UX
@@ -78,22 +76,22 @@ backlog #12 自己记了：双 pass 延迟靠"结算器上下文缩水"对冲，
 
 ---
 
-## 4. 评测台（你的背书工具，也欢迎你扩它）
+## 4. 评测工具
 
-**不要用"更沉浸"这种不可证伪的话提议。** 我们有现成 A/B harness：
+不要只用「更沉浸」等无法复现的判断说明改动。仓库已有以下 A/B harness：
 
 - `scripts/render-bench.ts`（`pnpm` 脚本入口见 `package.json`）：多模型 × 多轮 × 盲样渲染对比。
 - `docs/render-bench/<timestamp>/turn-NN/`：每个 turn 有 `baseline.md`、各模型 `round-N.md`、`blind/sample-NN.md` + `key.json`（盲评对照）。
 - `docs/spikes/two-pass/`：双 pass 的早期实测样本（turn-52/55/57 的 input/baseline/rendered）。
 - `scripts/audit-session.ts`（`pnpm audit:session`）：对真实 session 跑叙事纪律回归——时间推进覆盖率、无代价连续段、output 契约机械子集、**未揭示秘密泄漏**。你的 prompt 改动可以用它做回归，证明没把纪律改坏。
 
-作为 agent 专家，欢迎你**扩 harness**：加评测维度（NPC 声音区分度、意象重复率、节奏曲线）、加 judge 模型、改盲样集。把"提示词玄学"变成 CI 能跑的数字，是这个项目最欢迎的贡献形态。
+可以扩展 harness，加入 NPC 声音区分度、意象重复率或节奏曲线等指标，也可以调整 judge 模型和盲样集。新增指标应能在 CI 或本地脚本中复现。
 
 ---
 
 ## 5. 工作纪律（提交前必过）
 
-`AGENTS.md` 「提交」段：四项检查（typecheck / lint / test / knip 死代码），一个 commit 一件事，commit message 英文 imperative。改 prompt 也要：如果你的改动让某条 prompt 规则变成可机械检测的，**优先开 issue/PR 把它下沉到 `lint-rules.ts` 并补测试**，而不是停在改 prompt 文字。
+`AGENTS.md` 「提交」段要求通过 typecheck、lint、format check 和 test。一个 commit 只处理一件事，commit message 使用英文祈使句。若 prompt 规则可以机械检测，应优先把它下沉到 `lint-rules.ts` 或其它合适的 engine 边界，并补测试。
 
 ---
 
@@ -110,8 +108,8 @@ backlog #12 自己记了：双 pass 延迟靠"结算器上下文缩水"对冲，
 | 楼层记忆 / 摘要          | `prose-digest-store.ts` 双层滑窗 + packet 机械摘要（#13）                                     | >32 轮仍会丢，arc-summary 层未做             |
 | 抽卡 / 骰子              | `engine/core/utils/seeded-rng.ts`（确定性，rewind 安全）                                      |                                              |
 
-附录 B（按需）：`docs/adr/` 有 6 篇 ADR 记录关键架构决策（双 pass、public/secret 拆分、engine 账本执法、slim settlement、spawn seam、pending-harvest guard）——你质疑某个设计前先看对应 ADR，可能已经辩论过。
+附录 B（按需）：`docs/adr/` 记录双 pass、public/secret 拆分、engine 账本执法、slim settlement 和 spawn seam 等架构决策。审查相关设计前，请先查看对应 ADR 的证据与取舍。
 
 ---
 
-_维护：本文是活文档。你上手后发现 brief 哪里过时或哪条张力已不成立，直接改它。_
+_维护：本文是活文档。若内容过时或未决问题已经关闭，请直接更新。_

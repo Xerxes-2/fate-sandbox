@@ -1,5 +1,20 @@
-# Pending-harvest ledger guards a forgotten backstage candidate
+# Guard pending backstage candidates with a harvest ledger
 
-After the backstage director became an engine-direct detached `pi -p` fork (ADR 0005), the retrieval step was underspecified: `run_parallel_line` returned a `run_id` and the GM was told to "read the run's last assistant message from the session dir," which is unworkable for an LLM (the session file carries an unpredictable ISO-timestamp prefix and there is no clean jsonl-reading tool), so in practice the GM reached for the stale pi-actors `inspect` tool — which has no record of an engine-forked process and answers "Run not found." We closed the read side symmetrically with the spawn side: `harvest_backstage_candidate` now takes the `run_id`, and `engine/core/backstage/backstage-session-read.ts` globs `<sessionDir>/<ISO>_<runId>.jsonl`, picks the newest by ISO prefix, and extracts the final assistant `type:"text"` part — the engine owns both ends of the loop, no external substrate and no `inspect`. That still left the real robustness question: **what if the GM forgets to harvest?** The existing Phase-3 obligation ledger (ADR 0003) already hard-blocks the next `commit_turn` until backstage debt is settled, so the world cannot silently go stale — but the obligation is satisfied by landing _something_, not by harvesting _this ready run_, which opens a footgun: a forgetful `resolve_backstage_line` with `outcome=no-change` clears the block while **discarding the candidate the director already produced**.
+## Problem
 
-The fix is a second engine-enforced ledger, `secrets.backstagePendingHarvests` (schema v18, each entry `{runId, lineId, spawnedAt}`), with enforcement strength matched to the risk exactly as ADR 0003 prescribes. `run_parallel_line` records a pending marker on spawn; `harvest_backstage_candidate` clears it by `runId` once the candidate is retrieved and validated; `record_offscreen_event` clears it by `lineId` when a candidate lands (covering a manual land). The teeth are at the discard site, not as a blanket block: **`resolve_backstage_line` refuses while any unharvested run is pending** (`assertNoUnharvestedPending`), forcing harvest-first — and because harvest clears the marker, the legitimate "the director itself returned no-change" path still works (harvest the run, see no-change, then resolve). The soft layer is dunning: both canonical-commit returns (`commit_turn`, `progress_scene_beat`) append a `formatPendingHarvestReminder` line listing pending runs, so a run spawned without an open obligation is still nudged every turn rather than forgotten. The result is self-healing: spawn → (dun: harvest `bl-x`) → harvest (clears marker, shows the candidate + landing guidance) → record/resolve. A produced candidate can no longer be lost by forgetting, and cannot be thrown away by a stray no-change.
+After ADR 0005 moved the backstage director to a detached engine process, `run_parallel_line` returned a `run_id` but provided no supported retrieval path. Session filenames include an unpredictable ISO timestamp, and the pi-actors `inspect` tool has no record of engine-forked processes.
+
+`harvest_backstage_candidate` now accepts the `run_id`. `engine/core/backstage/backstage-session-read.ts` finds `<sessionDir>/<ISO>_<runId>.jsonl`, selects the newest matching file by ISO prefix, and extracts the final assistant text.
+
+The existing backstage obligation still allowed one loss path. A GM could call `resolve_backstage_line` with `outcome=no-change` before harvesting a candidate, clearing the obligation even though the director had produced output.
+
+## Decision
+
+Schema v18 adds `secrets.backstagePendingHarvests`. Each marker stores `{runId, lineId, spawnedAt}`.
+
+- `run_parallel_line` records a marker after spawn.
+- `harvest_backstage_candidate` clears the matching marker after retrieval and validation.
+- `record_offscreen_event` clears markers for the landed `lineId`, including manually landed candidates.
+- `resolve_backstage_line` rejects while `assertNoUnharvestedPending` finds an unharvested run.
+
+Canonical commit results from `commit_turn` and `progress_scene_beat` also append `formatPendingHarvestReminder` output for pending runs. A valid no-change result remains possible: harvest the candidate first, inspect it, then resolve the line.
