@@ -20,9 +20,7 @@
 
 import type { Api, Message, Model, ThinkingLevel } from "@earendil-works/pi-ai";
 
-// pi-ai 0.80 把全局 streamSimple() 移到临时 compat 入口（见 two-pass-render/index.ts）。
-import { streamSimple } from "@earendil-works/pi-ai/compat";
-import { AuthStorage, ModelRegistry } from "@earendil-works/pi-coding-agent";
+import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -217,7 +215,7 @@ function toStreamMessages(messages: readonly RendererMessage[], model: Model<Api
 }
 
 async function renderRound(
-  registry: ModelRegistry,
+  modelRuntime: ModelRuntime,
   modelRef: string,
   turn: BenchTurn,
   round: number,
@@ -234,20 +232,18 @@ async function renderRound(
     cost: 0,
   };
   try {
-    const model = resolveModel(registry, modelRef);
-    const auth = await registry.getApiKeyAndHeaders(model);
-    if (!auth.ok) throw new Error(`auth unavailable: ${auth.error}`);
+    const model = resolveModel(modelRuntime, modelRef);
     const started = Date.now();
-    const result = await streamSimple(
-      model,
-      { systemPrompt: turn.systemPrompt, messages: toStreamMessages(turn.messages, model) },
-      {
-        apiKey: auth.apiKey,
-        headers: auth.headers,
-        maxTokens: RENDERER_MAX_TOKENS,
-        reasoning: model.reasoning ? reasoning : undefined,
-      },
-    ).result();
+    const result = await modelRuntime
+      .streamSimple(
+        model,
+        { systemPrompt: turn.systemPrompt, messages: toStreamMessages(turn.messages, model) },
+        {
+          maxTokens: RENDERER_MAX_TOKENS,
+          reasoning: model.reasoning ? reasoning : undefined,
+        },
+      )
+      .result();
     base.ms = Date.now() - started;
     if (result.stopReason === "error" || result.stopReason === "aborted") {
       throw new Error(result.errorMessage ?? `stopReason=${result.stopReason}`);
@@ -273,10 +269,10 @@ async function renderRound(
   return base;
 }
 
-function resolveModel(registry: ModelRegistry, ref: string): Model<Api> {
+function resolveModel(modelRuntime: ModelRuntime, ref: string): Model<Api> {
   const slash = ref.indexOf("/");
   if (slash <= 0) throw new Error(`model ref must be provider/model-id: ${ref}`);
-  const model = registry.find(ref.slice(0, slash), ref.slice(slash + 1));
+  const model = modelRuntime.getModel(ref.slice(0, slash), ref.slice(slash + 1));
   if (model === undefined) throw new Error(`model not found in registry: ${ref}`);
   return model;
 }
@@ -367,16 +363,16 @@ function summaryTable(turn: BenchTurn, results: RoundResult[]): string {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
-  const registry = ModelRegistry.create(AuthStorage.create());
+  const modelRuntime = await ModelRuntime.create({ allowModelNetwork: false });
   const turns = collectBenchTurns(options.session, options.turns);
 
   console.log(`session: ${options.session}`);
   console.log(`turns: ${turns.map((turn) => turn.turn).join(", ")} · rounds: ${options.rounds}`);
   for (const ref of options.models) {
     try {
-      const model = resolveModel(registry, ref);
-      const auth = await registry.getApiKeyAndHeaders(model);
-      console.log(`model ${ref}: ${auth.ok ? "ok" : `AUTH FAIL (${auth.error})`}`);
+      const model = resolveModel(modelRuntime, ref);
+      const auth = await modelRuntime.getAuth(model);
+      console.log(`model ${ref}: ${auth === undefined ? "AUTH FAIL" : "ok"}`);
     } catch (error) {
       console.log(
         `model ${ref}: NOT FOUND (${error instanceof Error ? error.message : String(error)})`,
@@ -416,7 +412,7 @@ async function main(): Promise<void> {
       options.models.map(async (ref) => {
         const results: RoundResult[] = [];
         for (let round = 1; round <= options.rounds; round++) {
-          const result = await renderRound(registry, ref, turn, round, options.reasoning);
+          const result = await renderRound(modelRuntime, ref, turn, round, options.reasoning);
           console.log(
             result.error !== undefined
               ? `  ${ref} r${round}: ERROR ${result.error}`
