@@ -14,11 +14,14 @@
 import type { State } from "../state/state.ts";
 
 import { BACKSTAGE_NO_COST_STREAK_LIMIT } from "./backstage-obligation.ts";
+import { collectBackstageDueNotices } from "./faction-clock.ts";
 
 export function buildBackstageGmBrief(state: State): string {
   const obligations = state.secrets.backstageObligations;
   const pending = state.secrets.backstagePendingHarvests;
   const streak = state.secrets.backstagePressure.consecutiveNoCostTurns;
+  const clocks = state.secrets.factionClocks;
+  const scheduledEvents = state.secrets.scheduledEvents;
 
   const lines: string[] = [];
 
@@ -39,6 +42,24 @@ export function buildBackstageGmBrief(state: State): string {
       );
     }
   }
+
+  if (clocks.length > 0) {
+    lines.push(`阵营时钟 ${clocks.length} 个：`);
+    for (const clock of clocks) {
+      lines.push(
+        `- ${clock.id}｜${clock.label}｜faction=${clock.factionId}｜${clock.filled}/${clock.size}｜visibility=${clock.visibility}`,
+      );
+    }
+  }
+
+  if (scheduledEvents.length > 0) {
+    lines.push(`幕后定时事件 ${scheduledEvents.length} 个：`);
+    for (const event of scheduledEvents) {
+      lines.push(`- ${event.id}｜dueAt=${event.dueAt}｜${event.summary}`);
+    }
+  }
+
+  lines.push(...collectBackstageDueNotices(state));
 
   // 无义务但 no-cost 连击临近阈值：提前预警，GM 可主动起一条后台线避免被自动义务硬推。
   if (obligations.length === 0 && streak >= BACKSTAGE_NO_COST_STREAK_LIMIT - 1) {

@@ -40,3 +40,28 @@ void test("no-cost streak nearing the threshold raises an early pressure warning
   assert.match(brief, /后台压力/);
   assert.match(brief, /阈值 2/);
 });
+
+void test("faction clocks and scheduled events remain discoverable without tool receipts", () => {
+  const state = createInitialState();
+  state.secrets.factionClocks.push({
+    id: "clock-church",
+    factionId: "church",
+    label: "完成封锁",
+    filled: 4,
+    size: 4,
+    visibility: "hidden",
+  });
+  state.secrets.scheduledEvents.push({
+    id: "scheduled-contact",
+    dueAt: state.public.clock.currentAt,
+    summary: "联络人抵达",
+  });
+
+  const brief = buildBackstageGmBrief(state);
+
+  assert.match(brief, /clock-church｜完成封锁/);
+  assert.match(brief, /scheduled-contact｜dueAt=/);
+  assert.match(brief, /阵营时钟已填满/);
+  assert.match(brief, /幕后倒计时已到期/);
+  assert.match(brief, /resolve-due/);
+});
