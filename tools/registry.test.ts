@@ -44,10 +44,15 @@ void test("tool descriptions avoid checklist headings that bait reasoning", () =
 });
 
 void test("registry exposes explicit cross-turn tool-result handoffs", () => {
-  assert.equal(toolResultRetention("commit_turn"), "current-player-turn");
-  assert.equal(toolResultRetention("harvest_backstage_candidate"), "cross-player-turn");
-  assert.equal(toolResultRetention("run_showrunner_audit"), "cross-player-turn");
-  assert.equal(toolResultRetention("unknown_tool"), "current-player-turn");
+  assert.deepEqual(toolResultRetention("commit_turn"), { kind: "current-player-turn" });
+  assert.deepEqual(toolResultRetention("harvest_backstage_candidate"), {
+    kind: "until-tool-call",
+    terminalTools: ["record_offscreen_event", "resolve_backstage_line"],
+  });
+  assert.deepEqual(toolResultRetention("run_showrunner_audit"), {
+    kind: "latest-cross-player-turn",
+  });
+  assert.deepEqual(toolResultRetention("unknown_tool"), { kind: "current-player-turn" });
 });
 
 void test("registry stays a thin list without inline contracts", () => {

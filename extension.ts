@@ -38,10 +38,7 @@ export default function extension(pi: ExtensionAPI): void {
     // 结算器（Pass A）投影：渲染产物不作为对话流消息进结算上下文，但最后一轮渲染正文
     // 作为物理连续性锚注入 pre-response slot，防止跨轮物理状态断裂。
     let lastRenderedProse: string | undefined;
-    const workingSet = projectSettlementWorkingSet(
-      event.messages,
-      (toolName) => toolResultRetention(toolName) === "cross-player-turn",
-    );
+    const workingSet = projectSettlementWorkingSet(event.messages, toolResultRetention);
     const settlementMessages = workingSet
       .filter((message) => {
         if (isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE) {

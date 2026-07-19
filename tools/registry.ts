@@ -76,8 +76,9 @@ const TOOL_DEFINITIONS: readonly FateToolDefinition[] = [
 
 export function toolResultRetention(toolName: string): ToolResultRetention {
   return (
-    TOOL_DEFINITIONS.find((definition) => definition.name === toolName)?.resultRetention ??
-    "current-player-turn"
+    TOOL_DEFINITIONS.find((definition) => definition.name === toolName)?.resultRetention ?? {
+      kind: "current-player-turn",
+    }
   );
 }
 
