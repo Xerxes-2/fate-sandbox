@@ -9,6 +9,18 @@ function user(text: string): Record<string, unknown> {
   return { role: "user", content: [{ type: "text", text }] };
 }
 
+function skillUser(name: string, args?: string): Record<string, unknown> {
+  const block = [
+    `<skill name="${name}" location="/game/skills/${name}/SKILL.md">`,
+    `References are relative to /game/skills/${name}.`,
+    "",
+    `# ${name}`,
+    "large skill instructions",
+    "</skill>",
+  ].join("\n");
+  return user(args === undefined ? block : `${block}\n\n${args}`);
+}
+
 function assistantToolCall(
   id: string,
   name: string,
@@ -206,6 +218,78 @@ void test("completed-turn prefix stays byte-stable while the active loop grows",
     JSON.stringify(initial.slice(0, initialBoundary)),
     JSON.stringify(grown.slice(0, grownBoundary)),
   );
+});
+
+void test("projectSettlementWorkingSet condenses a completed skill expansion", () => {
+  const invocation = skillUser("time-sense", "跳过到第二天");
+  const messages = [
+    invocation,
+    assistantToolCall("packet-1", "submit_direction_packet", {
+      needsRender: true,
+      playerAction: "休息到清晨",
+      resolvedChanges: ["时间推进至次日"],
+    }),
+    toolResult("packet-1", "accepted"),
+    user("出门"),
+  ];
+
+  const projected = projectSettlementWorkingSet(messages, RETENTION_FOR);
+
+  assert.deepEqual(projected[0]?.content, [
+    {
+      type: "text",
+      text: "[已完成技能调用]\n玩家调用 /skill:time-sense\n参数：跳过到第二天",
+    },
+  ]);
+  assert.equal(JSON.stringify(projected).includes("large skill instructions"), false);
+});
+
+void test("projectSettlementWorkingSet retains start-game until initialization crosses a player boundary", () => {
+  const invocation = skillUser("start-game");
+  const collectionPacket = assistantToolCall("packet-1", "submit_direction_packet", {
+    needsRender: false,
+    directReply: "选择开局",
+  });
+  const initialization = assistantToolCall("init-1", "initialize_new_game");
+  const secondTurn = [
+    invocation,
+    collectionPacket,
+    toolResult("packet-1", "accepted"),
+    user("FSF，新手模式"),
+    initialization,
+    toolResult("init-1", "initialized"),
+  ];
+
+  const duringInitialization = projectSettlementWorkingSet(secondTurn, RETENTION_FOR);
+  assert.equal(duringInitialization[0], invocation);
+
+  const afterInitialization = projectSettlementWorkingSet(
+    [...secondTurn, user("环顾四周")],
+    RETENTION_FOR,
+  );
+  assert.deepEqual(afterInitialization[0]?.content, [
+    { type: "text", text: "[已完成技能调用]\n玩家调用 /skill:start-game" },
+  ]);
+});
+
+void test("an earlier initialization does not terminate a newer start-game invocation", () => {
+  const invocation = skillUser("start-game");
+  const messages = [
+    user("旧开局"),
+    assistantToolCall("old-init", "initialize_new_game"),
+    toolResult("old-init", "initialized"),
+    invocation,
+    assistantToolCall("packet-1", "submit_direction_packet", {
+      needsRender: false,
+      directReply: "选择新开局",
+    }),
+    toolResult("packet-1", "accepted"),
+    user("默认"),
+  ];
+
+  const projected = projectSettlementWorkingSet(messages, RETENTION_FOR);
+
+  assert.equal(projected.includes(invocation), true);
 });
 
 void test("projectSettlementWorkingSet preserves all messages before any player input", () => {

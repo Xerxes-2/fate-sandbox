@@ -8,6 +8,10 @@
  */
 
 import { isRecord } from "../core/utils/typebox-validation.ts";
+import {
+  formatSkillPlayerInput,
+  parseSkillInvocation,
+} from "../prompt-assembly/skill-invocation.ts";
 import { PROSE_CUSTOM_TYPE, SUBMIT_DIRECTION_PACKET_TOOL } from "./render-turn.ts";
 
 /** 摘要条目（回合）总数上限（含上次摘要折叠进来的行）。 */
@@ -215,17 +219,25 @@ function excerpt(text: string, maxChars: number): string {
 function playerInputText(message: unknown): string | undefined {
   if (!isRecord(message) || message["role"] !== "user") return undefined;
   const content = message["content"];
-  if (typeof content === "string") return content.trim() === "" ? undefined : content;
+  if (typeof content === "string") return normalizedPlayerText(content);
   if (!Array.isArray(content)) return undefined;
   const text = content
     .filter(
       (part): part is { type: "text"; text: string } =>
         isRecord(part) && part["type"] === "text" && typeof part["text"] === "string",
     )
-    .map((part) => part.text)
+    .map((part) => normalizedPlayerText(part.text))
+    .filter((part): part is string => part !== undefined)
     .join("\n")
     .trim();
   return text === "" ? undefined : text;
+}
+
+function normalizedPlayerText(text: string): string | undefined {
+  const trimmed = text.trim();
+  if (trimmed === "") return undefined;
+  const invocation = parseSkillInvocation(trimmed);
+  return invocation === undefined ? trimmed : formatSkillPlayerInput(invocation);
 }
 
 function submitPacketCall(

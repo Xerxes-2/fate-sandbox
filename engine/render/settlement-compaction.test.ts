@@ -11,6 +11,18 @@ function userMessage(text: string): Record<string, unknown> {
   return { role: "user", content: [{ type: "text", text }], timestamp: 0 };
 }
 
+function skillUserMessage(name: string, args?: string): Record<string, unknown> {
+  const block = [
+    `<skill name="${name}" location="/game/skills/${name}/SKILL.md">`,
+    `References are relative to /game/skills/${name}.`,
+    "",
+    `# ${name}`,
+    "large skill instructions",
+    "</skill>",
+  ].join("\n");
+  return userMessage(args === undefined ? block : `${block}\n\n${args}`);
+}
+
 function packetCallMessage(
   args: Record<string, unknown>,
   toolCallId = "tc",
@@ -94,6 +106,24 @@ void test("meta turns retain a bounded direct reply", () => {
   assert.match(summary, /meta\/OOC 轮，直答：令咒可以强化从者/);
   assert.match(summary, /…$/m);
   assert.ok(summary.length < reply.length + 300);
+});
+
+void test("skill expansions contribute only invocation and arguments to turn chronology", () => {
+  const summary = buildSettlementCompactionSummary(
+    [
+      skillUserMessage("time-sense", "跳过到第二天"),
+      packetCallMessage({
+        needsRender: true,
+        playerAction: "休息到清晨",
+        resolvedChanges: ["时间推进至次日"],
+      }),
+    ],
+    undefined,
+  );
+
+  assert.match(summary, /玩家「\/skill:time-sense 跳过到第二天」/);
+  assert.doesNotMatch(summary, /large skill instructions/);
+  assert.doesNotMatch(summary, /References are relative/);
 });
 
 void test("buildSettlementCompactionSummary includes prose excerpt when prose message exists", () => {

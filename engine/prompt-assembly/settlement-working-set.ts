@@ -2,6 +2,11 @@ import type { ToolResultRetention } from "../../tools/runtime/tool-definition.ts
 
 import { isRecord } from "../core/utils/typebox-validation.ts";
 import { buildSettlementWorkingSetCapsules } from "../render/settlement-compaction.ts";
+import {
+  formatCompletedSkillInvocation,
+  parseSkillInvocation,
+  type SkillInvocation,
+} from "./skill-invocation.ts";
 
 export type ToolResultRetentionPolicy = (toolName: string) => ToolResultRetention;
 
@@ -9,6 +14,14 @@ interface RetainedWorkflowResult {
   toolCallId: string;
   retention: ToolResultRetention & { kind: "until-tool-call" };
 }
+
+interface SuccessfulToolCall {
+  messageIndex: number;
+  name: string;
+}
+
+const START_GAME_SKILL = "start-game";
+const INITIALIZE_NEW_GAME_TOOL = "initialize_new_game";
 
 /**
  * Build the per-call settlement working set without changing the lossless session log.
@@ -25,6 +38,9 @@ export function projectSettlementWorkingSet<TMessage>(
   }
 
   const retainedCallIds = collectRetainedToolCallIds(messages, retentionFor);
+  const successfulPriorCalls = collectSuccessfulToolCalls(messages).filter(
+    (call) => call.messageIndex < latestUserIndex,
+  );
   const capsules = buildSettlementWorkingSetCapsules(messages.slice(0, latestUserIndex));
   const projected: TMessage[] = [];
 
@@ -33,7 +49,13 @@ export function projectSettlementWorkingSet<TMessage>(
       projected.push(message);
       return;
     }
-    const staleMessage = projectCompletedTurnMessage(message, retainedCallIds, capsules);
+    const staleMessage = projectCompletedTurnMessage(
+      message,
+      index,
+      retainedCallIds,
+      capsules,
+      successfulPriorCalls,
+    );
     if (staleMessage !== undefined) {
       projected.push(staleMessage);
     }
@@ -43,11 +65,19 @@ export function projectSettlementWorkingSet<TMessage>(
 
 function projectCompletedTurnMessage<TMessage>(
   message: TMessage,
+  messageIndex: number,
   retainedCallIds: ReadonlySet<string>,
   capsules: ReadonlyMap<string, string>,
+  successfulPriorCalls: readonly SuccessfulToolCall[],
 ): TMessage | undefined {
   if (isToolResult(message)) {
     return retainedCallIds.has(toolResultCallId(message)) ? message : undefined;
+  }
+  const skillInvocation = skillInvocationFromMessage(message);
+  if (skillInvocation !== undefined) {
+    return skillExpansionIsPending(skillInvocation, messageIndex, successfulPriorCalls)
+      ? message
+      : replaceSkillInvocation(message, skillInvocation);
   }
   if (!isRecord(message) || message["role"] !== "assistant") {
     return message;
@@ -84,6 +114,72 @@ function projectCompletedTurnMessage<TMessage>(
     return undefined;
   }
   return replaceMessageContent(message, projectedContent);
+}
+
+function skillExpansionIsPending(
+  invocation: SkillInvocation,
+  invocationIndex: number,
+  successfulPriorCalls: readonly SuccessfulToolCall[],
+): boolean {
+  if (invocation.name !== START_GAME_SKILL) {
+    return false;
+  }
+  return !successfulPriorCalls.some(
+    (call) => call.messageIndex > invocationIndex && call.name === INITIALIZE_NEW_GAME_TOOL,
+  );
+}
+
+function skillInvocationFromMessage(message: unknown): SkillInvocation | undefined {
+  if (!isRecord(message) || message["role"] !== "user") {
+    return undefined;
+  }
+  const content = message["content"];
+  if (typeof content === "string") {
+    return parseSkillInvocation(content);
+  }
+  if (!Array.isArray(content)) {
+    return undefined;
+  }
+  for (const part of content) {
+    if (isRecord(part) && part["type"] === "text" && typeof part["text"] === "string") {
+      const invocation = parseSkillInvocation(part["text"]);
+      if (invocation !== undefined) {
+        return invocation;
+      }
+    }
+  }
+  return undefined;
+}
+
+function replaceSkillInvocation<TMessage>(
+  message: TMessage,
+  invocation: SkillInvocation,
+): TMessage {
+  if (!isRecord(message)) {
+    return message;
+  }
+  const replacement = formatCompletedSkillInvocation(invocation);
+  const content = message["content"];
+  if (typeof content === "string") {
+    return { ...message, content: replacement };
+  }
+  if (!Array.isArray(content)) {
+    return message;
+  }
+  return {
+    ...message,
+    content: content.map((part) => {
+      if (
+        isRecord(part) &&
+        part["type"] === "text" &&
+        typeof part["text"] === "string" &&
+        parseSkillInvocation(part["text"]) !== undefined
+      ) {
+        return { ...part, text: replacement };
+      }
+      return part;
+    }),
+  };
 }
 
 function retainedToolCallShell(part: Record<string, unknown>): Record<string, unknown> {
@@ -148,15 +244,24 @@ function collectSuccessfulToolCallIds(messages: ReadonlyArray<unknown>): Set<str
   return successful;
 }
 
-function collectToolCalls(messages: ReadonlyArray<unknown>): Array<{ id: string; name: string }> {
-  const calls: Array<{ id: string; name: string }> = [];
-  for (const message of messages) {
+function collectSuccessfulToolCalls(messages: ReadonlyArray<unknown>): SuccessfulToolCall[] {
+  const successfulCallIds = collectSuccessfulToolCallIds(messages);
+  return collectToolCalls(messages)
+    .filter((call) => successfulCallIds.has(call.id))
+    .map((call) => ({ messageIndex: call.messageIndex, name: call.name }));
+}
+
+function collectToolCalls(
+  messages: ReadonlyArray<unknown>,
+): Array<{ id: string; messageIndex: number; name: string }> {
+  const calls: Array<{ id: string; messageIndex: number; name: string }> = [];
+  messages.forEach((message, messageIndex) => {
     if (!isRecord(message) || message["role"] !== "assistant") {
-      continue;
+      return;
     }
     const content = message["content"];
     if (!Array.isArray(content)) {
-      continue;
+      return;
     }
     for (const part of content) {
       if (
@@ -165,10 +270,10 @@ function collectToolCalls(messages: ReadonlyArray<unknown>): Array<{ id: string;
         typeof part["id"] === "string" &&
         typeof part["name"] === "string"
       ) {
-        calls.push({ id: part["id"], name: part["name"] });
+        calls.push({ id: part["id"], messageIndex, name: part["name"] });
       }
     }
-  }
+  });
   return calls;
 }
 
