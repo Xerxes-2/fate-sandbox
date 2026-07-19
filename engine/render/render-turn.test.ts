@@ -9,6 +9,7 @@ import {
   lintRenderedProse,
   PROSE_CUSTOM_TYPE,
   redactSecrets,
+  rendererModeForMessages,
   SUBMIT_DIRECTION_PACKET_TOOL,
 } from "./render-turn.ts";
 
@@ -131,7 +132,8 @@ void test("buildRendererMessages builds an append-only conversation shape", () =
   assert.match(final, /# Render Length Floor \(linted\)/);
   assert.match(final, /Minimum readable units for this turn: 295 字\./);
   assert.match(final, /eventWeight=normal; resolvedChanges=1; npcStances=0/);
-  assert.match(final, /First turn # Current Player Input into in-scene action or speech/);
+  assert.match(final, /Continue directly from the latest body prose/);
+  assert.match(final, /do not preface it with renewed environment setup/);
   assert.match(final, /Output only Chinese body prose/);
 });
 
@@ -150,18 +152,27 @@ void test("buildRendererMessages starts the first rendered scene without direct-
   assert.equal(messages.length, 1);
   const openingPrompt = messages[0]?.text ?? "";
   assert.match(openingPrompt, /# Render Mode\n\nOpening Scene — Story Beginning/);
-  assert.match(openingPrompt, /the beginning of a complete story/);
-  assert.match(openingPrompt, /Assume the reader has seen none of the setup conversation/);
-  assert.match(openingPrompt, /the protagonist's lived identity and ordinary role/);
-  assert.match(openingPrompt, /the concrete time and place/);
-  assert.match(openingPrompt, /the normal baseline before supernatural pressure distorts it/);
-  assert.match(openingPrompt, /Introduce each important present character/);
-  assert.match(openingPrompt, /Concise opening orientation is required/);
-  assert.match(openingPrompt, /Do not invent background beyond Current Player Input/);
-  assert.match(openingPrompt, /opening-scene seed, not necessarily the literal first sentence/);
+  assert.match(openingPrompt, /Follow the opening_protocol in the system prompt/);
+  assert.match(openingPrompt, /Treat Current Player Input as premise and setup/);
+  assert.doesNotMatch(
+    openingPrompt,
+    /the normal baseline before supernatural pressure distorts it/,
+  );
   assert.match(openingPrompt, /FSF，新手模式。/);
   assert.doesNotMatch(openingPrompt, /请选择开局/);
   assert.doesNotMatch(openingPrompt, /开始游戏/);
+});
+
+void test("rendererModeForMessages derives mode from rendered prose rather than direct replies", () => {
+  assert.equal(rendererModeForMessages([userMessage("开局")]), "opening");
+  assert.equal(
+    rendererModeForMessages([userMessage("开局"), directReplyMessage("请选择开局。")]),
+    "opening",
+  );
+  assert.equal(
+    rendererModeForMessages([userMessage("第一轮输入"), proseMessage("第一轮正文。")]),
+    "continuation",
+  );
 });
 
 void test("buildRendererMessages excludes direct replies between rendered turns", () => {

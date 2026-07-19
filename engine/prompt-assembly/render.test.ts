@@ -21,9 +21,10 @@ void test("renderer prompt keeps current player input as the first prose seed", 
 
   assert.match(systemRender, /Player Input Render Contract/u);
   assert.match(systemRender, /# Current Player Input` is the prose seed/u);
-  assert.match(systemRender, /literary second-person Chinese/u);
   assert.match(systemRender, /does not replace the raw expression/u);
+  assert.match(systemRender, /second-person Chinese/u);
   assert.match(renderPrompt, /first visible beat belongs to the player's intent/u);
+  assert.match(renderPrompt, /Do not reopen with a scenery lap/u);
 });
 
 void test("output contract blocks assistant delivery wrappers", () => {

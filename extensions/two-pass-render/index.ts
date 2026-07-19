@@ -27,6 +27,7 @@ import {
   findPendingDirectionPacket,
   lintRenderedProse,
   type PendingDirectionPacket,
+  rendererModeForMessages,
   PROSE_CUSTOM_TYPE,
   redactSecrets,
   type RendererMessage,
@@ -199,7 +200,7 @@ async function renderProse(
     return undefined;
   }
 
-  const systemPrompt = buildRendererSystemPrompt();
+  const systemPrompt = buildRendererSystemPrompt(rendererModeForMessages(loopMessages));
   const state = getState();
   const baseMessages = buildRendererMessages(
     loopMessages,

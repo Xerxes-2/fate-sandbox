@@ -1,3 +1,5 @@
+import type { RendererMode } from "../render/render-turn.ts";
+
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -110,11 +112,16 @@ function findLastUserMessageIndex(messages: ReadonlyArray<unknown>): number {
 
 /**
  * 渲染器（Pass B）洁净室 system prompt：render/system.md（角色 + packet 契约）
- * + 全部 render/both 模块，按 slot 顺序与 priority 拼接。零工具 schema、零机械规则。
+ * + 全部 render/both 模块，按 slot 顺序与 priority 拼接。首篇额外注入 opening protocol；
+ * continuation 不携带开篇语义。零工具 schema、零机械规则。
  */
-export function buildRendererSystemPrompt(): string {
+export function buildRendererSystemPrompt(mode: RendererMode): string {
   const sections = [readPromptFile("prompts/render/system.md").trim()];
   for (const slot of ["pre-history", "pre-response", "final-contract"] as const) {
+    if (slot === "final-contract" && mode === "opening") {
+      const openingProtocol = readPromptFile("prompts/render/opening-protocol.md").trim();
+      sections.push(`<opening_protocol>\n${openingProtocol}\n</opening_protocol>`);
+    }
     for (const module of promptModulesForSlot(slot, "render")) {
       sections.push(`<${module.header}>\n${module.body.trim()}\n</${module.header}>`);
     }

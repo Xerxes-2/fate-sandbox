@@ -33,6 +33,7 @@ import {
   findPendingDirectionPacket,
   PROSE_CUSTOM_TYPE,
   type RendererMessage,
+  rendererModeForMessages,
 } from "../engine/render/render-turn.ts";
 
 const PROJECT_ROOT = join(import.meta.dirname, "..");
@@ -129,10 +130,16 @@ function entryToMessage(entry: {
   message?: Record<string, unknown>;
   customType?: string;
   content?: unknown;
+  details?: unknown;
 }): unknown {
   if (entry.type === "message" && entry.message !== undefined) return entry.message;
   if (entry.type === "custom_message" && entry.customType === PROSE_CUSTOM_TYPE) {
-    return { role: "custom", customType: PROSE_CUSTOM_TYPE, content: entry.content };
+    return {
+      role: "custom",
+      customType: PROSE_CUSTOM_TYPE,
+      content: entry.content,
+      details: entry.details,
+    };
   }
   return undefined;
 }
@@ -147,12 +154,15 @@ function collectBenchTurns(sessionPath: string, wanted: number): BenchTurn[] {
 
   const proseIndices: number[] = [];
   messages.forEach((message, index) => {
-    if (isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE) {
+    if (!isRecord(message) || message["customType"] !== PROSE_CUSTOM_TYPE) {
+      return;
+    }
+    const details = message["details"];
+    if (!isRecord(details) || details["kind"] !== "direct-reply") {
       proseIndices.push(index);
     }
   });
 
-  const systemPrompt = buildRendererSystemPrompt();
   const digests = loadProseDigests(join(PROJECT_ROOT, "runtime", "prose-digests.json"));
   const turns: BenchTurn[] = [];
   for (const [ordinal, proseIndex] of proseIndices.entries()) {
@@ -165,7 +175,7 @@ function collectBenchTurns(sessionPath: string, wanted: number): BenchTurn[] {
     turns.push({
       turn: ordinal + 1,
       baseline: typeof baseline === "string" ? baseline : "",
-      systemPrompt,
+      systemPrompt: buildRendererSystemPrompt(rendererModeForMessages(prefix)),
       messages: buildRendererMessages(prefix, pending.packet, digests),
     });
   }

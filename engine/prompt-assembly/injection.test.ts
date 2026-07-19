@@ -61,8 +61,8 @@ void test("injectGmPromptMessages inserts slot-based prompt stack", () => {
   }
 });
 
-void test("buildRendererSystemPrompt assembles clean-room render stack", () => {
-  const prompt = buildRendererSystemPrompt();
+void test("buildRendererSystemPrompt assembles clean-room continuation stack", () => {
+  const prompt = buildRendererSystemPrompt("continuation");
 
   assert.match(prompt, /prose renderer \(Pass B\)/);
   assert.match(prompt, /Direction Packet Contract/);
@@ -71,9 +71,8 @@ void test("buildRendererSystemPrompt assembles clean-room render stack", () => {
   assert.match(prompt, /<render_protocol>/);
   assert.match(prompt, /<protagonist_impression>/);
   assert.match(prompt, /<output_contract>/);
-  assert.match(prompt, /Opening Scene — Story Beginning/);
-  assert.match(prompt, /current input is setup premise rather than prior in-world dialogue/);
-  assert.match(prompt, /first orient a new reader as required by that opening contract/);
+  assert.doesNotMatch(prompt, /Opening Scene — Story Beginning/);
+  assert.doesNotMatch(prompt, /ordinary baseline before supernatural pressure/);
   // 渲染器看不到工具/机械模块
   assert.doesNotMatch(
     prompt,
@@ -83,6 +82,19 @@ void test("buildRendererSystemPrompt assembles clean-room render stack", () => {
   assert.doesNotMatch(prompt, /<backstage_ledger>|后台平行线账本|待 harvest/);
 });
 
+void test("buildRendererSystemPrompt adds opening guidance only for the first prose", () => {
+  const openingPrompt = buildRendererSystemPrompt("opening");
+  const continuationPrompt = buildRendererSystemPrompt("continuation");
+
+  assert.match(openingPrompt, /<opening_protocol>/);
+  assert.match(openingPrompt, /Opening Scene — Story Beginning/);
+  assert.match(openingPrompt, /the beginning of a complete story/);
+  assert.match(openingPrompt, /normal baseline before supernatural pressure/);
+  assert.doesNotMatch(continuationPrompt, /<opening_protocol>/);
+  assert.doesNotMatch(continuationPrompt, /Opening Scene — Story Beginning/);
+  assert.doesNotMatch(continuationPrompt, /normal baseline before supernatural pressure/);
+});
+
 void test("prompt assembly prefers local user prompt overrides", () => {
   resetState();
   const overridePath = "prompts/user/render/protagonist-impression.md";
@@ -90,7 +102,7 @@ void test("prompt assembly prefers local user prompt overrides", () => {
   mkdirSync("prompts/user/render", { recursive: true });
   writeFileSync(overridePath, "# 本地主角印象\n\n本地覆盖测试。\n");
   try {
-    const prompt = buildRendererSystemPrompt();
+    const prompt = buildRendererSystemPrompt("continuation");
 
     assert.match(prompt, /本地覆盖测试/);
     assert.doesNotMatch(prompt, /待填写/);
