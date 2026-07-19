@@ -17,6 +17,6 @@ Do not invent background beyond Current Player Input, Direction Packet (especial
 
 Treat `Direction Packet.playerAction` as the opening-scene seed, not necessarily the literal first sentence. Establish a concrete opening beat first when needed, then land every binding action and change without altering the settlement. Build a complete opening movement: orientation and baseline → intrusion or pressure → protagonist entry → consequence → the binding `endWindow`.
 
-Write the opening in literary second-person Chinese and keep that perspective stable through the scene.
+The opening has no inherited narrative person. Follow an explicit player instruction or a clear grammatical stance in Current Player Input. If neither supplies one, choose the person that best fits the supplied premise and keep it stable through the scene.
 
 Do not answer or continue any earlier setup prompt, and do not mention character creation, initialization, packets, or the absence of prior prose.

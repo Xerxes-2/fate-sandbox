@@ -22,9 +22,23 @@ void test("renderer prompt keeps current player input as the first prose seed", 
   assert.match(systemRender, /Player Input Render Contract/u);
   assert.match(systemRender, /# Current Player Input` is the prose seed/u);
   assert.match(systemRender, /does not replace the raw expression/u);
-  assert.match(systemRender, /second-person Chinese/u);
   assert.match(renderPrompt, /first visible beat belongs to the player's intent/u);
   assert.match(renderPrompt, /Do not reopen with a scenery lap/u);
+});
+
+void test("renderer prompt derives narrative person instead of locking second person", () => {
+  const systemRender = readFileSync("prompts/render/system.md", "utf-8");
+  const renderPrompt = readFileSync("prompts/render/protocol.md", "utf-8");
+
+  assert.match(systemRender, /No narrative person is globally fixed/u);
+  assert.match(systemRender, /explicit player instruction/u);
+  assert.match(
+    systemRender,
+    /preserve the narrative person and focalization of recent body prose/u,
+  );
+  assert.match(systemRender, /choose the person that fits the current input and packet/u);
+  assert.doesNotMatch(systemRender, /second-person Chinese/u);
+  assert.doesNotMatch(renderPrompt, /second-person Chinese/u);
 });
 
 void test("output contract blocks assistant delivery wrappers", () => {

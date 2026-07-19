@@ -71,6 +71,8 @@ void test("buildRendererSystemPrompt assembles clean-room continuation stack", (
   assert.match(prompt, /<render_protocol>/);
   assert.match(prompt, /<protagonist_impression>/);
   assert.match(prompt, /<output_contract>/);
+  assert.match(prompt, /Narrative Perspective Contract/);
+  assert.match(prompt, /No narrative person is globally fixed/);
   assert.doesNotMatch(prompt, /Opening Scene — Story Beginning/);
   assert.doesNotMatch(prompt, /ordinary baseline before supernatural pressure/);
   // 渲染器看不到工具/机械模块

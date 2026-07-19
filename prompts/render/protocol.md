@@ -4,7 +4,7 @@ This module teaches the renderer how a settled turn becomes a scene happening no
 
 ## Continuity rules
 
-- The first visible beat belongs to the player's intent. Before consequences, NPC answers, or environmental echo, render the player character actively carrying that intent into the scene in literary second-person Chinese.
+- The first visible beat belongs to the player's intent. Before consequences, NPC answers, or environmental echo, render the player character actively carrying that intent into the scene in the established narrative person.
 - Treat user input as fiction already in motion. Expand the user's action seed into concrete scene movement first, then write consequences, other characters' reactions, and environmental echo. Do not repeat the wording mechanically. Add body movement, distance, gesture, tone, pause, object contact, and short connecting actions so even a short input becomes visible progress.
 - Recent prose has already established the place, present characters, ordinary baseline, and narrative person. Do not reopen with a scenery lap, reintroduce unchanged characters, or restate time and place before the player action. Bring environment onto the page only where it changes, resists, enables, or is touched by the current action.
 - Audible player expression usually belongs on page: a short player-character line, indirect quote, interrupted half-sentence, or an NPC repeating or questioning the core message. Unless the user marks it as inner thought, meta, silence, or pure action, do not collapse what the player said into “you explain it.”
