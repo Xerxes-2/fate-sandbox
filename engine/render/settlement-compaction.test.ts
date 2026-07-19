@@ -42,21 +42,21 @@ void test("buildSettlementCompactionSummary indexes turns from packet calls", ()
   assert.match(summary, /\[结算上下文截断摘要/);
   assert.match(summary, /以注入的 state 为准/);
   assert.match(summary, /- 玩家「贴上去！」｜Saber 突进→ 受阻；魔力 -10/);
-  assert.match(summary, /- 玩家「规则问题：令咒怎么用？」｜meta\/OOC 轮/);
+  assert.match(summary, /- 玩家「规则问题：令咒怎么用？」｜meta\/OOC 轮，直答：……/);
 });
 
 void test("buildSettlementCompactionSummary folds previous digest lines and caps total", () => {
-  const previousLines = Array.from({ length: 90 }, (_, i) => `- 旧轮 ${i + 1}`).join("\n");
+  const previousLines = Array.from({ length: 170 }, (_, i) => `- 旧轮 ${i + 1}`).join("\n");
   const previous = `[结算上下文截断摘要｜机械生成]\n说明行\n${previousLines}`;
   const summary = buildSettlementCompactionSummary(
     [userMessage("新行动"), packetCallMessage({ needsRender: true, playerAction: "新行动落地" })],
     previous,
   );
 
-  // 90 旧行 + 1 新行 → 保留尾部 80 行，丢弃 11 行
+  // 170 旧行 + 1 新行 → 保留尾部 160 行，丢弃 11 行
   assert.match(summary, /更早的 11 轮索引已丢弃/);
   assert.doesNotMatch(summary, /- 旧轮 11\n/);
-  assert.match(summary, /- 旧轮 90/);
+  assert.match(summary, /- 旧轮 170/);
   assert.match(summary, /- 玩家「新行动」｜新行动落地/);
   assert.doesNotMatch(summary, /说明行/);
 });
@@ -81,6 +81,19 @@ void test("long player input is excerpted", () => {
     undefined,
   );
   assert.match(summary, /…」/);
+  assert.match(summary, /这是一段非常长的玩家输入这是一段非常长的玩家输入/);
+});
+
+void test("meta turns retain a bounded direct reply", () => {
+  const reply = "令咒可以强化从者、强制命令或实现短距离转移。".repeat(10);
+  const summary = buildSettlementCompactionSummary(
+    [userMessage("令咒怎么用？"), packetCallMessage({ needsRender: false, directReply: reply })],
+    undefined,
+  );
+
+  assert.match(summary, /meta\/OOC 轮，直答：令咒可以强化从者/);
+  assert.match(summary, /…$/m);
+  assert.ok(summary.length < reply.length + 300);
 });
 
 void test("buildSettlementCompactionSummary includes prose excerpt when prose message exists", () => {
@@ -116,7 +129,7 @@ function proseMessage(text: string): Record<string, unknown> {
 
 void test("recent turns keep ruling details; older turns collapse to one line", () => {
   const messages: Record<string, unknown>[] = [];
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 16; i++) {
     messages.push(
       userMessage(`行动 ${i}`),
       packetCallMessage({
@@ -138,8 +151,8 @@ void test("recent turns keep ruling details; older turns collapse to one line", 
   }
   const summary = buildSettlementCompactionSummary(messages, undefined);
 
-  // 最近 6 轮（5..10）带细节行；更早（1..4）只有单行索引。
-  assert.match(summary, /⌛ 收尾窗口：窗口 10/);
+  // 最近 12 轮（5..16）带细节行；更早（1..4）只有单行索引。
+  assert.match(summary, /⌛ 收尾窗口：窗口 16/);
   assert.match(summary, /☰ tohsaka-rin：主动动作 5/);
   assert.doesNotMatch(summary, /⌛ 收尾窗口：窗口 4/);
   assert.doesNotMatch(summary, /☰ tohsaka-rin：主动动作 1$/mu);
@@ -148,7 +161,7 @@ void test("recent turns keep ruling details; older turns collapse to one line", 
 
 void test("working-set capsules preserve plot causality without replay-only packet fields", () => {
   const messages: Record<string, unknown>[] = [];
-  for (let index = 1; index <= 8; index++) {
+  for (let index = 1; index <= 14; index++) {
     messages.push(
       userMessage(`行动 ${index}`),
       packetCallMessage(
@@ -166,6 +179,13 @@ void test("working-set capsules preserve plot causality without replay-only pack
               refusesToSay: "秘密",
             },
           ],
+          npcOmissions: [
+            {
+              actorId: "quiet-npc",
+              reasonCode: "watching-silently",
+              playerSafeNote: `静置表现 ${index}`,
+            },
+          ],
           sensoryAnchors: [`只供渲染的意象 ${index}`],
           canonFacts: [`只供渲染的原作事实 ${index}`],
         },
@@ -176,12 +196,13 @@ void test("working-set capsules preserve plot causality without replay-only pack
 
   const capsules = buildSettlementWorkingSetCapsules(messages);
 
-  assert.equal(capsules.size, 8);
-  assert.match(capsules.get("packet-8") ?? "", /玩家「行动 8」｜行动 8 落地→ 变化 8/);
-  assert.match(capsules.get("packet-8") ?? "", /收尾窗口：窗口 8/);
-  assert.match(capsules.get("packet-8") ?? "", /npc：主动动作 8/);
-  assert.doesNotMatch(capsules.get("packet-8") ?? "", /只供渲染的意象/);
-  assert.doesNotMatch(capsules.get("packet-8") ?? "", /只供渲染的原作事实/);
+  assert.equal(capsules.size, 14);
+  assert.match(capsules.get("packet-14") ?? "", /玩家「行动 14」｜行动 14 落地→ 变化 14/);
+  assert.match(capsules.get("packet-14") ?? "", /收尾窗口：窗口 14/);
+  assert.match(capsules.get("packet-14") ?? "", /npc：主动动作 14/);
+  assert.match(capsules.get("packet-14") ?? "", /quiet-npc（watching-silently）：静置表现 14/);
+  assert.doesNotMatch(capsules.get("packet-14") ?? "", /只供渲染的意象/);
+  assert.doesNotMatch(capsules.get("packet-14") ?? "", /只供渲染的原作事实/);
   assert.doesNotMatch(capsules.get("packet-2") ?? "", /收尾窗口/);
 });
 

@@ -11,15 +11,18 @@ import { isRecord } from "../core/utils/typebox-validation.ts";
 import { PROSE_CUSTOM_TYPE, SUBMIT_DIRECTION_PACKET_TOOL } from "./render-turn.ts";
 
 /** 摘要条目（回合）总数上限（含上次摘要折叠进来的行）。 */
-const MAX_DIGEST_LINES = 80;
-const PLAYER_INPUT_EXCERPT_CHARS = 30;
+const MAX_DIGEST_LINES = 160;
+const PLAYER_INPUT_EXCERPT_CHARS = 80;
+const DIRECT_REPLY_EXCERPT_CHARS = 200;
 /**
  * 两层梯度（回流自 lonestar settlement digest）：被压缩区域里最近若干轮在索引行下
- * 额外保留裁决细节（收尾窗口 / NPC 主动 beat / 更长正文摘录）；更早回合只留一行。
+ * 额外保留裁决细节（收尾窗口 / NPC 主动或静置 beat / 更长正文摘录）；更早回合只留一行。
  * 细节行不以 "- " 开头，所以再次 compaction 折叠时自动降级回单行索引。
  */
-const RECENT_FULL_TURNS = 6;
+const RECENT_FULL_TURNS = 12;
 const RECENT_PROSE_EXCERPT_CHARS = 200;
+const END_WINDOW_EXCERPT_CHARS = 120;
+const NPC_BEAT_EXCERPT_CHARS = 100;
 const WORKING_SET_CAPSULE_HEADER = "[已结算剧情胶囊｜机械生成]";
 
 const SUMMARY_HEADER = [
@@ -60,7 +63,7 @@ export function buildSettlementCompactionSummary(
 /**
  * Replace completed direction-packet calls with stable narrative capsules. Each capsule is derived
  * only from its completed turn; adding tool calls inside the current player turn cannot rewrite it.
- * The six-turn detail gradient matches compaction, so only the oldest rich capsule changes per turn.
+ * The twelve-turn detail gradient matches compaction, so only the oldest rich capsule changes per turn.
  */
 export function buildSettlementWorkingSetCapsules(
   messages: ReadonlyArray<unknown>,
@@ -122,14 +125,14 @@ function extractTurnEntries(messages: ReadonlyArray<unknown>): TurnDigestEntry[]
   return entries;
 }
 
-/** 近期轮的裁决细节：收尾窗口 + NPC 主动 beat + 更长正文摘录。 */
+/** 近期轮的裁决细节：收尾窗口 + NPC 主动/静置 beat + 更长正文摘录。 */
 function formatTurnDetails(args: Record<string, unknown>, prose: string | undefined): string[] {
   if (args["needsRender"] === false) {
     return [];
   }
   const details: string[] = [];
   if (typeof args["endWindow"] === "string" && args["endWindow"].trim() !== "") {
-    details.push(`  ⌛ 收尾窗口：${excerpt(args["endWindow"], 80)}`);
+    details.push(`  ⌛ 收尾窗口：${excerpt(args["endWindow"], END_WINDOW_EXCERPT_CHARS)}`);
   }
   if (Array.isArray(args["npcStances"])) {
     for (const stance of args["npcStances"]) {
@@ -138,7 +141,23 @@ function formatTurnDetails(args: Record<string, unknown>, prose: string | undefi
         typeof stance["actorId"] === "string" &&
         typeof stance["move"] === "string"
       ) {
-        details.push(`  ☰ ${stance["actorId"]}：${excerpt(stance["move"], 60)}`);
+        details.push(
+          `  ☰ ${stance["actorId"]}：${excerpt(stance["move"], NPC_BEAT_EXCERPT_CHARS)}`,
+        );
+      }
+    }
+  }
+  if (Array.isArray(args["npcOmissions"])) {
+    for (const omission of args["npcOmissions"]) {
+      if (
+        isRecord(omission) &&
+        typeof omission["actorId"] === "string" &&
+        typeof omission["reasonCode"] === "string" &&
+        typeof omission["playerSafeNote"] === "string"
+      ) {
+        details.push(
+          `  ◌ ${omission["actorId"]}（${omission["reasonCode"]}）：${excerpt(omission["playerSafeNote"], NPC_BEAT_EXCERPT_CHARS)}`,
+        );
       }
     }
   }
@@ -157,7 +176,11 @@ function formatTurnLine(
 ): string {
   const input = excerpt(inputs.join(" / "), PLAYER_INPUT_EXCERPT_CHARS);
   if (args["needsRender"] === false) {
-    return `- 玩家「${input}」｜meta/OOC 轮，直接作答`;
+    const directReply =
+      typeof args["directReply"] === "string"
+        ? excerpt(args["directReply"], DIRECT_REPLY_EXCERPT_CHARS)
+        : "（直答内容缺失）";
+    return `- 玩家「${input}」｜meta/OOC 轮，直答：${directReply}`;
   }
   const playerAction =
     typeof args["playerAction"] === "string" ? args["playerAction"] : "（未知行动）";
