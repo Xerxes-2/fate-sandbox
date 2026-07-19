@@ -6,18 +6,17 @@ import test from "node:test";
 import { toolResultRetention } from "./registry.ts";
 
 /**
- * 工具契约（name/description/parameters）与实现同文件维护；
- * entry schema 必须保持 loose——union 校验交给领域工具/normalizer，
- * 避免 anyOf/literal schema 在模型侧产生不可读报错。
+ * 工具文件只组装参数契约，不重复声明领域 union；模型接口与执行校验需要的
+ * discriminated union 必须由 engine 的权威 schema 导出，避免两套字段漂移。
  */
-void test("tool entry schemas stay loose across all tool files", () => {
+void test("tool files do not redeclare domain unions", () => {
   const forbidden = ["Type", "Union"].join(".");
   for (const file of listToolSourceFiles()) {
     const source = readFileSync(file, "utf-8");
     assert.equal(
       source.includes(forbidden),
       false,
-      `${file}: tool entry schemas must stay loose; domain tools/normalizers should validate unions.`,
+      `${file}: import authoritative domain unions from engine instead of redeclaring them.`,
     );
   }
 });

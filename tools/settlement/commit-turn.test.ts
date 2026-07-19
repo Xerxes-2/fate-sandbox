@@ -32,20 +32,65 @@ function beginBeatViaTool(objectives: string[]): void {
   );
 }
 
-void test("commit_turn publishes nested event requirements to the model", () => {
-  const schema = JSON.stringify(commitTurnToolDefinition.parameters);
-
-  assert.ok(schema.includes('"event":{"type":"object"'));
-  assert.match(schema, /complete-beat/);
-  assert.match(schema, /claims/);
-  assert.match(schema, /record-daily-event/);
-  assert.match(
-    schema,
-    /daily \/ investigation \/ social \/ combat \/ ritual \/ escape \/ downtime/,
+void test("commit_turn publishes exact schemas for discriminator-dependent scene events", () => {
+  const addObjectiveSchema = findSchemaForLiteralKind(
+    commitTurnToolDefinition.parameters,
+    "add-objective",
   );
-  assert.match(schema, /add-objective \/ resolve-objective/);
-  assert.match(schema, /spend-money/);
+  const addThreatSchema = findSchemaForLiteralKind(
+    commitTurnToolDefinition.parameters,
+    "add-threat",
+  );
+
+  assert.deepEqual(addObjectiveSchema["required"], ["kind", "summary", "reason"]);
+  assert.deepEqual(addThreatSchema["required"], ["kind", "summary", "severity", "reason"]);
+  assert.doesNotMatch(JSON.stringify(addObjectiveSchema), /objectiveSummary/);
+  assert.doesNotMatch(JSON.stringify(addThreatSchema), /threatSummary/);
 });
+
+function findSchemaForLiteralKind(value: unknown, kind: string): Record<string, unknown> {
+  const result = tryFindSchemaForLiteralKind(value, kind);
+  if (result === undefined) {
+    throw new Error(`commit_turn schema 没有 kind=${kind} 的精确分支。`);
+  }
+  return result;
+}
+
+function tryFindSchemaForLiteralKind(
+  value: unknown,
+  kind: string,
+): Record<string, unknown> | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  const properties = value["properties"];
+  if (isRecord(properties)) {
+    const kindSchema = properties["kind"];
+    if (isRecord(kindSchema) && kindSchema["const"] === kind) {
+      return value;
+    }
+  }
+  for (const child of Object.values(value)) {
+    if (Array.isArray(child)) {
+      for (const item of child) {
+        const result = tryFindSchemaForLiteralKind(item, kind);
+        if (result !== undefined) {
+          return result;
+        }
+      }
+    } else {
+      const result = tryFindSchemaForLiteralKind(child, kind);
+      if (result !== undefined) {
+        return result;
+      }
+    }
+  }
+  return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 void test("commitTurnTool requires top-level time", () => {
   resetState();

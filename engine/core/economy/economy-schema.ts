@@ -85,12 +85,15 @@ export const ADD_DEBT_EVENT_SCHEMA = Type.Object({
   reason: Type.String({ minLength: 1 }),
 });
 
-export type EconomyEvent =
-  | Static<typeof SPEND_MONEY_EVENT_SCHEMA>
-  | Static<typeof GAIN_MONEY_EVENT_SCHEMA>
-  | Static<typeof ADD_PURSE_EVENT_SCHEMA>
-  | Static<typeof RENAME_PURSE_EVENT_SCHEMA>
-  | Static<typeof ADD_DEBT_EVENT_SCHEMA>;
+export const ECONOMY_EVENT_SCHEMA = Type.Union([
+  SPEND_MONEY_EVENT_SCHEMA,
+  GAIN_MONEY_EVENT_SCHEMA,
+  ADD_PURSE_EVENT_SCHEMA,
+  RENAME_PURSE_EVENT_SCHEMA,
+  ADD_DEBT_EVENT_SCHEMA,
+]);
+
+export type EconomyEvent = Static<typeof ECONOMY_EVENT_SCHEMA>;
 
 const ECONOMY_EVENT_KIND_VALIDATOR = Compile(ECONOMY_EVENT_KIND_SCHEMA);
 const SPEND_MONEY_EVENT_VALIDATOR = Compile(SPEND_MONEY_EVENT_SCHEMA);

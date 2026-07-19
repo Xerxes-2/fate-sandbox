@@ -1,10 +1,11 @@
-import type { ActorConditionEvent, ActorConditionEventResult } from "../actor/actor-condition.ts";
-import type { ScenePresenceInput, ScenePresenceResult } from "../actor/actor.ts";
-import type { ServantFormEvent, ServantFormEventResult } from "../actor/servant.ts";
-import type { EconomyEvent, EconomyEventResult } from "../economy/economy.ts";
-import type { MemoryEvent, MemoryEventResult } from "../memory/memory.ts";
-import type { SceneEvent, SceneEventResult } from "../scene/scene.ts";
+import type { ActorConditionEventResult } from "../actor/actor-condition.ts";
+import type { ScenePresenceResult } from "../actor/actor.ts";
+import type { ServantFormEventResult } from "../actor/servant.ts";
+import type { EconomyEventResult } from "../economy/economy.ts";
+import type { MemoryEventResult } from "../memory/memory.ts";
+import type { SceneEventResult } from "../scene/scene.ts";
 import type { State, TurnTimePolicy } from "../state/state.ts";
+import type { TurnCommitEvent } from "./turn-event-schema.ts";
 
 import { updateActorCondition } from "../actor/actor-condition.ts";
 import { setScenePresence } from "../actor/actor.ts";
@@ -18,13 +19,7 @@ import { assertNoOpenObligations } from "./obligations.ts";
 import { appendTurnLogEntry } from "./turn-log.ts";
 import { applyTurnTime } from "./turn-time.ts";
 
-export type TurnCommitEvent =
-  | { kind: "scene"; event: SceneEvent }
-  | { kind: "scene-presence"; event: ScenePresenceInput }
-  | { kind: "actor-condition"; event: ActorConditionEvent }
-  | { kind: "servant-form"; event: ServantFormEvent }
-  | { kind: "economy"; event: EconomyEvent }
-  | { kind: "memory"; event: MemoryEvent };
+export type { TurnCommitEvent } from "./turn-event-schema.ts";
 
 export interface TurnCommitInput {
   summary: string;

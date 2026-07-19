@@ -108,11 +108,14 @@ export const RECORD_DAILY_SUMMARY_SCHEMA = Type.Object({
   summary: Type.String({ minLength: 1 }),
 });
 
-export type MemoryEvent =
-  | Static<typeof PIN_FACT_EVENT_SCHEMA>
-  | Static<typeof RECORD_MAJOR_EVENT_SCHEMA>
-  | Static<typeof RECORD_DAILY_SUMMARY_SCHEMA>
-  | Static<typeof RECORD_DAILY_EVENT_SCHEMA>;
+export const MEMORY_EVENT_SCHEMA = Type.Union([
+  PIN_FACT_EVENT_SCHEMA,
+  RECORD_MAJOR_EVENT_SCHEMA,
+  RECORD_DAILY_SUMMARY_SCHEMA,
+  RECORD_DAILY_EVENT_SCHEMA,
+]);
+
+export type MemoryEvent = Static<typeof MEMORY_EVENT_SCHEMA>;
 
 const MEMORY_EVENT_KIND_VALIDATOR = Compile(MEMORY_EVENT_KIND_SCHEMA);
 const PIN_FACT_EVENT_VALIDATOR = Compile(PIN_FACT_EVENT_SCHEMA);
