@@ -17,23 +17,27 @@ import type { ToolResult } from "../runtime/tool-result.ts";
 import { Type } from "typebox";
 
 import { clearPendingHarvestByRun } from "../../engine/core/backstage/backstage-pending.ts";
-import { readBackstageCandidateRaw } from "../../engine/core/backstage/backstage-session-read.ts";
+import { waitForBackstageCandidateRaw } from "../../engine/core/backstage/backstage-session-read.ts";
 import { parseParallelLineOutput } from "../../engine/core/backstage/parallel-line-output-schema.ts";
 import { assertNonEmptyString, isRecord } from "../../engine/core/utils/typebox-validation.ts";
 import { runDomainEventTool } from "./domain-tool-runner.ts";
 
-/** sessionDir 仅供测试注入临时夹具目录；生产走默认 BACKSTAGE_SESSION_DIR。 */
-export function harvestBackstageCandidateTool(
+const HARVEST_WAIT_TIMEOUT_MS = 45_000;
+
+/** sessionDir/timeoutMs 仅供测试注入；生产等待 director 最长 45 秒。 */
+export async function harvestBackstageCandidateTool(
   params: unknown,
   sessionManager: unknown,
   sessionDir?: string,
-): ToolResult {
+  signal?: AbortSignal,
+  timeoutMs = HARVEST_WAIT_TIMEOUT_MS,
+): Promise<ToolResult> {
   if (!isRecord(params)) {
     throw new Error("harvest_backstage_candidate 参数必须是对象。");
   }
   const runId = assertNonEmptyString(params["run_id"], "run_id");
   // 读+验收在前（可能报错）；只有取回成功才清掉该 run 的 pending 标记。
-  const raw = readBackstageCandidateRaw(runId, sessionDir);
+  const raw = await waitForBackstageCandidateRaw(runId, { sessionDir, signal, timeoutMs });
   const candidate = parseParallelLineOutput(raw);
   return runDomainEventTool({
     sessionManager,
@@ -76,8 +80,8 @@ export const harvestBackstageCandidateToolDefinition: FateToolDefinition = {
   description:
     "按 run_id 从 director 的持久 session 取回裸候选并过 engine 验收，返回结构合法的 ParallelLineOutput 供审查后落地。\n\n" +
     "【使用边界】\n" +
-    "- run_parallel_line 异步起 director 后，隔轮（约 10-20s）用其返回的 run_id 调本工具；engine 自动定位 session、抽取候选、做结构校验\n" +
-    "- run 尚未产出候选 / run_id 不存在会报错：稍后重试或核对 run_id\n" +
+    "- run_parallel_line 异步起 director 后，用其返回的 run_id 调本工具；单次调用会等待候选（最长 45s），再自动定位 session、抽取候选、做结构校验\n" +
+    "- 45s 内仍无候选会报错并保留 pending-harvest 义务；检查对应 spawn log，不要紧密轮询\n" +
     "- 验收失败（非法 JSON / 缺字段）会报错：重开 director 或修正后重试\n" +
     "流程：run_parallel_line（异步）→ 下一轮 harvest_backstage_candidate(run_id) 验收 → 审查 → record_offscreen_event 落地，或 resolve_backstage_line 关闭义务。\n\n" +
     "禁区：\n" +
@@ -90,6 +94,6 @@ export const harvestBackstageCandidateToolDefinition: FateToolDefinition = {
         "run_parallel_line 返回的 run_id（如 bl-archer-floor1-scout）；engine 按它定位该 director 的持久 session 并取回裸候选",
     }),
   }),
-  execute: async (_toolCallId, params, _signal, _onUpdate, ctx) =>
-    harvestBackstageCandidateTool(params, ctx.sessionManager),
+  execute: async (_toolCallId, params, signal, _onUpdate, ctx) =>
+    harvestBackstageCandidateTool(params, ctx.sessionManager, undefined, signal),
 };

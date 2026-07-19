@@ -85,7 +85,7 @@ void test("run_parallel_line persists a pending-harvest marker", () => {
   }
 });
 
-void test("resolve_backstage_line REFUSES while an unharvested run is pending, then works after harvest", () => {
+void test("resolve_backstage_line REFUSES while an unharvested run is pending, then works after harvest", async () => {
   resetState();
   stubSpawner();
   const dir = mkdtempSync(join(tmpdir(), "fsn-pending-flow-"));
@@ -106,7 +106,7 @@ void test("resolve_backstage_line REFUSES while an unharvested run is pending, t
 
     // harvest retrieves + reviews → clears the pending marker
     writeSession(dir, "bl-caster-ryudou", candidate("caster-ryudou", "no-change"));
-    harvestBackstageCandidateTool({ run_id: "bl-caster-ryudou" }, noopSessionManager(), dir);
+    await harvestBackstageCandidateTool({ run_id: "bl-caster-ryudou" }, noopSessionManager(), dir);
     assert.equal(getState().secrets.backstagePendingHarvests.length, 0);
 
     // now a reviewed no-change resolve is allowed

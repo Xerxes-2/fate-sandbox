@@ -67,12 +67,12 @@ function freshDir(): string {
   return mkdtempSync(join(tmpdir(), "fsn-harvest-"));
 }
 
-void test("harvest reads a run by run_id and guides record_offscreen_event for progress", () => {
+void test("harvest reads a run by run_id and guides record_offscreen_event for progress", async () => {
   const dir = freshDir();
   writeSession(dir, "bl-caster-ryudou", JSON.stringify(VALID_CANDIDATE));
 
   resetState();
-  const result = harvestBackstageCandidateTool(
+  const result = await harvestBackstageCandidateTool(
     { run_id: "bl-caster-ryudou" },
     noopSessionManager(),
     dir,
@@ -85,14 +85,31 @@ void test("harvest reads a run by run_id and guides record_offscreen_event for p
   assert.match(textOf(result), /caster-ryudou/);
 });
 
-void test("harvest tolerates leading/trailing noise around the JSON", () => {
+void test("one harvest call waits for an in-flight director session", async () => {
+  resetState();
+  const dir = freshDir();
+  const pending = harvestBackstageCandidateTool(
+    { run_id: "bl-caster-ryudou" },
+    noopSessionManager(),
+    dir,
+    undefined,
+    1_000,
+  );
+
+  writeSession(dir, "bl-caster-ryudou", JSON.stringify(VALID_CANDIDATE));
+
+  const result = await pending;
+  assert.match(textOf(result), /结构合法/);
+});
+
+void test("harvest tolerates leading/trailing noise around the JSON", async () => {
   const dir = freshDir();
   const raw =
     "Here is the candidate:\n```json\n" + JSON.stringify(VALID_CANDIDATE) + "\n```\nDone.";
   writeSession(dir, "bl-caster-ryudou", raw);
 
   resetState();
-  const result = harvestBackstageCandidateTool(
+  const result = await harvestBackstageCandidateTool(
     { run_id: "bl-caster-ryudou" },
     noopSessionManager(),
     dir,
@@ -102,7 +119,7 @@ void test("harvest tolerates leading/trailing noise around the JSON", () => {
   assert.equal(candidate["lineId"], "caster-ryudou");
 });
 
-void test("harvest picks the NEWEST session when a run was re-spawned", () => {
+void test("harvest picks the NEWEST session when a run was re-spawned", async () => {
   const dir = freshDir();
   writeSession(
     dir,
@@ -118,13 +135,13 @@ void test("harvest picks the NEWEST session when a run was re-spawned", () => {
   );
 
   resetState();
-  const result = harvestBackstageCandidateTool({ run_id: "bl-x" }, noopSessionManager(), dir);
+  const result = await harvestBackstageCandidateTool({ run_id: "bl-x" }, noopSessionManager(), dir);
   const candidate = result.details["candidate"];
   assert.ok(isRecord(candidate));
   assert.equal(candidate["outcome"], "progress");
 });
 
-void test("harvest routes no-change/blocked toward resolve_backstage_line", () => {
+void test("harvest routes no-change/blocked toward resolve_backstage_line", async () => {
   const dir = freshDir();
   writeSession(
     dir,
@@ -133,7 +150,7 @@ void test("harvest routes no-change/blocked toward resolve_backstage_line", () =
   );
 
   resetState();
-  const result = harvestBackstageCandidateTool(
+  const result = await harvestBackstageCandidateTool(
     { run_id: "bl-caster-ryudou" },
     noopSessionManager(),
     dir,
@@ -141,33 +158,39 @@ void test("harvest routes no-change/blocked toward resolve_backstage_line", () =
   assert.match(textOf(result), /resolve_backstage_line/);
 });
 
-void test("harvest rejects a malformed candidate (structure firewall)", () => {
+void test("harvest rejects a malformed candidate (structure firewall)", async () => {
   resetState();
   const dir = freshDir();
   writeSession(dir, "bl-bad", "not json at all");
-  assert.throws(() =>
+  await assert.rejects(
     harvestBackstageCandidateTool({ run_id: "bl-bad" }, noopSessionManager(), dir),
   );
 
   const dir2 = freshDir();
   writeSession(dir2, "bl-partial", JSON.stringify({ lineId: "x", outcome: "progress" }));
-  assert.throws(() =>
+  await assert.rejects(
     harvestBackstageCandidateTool({ run_id: "bl-partial" }, noopSessionManager(), dir2),
   );
 });
 
-void test("harvest requires a non-empty run_id", () => {
+void test("harvest requires a non-empty run_id", async () => {
   resetState();
   const dir = freshDir();
-  assert.throws(() => harvestBackstageCandidateTool({}, noopSessionManager(), dir));
-  assert.throws(() => harvestBackstageCandidateTool({ run_id: "" }, noopSessionManager(), dir));
+  await assert.rejects(harvestBackstageCandidateTool({}, noopSessionManager(), dir));
+  await assert.rejects(harvestBackstageCandidateTool({ run_id: "" }, noopSessionManager(), dir));
 });
 
-void test("harvest reports a clear error when the run is not found", () => {
+void test("harvest reports a timeout when the run is not found", async () => {
   resetState();
   const dir = freshDir();
-  assert.throws(
-    () => harvestBackstageCandidateTool({ run_id: "bl-missing" }, noopSessionManager(), dir),
-    /找不到 run_id=bl-missing/,
+  await assert.rejects(
+    harvestBackstageCandidateTool(
+      { run_id: "bl-missing" },
+      noopSessionManager(),
+      dir,
+      undefined,
+      10,
+    ),
+    /未产出候选.*run_id=bl-missing/,
   );
 });

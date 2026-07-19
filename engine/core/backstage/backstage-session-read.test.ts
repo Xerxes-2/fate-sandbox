@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { extractLastAssistantText, readBackstageCandidateRaw } from "./backstage-session-read.ts";
+import {
+  extractLastAssistantText,
+  readBackstageCandidateRaw,
+  waitForBackstageCandidateRaw,
+} from "./backstage-session-read.ts";
 
 function assistantLine(text: string): string {
   return JSON.stringify({
@@ -73,6 +77,19 @@ void test("readBackstageCandidateRaw picks the newest of several runs (ISO prefi
     SESSION_HEADER + "\n" + assistantLine("new") + "\n",
   );
   assert.equal(readBackstageCandidateRaw("bl-x", dir), "new");
+});
+
+void test("waitForBackstageCandidateRaw waits for an in-flight session", async () => {
+  const dir = freshDir();
+  const path = join(dir, "2026-06-22T07-42-09-399Z_bl-archer.jsonl");
+  const pending = waitForBackstageCandidateRaw("bl-archer", {
+    sessionDir: dir,
+    timeoutMs: 1_000,
+  });
+
+  writeFileSync(path, `${SESSION_HEADER}\n${assistantLine("ready")}\n`);
+
+  assert.equal(await pending, "ready");
 });
 
 void test("readBackstageCandidateRaw throws for an unknown run_id", () => {
