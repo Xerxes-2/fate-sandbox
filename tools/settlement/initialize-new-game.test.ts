@@ -76,7 +76,7 @@ void test("initializeNewGameTool initializes servant protagonist hidden true nam
       kind: "servant-protagonist",
       campaign: { presetId: "fsf_2008_snowfield" },
       protagonist: {
-        actorId: "snowfield-saber",
+        actorId: "servant-saber",
         internalName: "Saber",
         publicIdentity: "刚现界且真名未公开的 Saber",
         apparentAge: "青年",
@@ -96,12 +96,12 @@ void test("initializeNewGameTool initializes servant protagonist hidden true nam
   );
 
   const state = getStateDetail(sessionManager);
-  assert.equal(state.public.protagonistActorId, "snowfield-saber");
+  assert.equal(state.public.protagonistActorId, "servant-saber");
   assert.equal(
-    state.public.actors["snowfield-saber"]?.servantForm?.identity.trueName.status,
+    state.public.actors["servant-saber"]?.servantForm?.identity.trueName.status,
     "hidden",
   );
-  assert.equal(state.secrets.actorStates["snowfield-saber"]?.secrets !== undefined, true);
+  assert.equal(state.secrets.actorStates["servant-saber"]?.secrets !== undefined, true);
 });
 
 void test("initializeNewGameTool rejects public revealed servant protagonist true name", () => {
@@ -114,7 +114,7 @@ void test("initializeNewGameTool rejects public revealed servant protagonist tru
           kind: "servant-protagonist",
           campaign: { presetId: "fsf_2008_snowfield" },
           protagonist: {
-            actorId: "snowfield-saber",
+            actorId: "servant-saber",
             internalName: "Saber",
             publicIdentity: "真名不该公开的 Saber",
             apparentAge: "青年",
@@ -140,7 +140,7 @@ void test("initializeNewGameTool coerces scalar reveal conditions into an array"
       kind: "servant-protagonist",
       campaign: { presetId: "fsf_2008_snowfield" },
       protagonist: {
-        actorId: "snowfield-saber",
+        actorId: "servant-saber",
         internalName: "Saber",
         publicIdentity: "刚现界且真名未公开的 Saber",
         apparentAge: "青年",
@@ -157,7 +157,7 @@ void test("initializeNewGameTool coerces scalar reveal conditions into an array"
     createMockSessionManager(),
   );
 
-  const trueName = getState().secrets.actorStates["snowfield-saber"]?.secrets?.trueName;
+  const trueName = getState().secrets.actorStates["servant-saber"]?.secrets?.trueName;
   assert.equal(trueName?.value, "隐藏真名");
   assert.deepEqual(trueName?.revealConditions, ["剧情内证据"]);
 });

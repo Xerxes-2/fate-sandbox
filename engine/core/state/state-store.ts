@@ -254,7 +254,7 @@ function assertPlayerActorId(value: string): string {
   const actorId = assertNonEmptyString(value, "playerActorId");
   if (!ACTOR_ID_PATTERN.test(actorId)) {
     throw new Error(
-      "非法 playerActorId：必须是至少两个 kebab-case 段组成的公开角色身份 ID，例如 ayaka-sajyou 或 snowfield-saber。",
+      "非法 playerActorId：必须是至少两个 kebab-case 段组成的公开角色身份 ID，例如 ayaka-sajyou 或 servant-saber。",
     );
   }
   return actorId;

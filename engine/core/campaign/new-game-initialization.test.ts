@@ -55,7 +55,7 @@ void describe("initializeNewGame", () => {
       kind: "servant-protagonist",
       campaign: { presetId: "fsf_2008_snowfield" },
       protagonist: {
-        actorId: "snowfield-saber",
+        actorId: "servant-saber",
         internalName: "Saber",
         publicIdentity: "刚现界且真名未公开的 Saber",
         apparentAge: "青年",
@@ -73,11 +73,11 @@ void describe("initializeNewGame", () => {
     });
 
     const state = draft;
-    const protagonist = state.public.actors["snowfield-saber"];
+    const protagonist = state.public.actors["servant-saber"];
 
-    assert.equal(state.public.protagonistActorId, "snowfield-saber");
+    assert.equal(state.public.protagonistActorId, "servant-saber");
     assert.equal(protagonist?.servantForm?.identity.trueName.status, "hidden");
     assert.equal(protagonist?.servantForm?.identity.trueName.display, "Saber");
-    assert.notEqual(state.secrets.actorStates["snowfield-saber"]?.secrets, undefined);
+    assert.notEqual(state.secrets.actorStates["servant-saber"]?.secrets, undefined);
   });
 });
