@@ -49,7 +49,11 @@ function normalizeNpcInput(value: unknown): unknown {
   if (!isRecord(value)) {
     return value;
   }
-  return { ...value, publicRoles: normalizeMasterRoles(value["publicRoles"]) };
+  return {
+    ...value,
+    publicRoles: normalizeMasterRoles(value["publicRoles"]),
+    ordinaryItems: value["ordinaryItems"] === undefined ? [] : value["ordinaryItems"],
+  };
 }
 
 function normalizeServantInput(value: unknown): unknown {

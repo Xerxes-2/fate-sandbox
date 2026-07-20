@@ -44,6 +44,31 @@ void test("upsertActorTool normalizes placeholder master fields for masterless s
   assert.equal(contract?.masterName, null);
 });
 
+void test("upsertActorTool defaults omitted public NPC ordinary items", () => {
+  resetState();
+
+  upsertActorTool(
+    {
+      kind: "upsert-public-npc",
+      npc: {
+        id: "ordinary-human",
+        kind: "human",
+        internalName: "普通市民",
+        publicIdentity: "附近居民",
+        apparentAge: "成年人",
+        outfit: { label: "便服", details: "朴素的日常衣物。" },
+        demeanor: "神情平静",
+        publicRoles: [],
+        relationshipToProtagonist: { stance: "neutral", summary: "尚不相识。" },
+      },
+      reason: "测试普通物品缺省值。",
+    },
+    createNoopSessionManager(),
+  );
+
+  assert.deepEqual(getState().public.actors["ordinary-human"]?.inventory.ordinaryItems, []);
+});
+
 void test("upsertActorTool defaults omitted public NPC master role fields", () => {
   resetState();
 
