@@ -13,7 +13,10 @@ import { syncStateFromSessionManager } from "./engine/core/state/session-hydrati
 import { isRecord } from "./engine/core/utils/typebox-validation.ts";
 import { beginTurnTrace, dumpPassA } from "./engine/debug/api-trace.ts";
 import { maybeForceCompact } from "./engine/debug/force-compact.ts";
-import { buildSystemPrompt, injectGmPromptMessages } from "./engine/prompt-assembly/injection.ts";
+import {
+  buildSettlementSystemPrompt,
+  injectGmPromptMessages,
+} from "./engine/prompt-assembly/injection.ts";
 import { projectSettlementWorkingSet } from "./engine/prompt-assembly/settlement-working-set.ts";
 import { findLatestNarrativeProse, PROSE_CUSTOM_TYPE } from "./engine/render/render-turn.ts";
 import { stripLeakedSettlementProse } from "./engine/render/settlement-prose-firewall.ts";
@@ -30,7 +33,7 @@ export default function extension(pi: ExtensionAPI): void {
     beginTurnTrace(new Date().toISOString());
     // Dev 开关：回合开始前强制触发一次压缩，演练 compaction-policy 的确定性接管路径。
     maybeForceCompact(ctx);
-    return { systemPrompt: buildSystemPrompt(event.systemPrompt) };
+    return { systemPrompt: buildSettlementSystemPrompt(event.systemPromptOptions) };
   });
 
   pi.on("context", async (event, ctx) => {

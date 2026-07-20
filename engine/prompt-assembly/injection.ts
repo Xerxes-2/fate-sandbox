@@ -1,5 +1,8 @@
+import type { BuildSystemPromptOptions } from "@earendil-works/pi-coding-agent";
+
 import type { RendererMode } from "../render/render-turn.ts";
 
+import { formatSkillsForPrompt } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,12 +46,14 @@ interface PromptModule {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..", "..");
 
-export function buildSystemPrompt(baseSystemPrompt: string): string {
-  return (
-    baseSystemPrompt +
-    "\n" +
-    readFileSync(join(PROJECT_ROOT, "prompts", "settlement/system.md"), "utf-8")
-  );
+export function buildSettlementSystemPrompt(options: BuildSystemPromptOptions): string {
+  const sections = [readPromptFile("prompts/settlement/system.md").trim()];
+  const skills = options.skills ?? [];
+  if (skills.length > 0 && options.selectedTools?.includes("read") === true) {
+    sections.push(formatSkillsForPrompt(skills).trim());
+  }
+  sections.push(`Current working directory: ${options.cwd}`);
+  return sections.join("\n\n");
 }
 
 /** 结算器（Pass A）主循环注入：只装 settlement/both 模块，零 style/render 模块。 */

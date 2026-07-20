@@ -5,7 +5,7 @@ import test from "node:test";
 import { resetState } from "../core/state/state-store.ts";
 import {
   buildRendererSystemPrompt,
-  buildSystemPrompt,
+  buildSettlementSystemPrompt,
   injectGmPromptMessages,
 } from "./injection.ts";
 
@@ -15,16 +15,37 @@ interface UserMessage {
   timestamp: number;
 }
 
-void test("buildSystemPrompt appends only the settlement director identity", () => {
-  const systemPrompt = buildSystemPrompt("base");
+void test("buildSettlementSystemPrompt keeps skills without the coding-agent identity", () => {
+  const systemPrompt = buildSettlementSystemPrompt({
+    cwd: "/game",
+    selectedTools: ["read", "lookup"],
+    skills: [
+      {
+        name: "start-game",
+        description: "Start a new game.",
+        filePath: "/game/skills/start-game/SKILL.md",
+        baseDir: "/game/skills/start-game",
+        sourceInfo: {
+          path: "/game/skills/start-game/SKILL.md",
+          source: "path",
+          scope: "temporary",
+          origin: "top-level",
+        },
+        disableModelInvocation: false,
+      },
+    ],
+  });
 
-  assert.match(systemPrompt, /base/);
   assert.match(systemPrompt, /Type-Moon \(Fate\) directed-narrative/);
   assert.match(systemPrompt, /settlement director/);
   assert.match(systemPrompt, /submit_direction_packet/);
+  assert.match(systemPrompt, /<available_skills>/);
+  assert.match(systemPrompt, /<name>start-game<\/name>/);
+  assert.match(systemPrompt, /Use the read tool to load a skill/);
+  assert.match(systemPrompt, /Current working directory: \/game/);
+  assert.doesNotMatch(systemPrompt, /expert coding assistant|Available tools:|Pi documentation/);
   assert.doesNotMatch(systemPrompt, /narrator \(GM\)/u);
-  assert.doesNotMatch(systemPrompt, /Internal Check Module/);
-  assert.doesNotMatch(systemPrompt, /Final Output Contract/);
+  assert.doesNotMatch(systemPrompt, /Internal Check Module|Final Output Contract/);
 });
 
 void test("injectGmPromptMessages omits runtime projections before state initialization", () => {
