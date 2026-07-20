@@ -4,12 +4,18 @@ import type { DirectionPacket } from "../../engine/render/packet-schema.ts";
 import type { TwoPassRenderLifecycleApi } from "./index.ts";
 import type { PendingProseDelivery } from "./prose-delivery.ts";
 
+import { SessionManager } from "@earendil-works/pi-coding-agent";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { SUBMIT_DIRECTION_PACKET_TOOL } from "../../engine/render/render-turn.ts";
+import {
+  PROSE_CUSTOM_TYPE,
+  rendererModeForMessages,
+  SUBMIT_DIRECTION_PACKET_TOOL,
+} from "../../engine/render/render-turn.ts";
 import { deliverSettledProse, registerTwoPassRenderLifecycle } from "./index.ts";
 import { createProseDelivery, createSettledProseDelivery } from "./prose-delivery.ts";
+import { sessionEntriesToRendererMessages } from "./reroll.ts";
 
 const RENDER_PACKET: DirectionPacket = {
   needsRender: true,
@@ -109,6 +115,18 @@ void test("settled rendered prose forwards suggested actions and clears its prev
   assert.equal(clearCount, 1);
 });
 
+void test("renderer history uses the active session branch after settlement projection removes prose", () => {
+  const sessionManager = SessionManager.inMemory();
+  sessionManager.appendCustomMessageEntry(PROSE_CUSTOM_TYPE, "上一轮已经渲染的正文。", true, {
+    kind: "rendered",
+  });
+
+  const messages = sessionEntriesToRendererMessages(sessionManager.getBranch());
+
+  assert.equal(rendererModeForMessages(messages), "continuation");
+  assert.equal(messages.length, 1);
+});
+
 void test("two-pass lifecycle appends a packet once on agent_settled and cleans widgets", async () => {
   let agentEnd: Parameters<TwoPassRenderLifecycleApi["onAgentEnd"]>[0] | undefined;
   let agentSettled: Parameters<TwoPassRenderLifecycleApi["onAgentSettled"]>[0] | undefined;
@@ -129,9 +147,13 @@ void test("two-pass lifecycle appends a packet once on agent_settled and cleans 
   assert.ok(agentEnd);
   assert.ok(agentSettled);
 
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This direct-reply seam reads only hasUI, isIdle, and ui.setWidget; constructing unrelated runtime registries would obscure the behavior under test.
+  const sessionManager = SessionManager.inMemory();
+  const contextSessionManager: ExtensionContext["sessionManager"] = sessionManager;
+  const hasUI: boolean = true;
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- This direct-reply seam reads only session history, hasUI, isIdle, and ui.setWidget; constructing unrelated runtime registries would obscure the behavior under test.
   const ctx = {
-    hasUI: true,
+    sessionManager: contextSessionManager,
+    hasUI,
     isIdle: () => false,
     ui: {
       setWidget(key: string, value: unknown): void {
@@ -168,6 +190,11 @@ void test("two-pass lifecycle appends a packet once on agent_settled and cleans 
       },
     ],
   };
+  const eventMessage = event.messages[0];
+  if (eventMessage?.role !== "assistant") {
+    throw new Error("expected direct-reply assistant message");
+  }
+  sessionManager.appendMessage(eventMessage);
 
   await agentEnd(event, ctx);
   await agentEnd(event, ctx);

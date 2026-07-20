@@ -37,7 +37,7 @@ import { stripLeakedSettlementProse } from "../../engine/render/settlement-prose
 import { stripThinkingResidue, THINKING_PREFILL_TEXT } from "../../engine/render/strip-thinking.ts";
 import { setChoiceWidget } from "../player-choices/index.ts";
 import { createProseDelivery, createSettledProseDelivery } from "./prose-delivery.ts";
-import { registerRerollCommand } from "./reroll.ts";
+import { registerRerollCommand, sessionEntriesToRendererMessages } from "./reroll.ts";
 
 const RENDERER_MAX_TOKENS = 8192;
 const DEFAULT_RENDER_LINT_RETRIES = 3;
@@ -108,8 +108,11 @@ export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): 
   const renderedToolCallIds = new Set<string>();
   const proseDelivery = createSettledProseDelivery();
 
-  api.onAgentEnd(async (event, ctx) => {
-    const pending = readPendingPacket(event.messages, ctx);
+  api.onAgentEnd(async (_event, ctx) => {
+    // agent_end.messages 已经过 Pass A 的 Settlement Working Set 投影，其中正文被有意删除。
+    // Pass B 必须从当前 session branch 读取自己的历史，否则每轮都会被误判为 opening。
+    const renderMessages = sessionEntriesToRendererMessages(ctx.sessionManager.getBranch());
+    const pending = readPendingPacket(renderMessages, ctx);
     if (pending === undefined || renderedToolCallIds.has(pending.toolCallId)) {
       return;
     }
@@ -121,7 +124,7 @@ export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): 
     }
     syncStateFromSessionManager(ctx.sessionManager);
     const unrevealedSecrets = collectUnrevealedSecretStrings(getState().secrets);
-    const prose = await renderProse(ctx, event.messages, packet, unrevealedSecrets);
+    const prose = await renderProse(ctx, renderMessages, packet, unrevealedSecrets);
     if (prose === undefined) {
       proseDelivery.queue(createProseDelivery(packet));
       return;
