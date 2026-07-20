@@ -15,7 +15,7 @@ import { beginTurnTrace, dumpPassA } from "./engine/debug/api-trace.ts";
 import { maybeForceCompact } from "./engine/debug/force-compact.ts";
 import { buildSystemPrompt, injectGmPromptMessages } from "./engine/prompt-assembly/injection.ts";
 import { projectSettlementWorkingSet } from "./engine/prompt-assembly/settlement-working-set.ts";
-import { PROSE_CUSTOM_TYPE } from "./engine/render/render-turn.ts";
+import { findLatestNarrativeProse, PROSE_CUSTOM_TYPE } from "./engine/render/render-turn.ts";
 import { stripLeakedSettlementProse } from "./engine/render/settlement-prose-firewall.ts";
 import { registerAllTools, toolResultRetention } from "./tools/registry.ts";
 
@@ -37,19 +37,10 @@ export default function extension(pi: ExtensionAPI): void {
     syncStateFromSessionManager(ctx.sessionManager);
     // 结算器（Pass A）投影：渲染产物不作为对话流消息进结算上下文，但最后一轮渲染正文
     // 作为物理连续性锚注入 pre-response slot，防止跨轮物理状态断裂。
-    let lastRenderedProse: string | undefined;
     const workingSet = projectSettlementWorkingSet(event.messages, toolResultRetention);
+    const lastRenderedProse = findLatestNarrativeProse(workingSet);
     const settlementMessages = workingSet
-      .filter((message) => {
-        if (isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE) {
-          const text = extractProseText(message);
-          if (text.length > 0) {
-            lastRenderedProse = text;
-          }
-          return false;
-        }
-        return true;
-      })
+      .filter((message) => !(isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE))
       // 在此过滤 message_end 上线前已写入历史的结算器误写正文：只整形
       // 传给结算模型的 per-call 视图，不改存档。新存档由 message_end 源头收口，
       // 这层负责处理老存档，二者互补。
@@ -75,23 +66,4 @@ export default function extension(pi: ExtensionAPI): void {
   });
 
   registerAllTools(pi);
-}
-
-/** 从 fsn-prose custom message 中提取纯文本。 */
-function extractProseText(message: Record<string, unknown>): string {
-  const content = message["content"];
-  if (typeof content === "string") {
-    return content.trim();
-  }
-  if (!Array.isArray(content)) {
-    return "";
-  }
-  return content
-    .filter(
-      (part): part is { type: "text"; text: string } =>
-        isRecord(part) && part["type"] === "text" && typeof part["text"] === "string",
-    )
-    .map((part) => part.text)
-    .join("\n")
-    .trim();
 }

@@ -5,6 +5,7 @@ import { parseDirectionPacket } from "./packet-schema.ts";
 import {
   buildLintRetryMessages,
   buildRendererMessages,
+  findLatestNarrativeProse,
   findPendingDirectionPacket,
   lintRenderedProse,
   PROSE_CUSTOM_TYPE,
@@ -161,6 +162,20 @@ void test("buildRendererMessages starts the first rendered scene without direct-
   assert.match(openingPrompt, /FSF，新手模式。/);
   assert.doesNotMatch(openingPrompt, /请选择开局/);
   assert.doesNotMatch(openingPrompt, /开始游戏/);
+});
+
+void test("findLatestNarrativeProse ignores a later direct reply", () => {
+  assert.equal(
+    findLatestNarrativeProse([
+      proseMessage("真正的上一轮正文。"),
+      directReplyMessage("请选择开局。"),
+    ]),
+    "真正的上一轮正文。",
+  );
+});
+
+void test("findLatestNarrativeProse returns undefined for direct-reply-only history", () => {
+  assert.equal(findLatestNarrativeProse([directReplyMessage("请选择开局。")]), undefined);
 });
 
 void test("rendererModeForMessages derives mode from rendered prose rather than direct replies", () => {

@@ -93,6 +93,20 @@ export function rendererModeForMessages(messages: ReadonlyArray<unknown>): Rende
   return collectRenderedTurns(messages).turns.length === 0 ? "opening" : "continuation";
 }
 
+export function findLatestNarrativeProse(messages: ReadonlyArray<unknown>): string | undefined {
+  let latest: string | undefined;
+  for (const message of messages) {
+    if (!isProseMessage(message) || isDirectReplyMessage(message)) {
+      continue;
+    }
+    const text = customMessageText(message).trim();
+    if (text.length > 0) {
+      latest = text;
+    }
+  }
+  return latest;
+}
+
 export function buildRendererMessages(
   messages: ReadonlyArray<unknown>,
   packet: DirectionPacket,
