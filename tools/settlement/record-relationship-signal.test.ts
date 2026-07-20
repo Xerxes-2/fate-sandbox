@@ -9,8 +9,8 @@ void test("recordRelationshipSignalTool writes player-known and secret ledgers",
 
   const publicResult = recordRelationshipSignalTool(
     {
-      actorId: "protagonist",
-      targetActorId: "protagonist",
+      actorId: "actor-1",
+      targetActorId: "actor-1",
       signal: "she changes the subject before the apology",
       interpretation: "guarded concern",
       boundary: "not a confession",
@@ -20,8 +20,8 @@ void test("recordRelationshipSignalTool writes player-known and secret ledgers",
   );
   recordRelationshipSignalTool(
     {
-      actorId: "protagonist",
-      targetActorId: "protagonist",
+      actorId: "actor-1",
+      targetActorId: "actor-1",
       signal: "she checks whether the family name lands",
       interpretation: "private test",
       boundary: "do not render the test directly",
@@ -45,8 +45,8 @@ void test("recordRelationshipSignalTool rejects invalid visibility and actors", 
     () =>
       recordRelationshipSignalTool(
         {
-          actorId: "protagonist",
-          targetActorId: "protagonist",
+          actorId: "actor-1",
+          targetActorId: "actor-1",
           signal: "pause",
           interpretation: "concern",
           boundary: "not confession",
@@ -62,7 +62,7 @@ void test("recordRelationshipSignalTool rejects invalid visibility and actors", 
       recordRelationshipSignalTool(
         {
           actorId: "ghost",
-          targetActorId: "protagonist",
+          targetActorId: "actor-1",
           signal: "pause",
           interpretation: "concern",
           boundary: "not confession",

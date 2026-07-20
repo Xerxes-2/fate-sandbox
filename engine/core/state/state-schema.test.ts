@@ -24,12 +24,13 @@ void test("parseStateSchema rejects unknown enum values with field path", () => 
 
 void test("parseStateSchema rejects actor registry key mismatch", () => {
   const raw = rawState();
+  const playerActorId = defaultPlayerActorId(raw);
   const actors = section(section(raw, "public"), "actors");
-  actors["impostor"] = actors["protagonist"];
+  actors["impostor"] = actors[playerActorId];
 
   assert.throws(
     () => parseStateSchema(raw),
-    /actor registry key impostor 与 actor\.id protagonist 不一致/,
+    new RegExp(`actor registry key impostor 与 actor\\.id ${playerActorId} 不一致`),
   );
 });
 
@@ -78,10 +79,11 @@ void test("parseStateSchema rejects malformed ISO instants", () => {
 
 void test("parseStateSchema rejects actorStates bundle key mismatch and orphans", () => {
   const mismatch = rawState();
-  section(section(mismatch, "secrets"), "actorStates")["protagonist"] = { actorId: "saber" };
+  const playerActorId = defaultPlayerActorId(mismatch);
+  section(section(mismatch, "secrets"), "actorStates")[playerActorId] = { actorId: "saber" };
   assert.throws(
     () => parseStateSchema(mismatch),
-    /actorStates key protagonist 与 actorId saber 不一致/,
+    new RegExp(`actorStates key ${playerActorId} 与 actorId saber 不一致`),
   );
 
   const orphan = rawState();
@@ -99,8 +101,9 @@ void test("parseStateSchema rejects actorStates bundle key mismatch and orphans"
 
 void test("parseStateSchema validates actor agenda facet actorId against bundle key", () => {
   const raw = rawState();
-  section(section(raw, "secrets"), "actorStates")["protagonist"] = {
-    actorId: "protagonist",
+  const playerActorId = defaultPlayerActorId(raw);
+  section(section(raw, "secrets"), "actorStates")[playerActorId] = {
+    actorId: playerActorId,
     agenda: {
       actorId: "saber",
       goal: "leave the school gate",
@@ -112,14 +115,15 @@ void test("parseStateSchema validates actor agenda facet actorId against bundle 
 
   assert.throws(
     () => parseStateSchema(raw),
-    /actorStates.protagonist.agenda.actorId saber 与 key 不一致/,
+    new RegExp(`actorStates\\.${playerActorId}\\.agenda\\.actorId saber 与 key 不一致`),
   );
 });
 
 void test("parseStateSchema validates actor knowledge lens facet actorId against bundle key", () => {
   const raw = rawState();
-  section(section(raw, "secrets"), "actorStates")["protagonist"] = {
-    actorId: "protagonist",
+  const playerActorId = defaultPlayerActorId(raw);
+  section(section(raw, "secrets"), "actorStates")[playerActorId] = {
+    actorId: playerActorId,
     knowledgeLens: {
       actorId: "saber",
       knows: ["A"],
@@ -131,16 +135,17 @@ void test("parseStateSchema validates actor knowledge lens facet actorId against
 
   assert.throws(
     () => parseStateSchema(raw),
-    /actorStates.protagonist.knowledgeLens.actorId saber 与 key 不一致/,
+    new RegExp(`actorStates\\.${playerActorId}\\.knowledgeLens\\.actorId saber 与 key 不一致`),
   );
 });
 
 void test("parseStateSchema normalizes actor agenda independent-action time", () => {
   const raw = rawState();
-  section(section(raw, "secrets"), "actorStates")["protagonist"] = {
-    actorId: "protagonist",
+  const playerActorId = defaultPlayerActorId(raw);
+  section(section(raw, "secrets"), "actorStates")[playerActorId] = {
+    actorId: playerActorId,
     agenda: {
-      actorId: "protagonist",
+      actorId: playerActorId,
       goal: "cross the gate",
       fear: "being noticed",
       currentOrder: "move",
@@ -151,18 +156,19 @@ void test("parseStateSchema normalizes actor agenda independent-action time", ()
   const parsed = parseStateSchema(raw);
 
   assert.equal(
-    parsed.secrets.actorStates["protagonist"]?.agenda?.lastIndependentActionAt,
+    parsed.secrets.actorStates[playerActorId]?.agenda?.lastIndependentActionAt,
     "2004-01-30T07:00:00.000Z",
   );
 });
 
 void test("parseStateSchema validates relationship signal actor refs, visibility layers, and ids", () => {
   const raw = rawState();
+  const playerActorId = defaultPlayerActorId(raw);
   section(raw, "public")["relationshipSignals"] = [
     {
       id: "relationship-signal-1",
-      actorId: "protagonist",
-      targetActorId: "protagonist",
+      actorId: playerActorId,
+      targetActorId: playerActorId,
       signal: "hesitates before answering",
       interpretation: "guarded concern",
       boundary: "do not overstate intimacy",
@@ -173,8 +179,8 @@ void test("parseStateSchema validates relationship signal actor refs, visibility
   section(raw, "secrets")["relationshipSignals"] = [
     {
       id: "relationship-signal-1",
-      actorId: "protagonist",
-      targetActorId: "protagonist",
+      actorId: playerActorId,
+      targetActorId: playerActorId,
       signal: "tests the boundary",
       interpretation: "private suspicion",
       boundary: "do not render directly",
@@ -189,7 +195,7 @@ void test("parseStateSchema validates relationship signal actor refs, visibility
     {
       id: "relationship-signal-2",
       actorId: "ghost",
-      targetActorId: "protagonist",
+      targetActorId: playerActorId,
       signal: "tests the boundary",
       interpretation: "private suspicion",
       boundary: "do not render directly",
@@ -205,8 +211,8 @@ void test("parseStateSchema validates relationship signal actor refs, visibility
   section(raw, "public")["relationshipSignals"] = [
     {
       id: "relationship-signal-3",
-      actorId: "protagonist",
-      targetActorId: "protagonist",
+      actorId: playerActorId,
+      targetActorId: playerActorId,
       signal: "hesitates before answering",
       interpretation: "guarded concern",
       boundary: "do not overstate intimacy",
@@ -220,7 +226,8 @@ void test("parseStateSchema validates relationship signal actor refs, visibility
 
 void test("parseStateSchema rejects dangling contractedServantIds", () => {
   const raw = rawState();
-  const protagonist = section(section(section(raw, "public"), "actors"), "protagonist");
+  const playerActorId = defaultPlayerActorId(raw);
+  const protagonist = section(section(section(raw, "public"), "actors"), playerActorId);
   protagonist["roles"] = [
     {
       kind: "master",
@@ -231,7 +238,9 @@ void test("parseStateSchema rejects dangling contractedServantIds", () => {
 
   assert.throws(
     () => parseStateSchema(raw),
-    /非法actors\.protagonist contractedServantIds\[\]: actor no-such-servant 不存在/,
+    new RegExp(
+      `非法actors\\.${playerActorId} contractedServantIds\\[\\]: actor no-such-servant 不存在`,
+    ),
   );
 });
 
@@ -283,13 +292,21 @@ void test("parseStateSchema rejects dangling servant contract masterActorId", ()
 
 void test("parseStateSchema rejects command spells with remaining above total", () => {
   const raw = rawState();
-  const protagonist = section(section(section(raw, "public"), "actors"), "protagonist");
+  const protagonist = section(section(section(raw, "public"), "actors"), defaultPlayerActorId(raw));
   protagonist["roles"] = [
     { kind: "master", commandSpells: { total: 3, remaining: 5 }, contractedServantIds: [] },
   ];
 
   assert.throws(() => parseStateSchema(raw), /remaining 不能大于 total/);
 });
+
+function defaultPlayerActorId(raw: Record<string, unknown>): string {
+  const actorId = section(raw, "public")["protagonistActorId"];
+  if (typeof actorId !== "string") {
+    throw new Error("unreachable: protagonistActorId 必须是字符串");
+  }
+  return actorId;
+}
 
 function rawState(): Record<string, unknown> {
   const cloned: unknown = structuredClone(createInitialState());

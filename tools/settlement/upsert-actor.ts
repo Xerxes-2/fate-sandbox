@@ -21,14 +21,17 @@ export function upsertActorTool(params: unknown, sessionManager: unknown): ToolR
     execute: (draft) =>
       upsertActor(
         draft,
-        parseActorRegistryInput(prepareUpsertActorParams(params), "upsert_actor 参数"),
+        parseActorRegistryInput(
+          prepareUpsertActorParams(params, draft.public.protagonistActorId),
+          "upsert_actor 参数",
+        ),
       ),
     details: resultDetails,
     message: (result) => result.message,
   });
 }
 
-function prepareUpsertActorParams(params: unknown): unknown {
+function prepareUpsertActorParams(params: unknown, playerActorId: string): unknown {
   if (!isRecord(params)) {
     return params;
   }
@@ -39,7 +42,10 @@ function prepareUpsertActorParams(params: unknown): unknown {
     case "ensure-public-npc":
       return { ...params, npc: normalizeNpcInput(params["npc"]) };
     case "upsert-servant":
-      return { ...params, servant: normalizeServantInput(params["servant"]) };
+      return {
+        ...params,
+        servant: normalizeServantInput(params["servant"], playerActorId),
+      };
     default:
       return params;
   }
@@ -56,11 +62,11 @@ function normalizeNpcInput(value: unknown): unknown {
   };
 }
 
-function normalizeServantInput(value: unknown): unknown {
+function normalizeServantInput(value: unknown, playerActorId: string): unknown {
   if (!isRecord(value)) {
     return value;
   }
-  guardProtagonistTrueName(value);
+  guardProtagonistTrueName(value, playerActorId);
   return {
     ...value,
     masterActorId: value["masterActorId"] ?? null,
@@ -69,15 +75,9 @@ function normalizeServantInput(value: unknown): unknown {
   };
 }
 
-/**
- * 玩家从者初始化不得公开真名——指向 reveal_secret 的领域报错，先于 schema。
- * BACKLOG（换主角）：这里靠 id==="protagonist" 字面量识别“玩家从者”。该守卫处在无 state
- * 上下文的输入归一层，拿不到 protagonistActorId 指针，所以暂时只能靠种子约定。
- * 这是 prompt 层的辅助守卫（实际防线是 commit 层 firewall）；待“换主角”立项并重设 setup 流程时，
- * 改成靠 kind/指针而非 id 字面量。
- */
-function guardProtagonistTrueName(servant: Record<string, unknown>): void {
-  if (servant["id"] === "protagonist" && servant["trueNameStatus"] === "revealed") {
+/** 玩家从者初始化不得公开真名——指向 reveal_secret 的领域报错，先于 schema。 */
+function guardProtagonistTrueName(servant: Record<string, unknown>, playerActorId: string): void {
+  if (servant["id"] === playerActorId && servant["trueNameStatus"] === "revealed") {
     throw new Error(
       "玩家从者初始化不得把 servant.trueNameStatus 写成 revealed；玩家知道真名也应保持 public trueName hidden/suspected，并用 reveal_secret 配置隐藏真名。",
     );

@@ -10,7 +10,7 @@ void test("updateActorAgendaTool upserts and marks independent action", () => {
   updateActorAgendaTool(
     {
       kind: "upsert",
-      actorId: "protagonist",
+      actorId: "actor-1",
       goal: "watch the school gate",
       fear: "being boxed in",
       currentOrder: "wait",
@@ -18,12 +18,12 @@ void test("updateActorAgendaTool upserts and marks independent action", () => {
     undefined,
   );
   updateActorAgendaTool(
-    { kind: "mark-independent-action", actorId: "protagonist", currentOrder: "circle the gate" },
+    { kind: "mark-independent-action", actorId: "actor-1", currentOrder: "circle the gate" },
     undefined,
   );
 
-  const agenda = cloneState().secrets.actorStates["protagonist"]?.agenda;
-  assert.equal(agenda?.actorId, "protagonist");
+  const agenda = cloneState().secrets.actorStates["actor-1"]?.agenda;
+  assert.equal(agenda?.actorId, "actor-1");
   assert.equal(agenda?.currentOrder, "circle the gate");
   assert.equal(agenda?.lastIndependentActionAt, cloneState().public.clock.currentAt);
 });
@@ -33,7 +33,7 @@ void test("updateActorAgendaTool clears agenda with an audit reason", () => {
   updateActorAgendaTool(
     {
       kind: "upsert",
-      actorId: "protagonist",
+      actorId: "actor-1",
       goal: "watch the road",
       fear: "ambush",
     },
@@ -41,7 +41,7 @@ void test("updateActorAgendaTool clears agenda with an audit reason", () => {
   );
 
   const result = updateActorAgendaTool(
-    { kind: "clear", actorId: "protagonist", reason: "left the tracked scene" },
+    { kind: "clear", actorId: "actor-1", reason: "left the tracked scene" },
     undefined,
   );
 

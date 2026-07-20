@@ -87,6 +87,7 @@ void test("updateScene rejects resolving the last objective of a beat", () => {
 
 void test("beginSceneBeat creates window objectives threats and presence together", () => {
   const draft = createInitialState();
+  const playerActorId = draft.public.protagonistActorId;
 
   const result = beginSceneBeat(draft, {
     storyWindow: {
@@ -100,8 +101,8 @@ void test("beginSceneBeat creates window objectives threats and presence togethe
     },
     objectives: ["确认北侧断崖结界", "发送撤退信号"],
     threats: [{ summary: "寺内巡逻接近", severity: "medium" }],
-    presentActorIds: ["protagonist"],
-    allyActorIds: ["protagonist"],
+    presentActorIds: [playerActorId],
+    allyActorIds: [playerActorId],
     situation: "investigation",
     reason: "锁定侦察收尾 beat",
   });
@@ -110,8 +111,8 @@ void test("beginSceneBeat creates window objectives threats and presence togethe
   assert.equal(state.public.scene.storyWindow?.currentBeatId, "ryudou-scouting-wrapup");
   assert.equal(state.public.scene.objectives.length, 2);
   assert.equal(state.public.scene.threats[0]?.summary, "寺内巡逻接近");
-  assert.deepEqual(state.public.scene.presentActorIds, ["protagonist"]);
-  assert.deepEqual(state.public.allyActorIds, ["protagonist"]);
+  assert.deepEqual(state.public.scene.presentActorIds, [playerActorId]);
+  assert.deepEqual(state.public.allyActorIds, [playerActorId]);
   assert.equal(state.public.scene.situation, "investigation");
   assert.equal(result.objectiveIds.length, 2);
   assert.match(result.objectiveIds[0] ?? "", /^objective-\d+$/);

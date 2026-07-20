@@ -137,7 +137,7 @@ void test("upsertActor rejects non-protagonist setup", () => {
 
 void test("setup-protagonist accepts the actor id that protagonistActorId points to", () => {
   const draft = createInitialState();
-  const seed = draft.public.actors["protagonist"];
+  const seed = draft.public.actors[draft.public.protagonistActorId];
   if (seed === undefined) {
     throw new Error("seed protagonist missing");
   }
@@ -159,7 +159,10 @@ void test("upsertActor can replace protagonist setup skeleton", () => {
   upsertShirouProtagonist(draft, 40);
 
   const publicState = draft.public;
-  assert.equal(publicState.actors.protagonist?.identity.publicIdentity, "卫宫士郎");
+  assert.equal(
+    publicState.actors[publicState.protagonistActorId]?.identity.publicIdentity,
+    "卫宫士郎",
+  );
   assert.match(buildGmBrief(publicState), /玩家角色：卫宫士郎 \/ human \/ 卫宫士郎/);
 });
 
@@ -178,7 +181,7 @@ void test("GM brief separates servant mana parameter from mana remaining percent
   upsertActor(draft, {
     kind: "upsert-servant",
     servant: {
-      id: "protagonist",
+      id: draft.public.protagonistActorId,
       internalName: "Saber",
       publicIdentity: "玩家扮演的 Saber",
       apparentAge: "不明",
@@ -218,7 +221,7 @@ function upsertShirouProtagonist(draft: State, od: number): void {
   upsertActor(draft, {
     kind: "setup-protagonist",
     actor: {
-      id: "protagonist",
+      id: draft.public.protagonistActorId,
       kind: "human",
       roles: [{ kind: "social", label: "穗群原学园学生" }],
       magecraft: {
@@ -518,7 +521,7 @@ void test("upsert-servant writes servant form with full parameter block", () => 
 void test("retireActor protects whoever protagonistActorId points to, not a literal id", () => {
   const draft = createInitialState();
   upsertTestCaster(draft);
-  // 模拟换主角：把主角指针指向 caster（种子 protagonist id 不再是主角）。
+  // 模拟换主角：把主角指针指向 caster（种子 actor id 不再是主角）。
   draft.public.protagonistActorId = "caster";
 
   assert.throws(
@@ -531,7 +534,7 @@ void test("retireActor removes a non-referenced actor from registry and scene", 
   const draft = createInitialState();
   upsertTestCaster(draft);
   setScenePresence(draft, {
-    presentActorIds: ["protagonist", "caster"],
+    presentActorIds: [draft.public.protagonistActorId, "caster"],
     allyActorIds: [],
     reason: "Caster enters before retiring",
   });
@@ -541,7 +544,7 @@ void test("retireActor removes a non-referenced actor from registry and scene", 
 
   assert.match(result.message, /caster/);
   assert.equal(state.public.actors["caster"], undefined);
-  assert.deepEqual(state.public.scene.presentActorIds, ["protagonist"]);
+  assert.deepEqual(state.public.scene.presentActorIds, [draft.public.protagonistActorId]);
 });
 
 void test("retireActor rejects actors referenced by master contracts", () => {
@@ -647,7 +650,7 @@ void test("retireActor leaves no orphan rows in any actor-keyed side table", () 
     reason: "seed actor for orphan test",
   });
   setScenePresence(draft, {
-    presentActorIds: ["protagonist", "tohsaka-rin"],
+    presentActorIds: [draft.public.protagonistActorId, "tohsaka-rin"],
     allyActorIds: ["tohsaka-rin"],
     reason: "present before retire",
   });
@@ -663,7 +666,7 @@ void test("retireActor leaves no orphan rows in any actor-keyed side table", () 
   draft.public.relationshipSignals.push({
     id: "sig-public-1",
     actorId: "tohsaka-rin",
-    targetActorId: "protagonist",
+    targetActorId: draft.public.protagonistActorId,
     signal: "递出一枚宝石。",
     interpretation: "试探性的善意。",
     boundary: "公开",
@@ -696,7 +699,7 @@ void test("retireActor leaves no orphan rows in any actor-keyed side table", () 
   };
   draft.secrets.relationshipSignals.push({
     id: "sig-secret-1",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     targetActorId: "tohsaka-rin",
     signal: "主角私下提防她。",
     interpretation: "未公开的戒心。",
@@ -721,14 +724,14 @@ void test("setScenePresence updates current scene independently from actor regis
   upsertTestCaster(draft);
 
   const result = setScenePresence(draft, {
-    presentActorIds: ["protagonist", "caster"],
+    presentActorIds: [draft.public.protagonistActorId, "caster"],
     allyActorIds: ["caster"],
     reason: "Caster enters the scene as temporary ally",
   });
 
   const publicState = draft.public;
   assert.equal(result.message, "场景在场 actor 已更新。");
-  assert.deepEqual(publicState.scene.presentActorIds, ["protagonist", "caster"]);
+  assert.deepEqual(publicState.scene.presentActorIds, [draft.public.protagonistActorId, "caster"]);
   assert.deepEqual(publicState.allyActorIds, ["caster"]);
 });
 
@@ -738,7 +741,7 @@ void test("setScenePresence rejects unknown actors", () => {
   assert.throws(
     () =>
       setScenePresence(draft, {
-        presentActorIds: ["protagonist", "caster"],
+        presentActorIds: [draft.public.protagonistActorId, "caster"],
         allyActorIds: [],
         reason: "unknown actor should fail",
       }),

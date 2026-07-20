@@ -9,13 +9,13 @@ import { updateActorConditionTool } from "./update-actor-condition.ts";
 void test("normalizeActorConditionEvent accepts update-outfit alias", () => {
   const event = normalizeActorConditionEvent({
     kind: "update-outfit",
-    actorId: "protagonist",
+    actorId: "actor-1",
     outfit: { label: "员工外套", details: "深色后勤员工外套。" },
     reason: "换装伪装",
   });
 
   assert.equal(event.kind, "change-outfit");
-  assert.equal(event.actorId, "protagonist");
+  assert.equal(event.actorId, "actor-1");
 });
 
 void test("updateActorConditionTool recovers mistaken update-wound outfit payload", () => {
@@ -24,7 +24,7 @@ void test("updateActorConditionTool recovers mistaken update-wound outfit payloa
   updateActorConditionTool(
     {
       kind: "update-wound",
-      actorId: "protagonist",
+      actorId: "actor-1",
       conditionId: "",
       outfit: { label: "员工外套", details: "深色后勤员工外套。" },
       reason: "换装伪装",
@@ -32,7 +32,7 @@ void test("updateActorConditionTool recovers mistaken update-wound outfit payloa
     createNoopSessionManager(),
   );
 
-  assert.equal(getState().public.actors.protagonist?.presentation.outfit.label, "员工外套");
+  assert.equal(getState().public.actors["actor-1"]?.presentation.outfit.label, "员工外套");
 });
 
 void test("normalizeActorConditionEvent reports empty wound id when no outfit is present", () => {
@@ -40,7 +40,7 @@ void test("normalizeActorConditionEvent reports empty wound id when no outfit is
     () =>
       normalizeActorConditionEvent({
         kind: "update-wound",
-        actorId: "protagonist",
+        actorId: "actor-1",
         conditionId: "",
         reason: "误更新伤势",
       }),
@@ -51,7 +51,7 @@ void test("normalizeActorConditionEvent reports empty wound id when no outfit is
 void test("normalizeActorConditionEvent strips stray outcome from non-resolve events", () => {
   const event = normalizeActorConditionEvent({
     kind: "add-wound",
-    actorId: "protagonist",
+    actorId: "actor-1",
     severity: "minor",
     text: "手背擦伤。",
     source: "玻璃碎片",
@@ -68,7 +68,7 @@ void test("normalizeActorConditionEvent reports invalid resolve outcome clearly"
     () =>
       normalizeActorConditionEvent({
         kind: "resolve-condition",
-        actorId: "protagonist",
+        actorId: "actor-1",
         conditionKind: "wound",
         conditionId: "wound-test",
         outcome: "worsened",
@@ -83,7 +83,7 @@ void test("normalizeActorConditionEvent reports invalid condition enums clearly"
     () =>
       normalizeActorConditionEvent({
         kind: "add-wound",
-        actorId: "protagonist",
+        actorId: "actor-1",
         severity: "dangerous",
         text: "手背擦伤。",
         source: "玻璃碎片",
@@ -98,8 +98,8 @@ void test("normalizeActorConditionEvent reports invalid condition enums clearly"
         kind: "add-tracked-item",
         label: "暗金色碎屑",
         itemKind: "clue",
-        holderActorId: "protagonist",
-        ownerActorId: "protagonist",
+        holderActorId: "actor-1",
+        ownerActorId: "actor-1",
         condition: "intact",
         visibility: "player-known",
         notes: [],
@@ -121,7 +121,7 @@ void test("commitTurnTool accepts actor-condition update-outfit alias", () => {
           kind: "actor-condition",
           event: {
             kind: "update-outfit",
-            actorId: "protagonist",
+            actorId: "actor-1",
             outfit: {
               label: "后勤员工外套",
               details: "宽大的后勤员工外套披在身上，显眼和服灵装退入灵子化。",
@@ -133,7 +133,7 @@ void test("commitTurnTool accepts actor-condition update-outfit alias", () => {
     createNoopSessionManager(),
   );
 
-  assert.equal(getState().public.actors.protagonist?.presentation.outfit.label, "后勤员工外套");
+  assert.equal(getState().public.actors["actor-1"]?.presentation.outfit.label, "后勤员工外套");
 });
 
 function createNoopSessionManager(): unknown {

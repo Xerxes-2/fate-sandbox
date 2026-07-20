@@ -7,14 +7,12 @@ import {
   recentPlayerKnownRelationshipSignals,
 } from "./relationship-signal.ts";
 
-const PROTAGONIST_ACTOR_ID = "protagonist";
-
 void test("recordRelationshipSignal splits player-known and secret ledgers", () => {
   const draft = createInitialState();
 
   const publicSignal = recordRelationshipSignal(draft, {
-    actorId: PROTAGONIST_ACTOR_ID,
-    targetActorId: PROTAGONIST_ACTOR_ID,
+    actorId: draft.public.protagonistActorId,
+    targetActorId: draft.public.protagonistActorId,
     signal: " she slows down before answering ",
     interpretation: "guarded concern, not consent",
     boundary: "do not turn concern into confession",
@@ -22,8 +20,8 @@ void test("recordRelationshipSignal splits player-known and secret ledgers", () 
     visibility: "player-known",
   });
   const secretSignal = recordRelationshipSignal(draft, {
-    actorId: PROTAGONIST_ACTOR_ID,
-    targetActorId: PROTAGONIST_ACTOR_ID,
+    actorId: draft.public.protagonistActorId,
+    targetActorId: draft.public.protagonistActorId,
     signal: "she checks whether the player notices the old family seal",
     interpretation: "testing player knowledge",
     boundary: "she will not explain the seal first",
@@ -42,8 +40,8 @@ void test("recentPlayerKnownRelationshipSignals returns newest player-safe entri
   const draft = createInitialState();
   for (let i = 1; i <= 3; i++) {
     recordRelationshipSignal(draft, {
-      actorId: PROTAGONIST_ACTOR_ID,
-      targetActorId: PROTAGONIST_ACTOR_ID,
+      actorId: draft.public.protagonistActorId,
+      targetActorId: draft.public.protagonistActorId,
       signal: `gesture ${i}`,
       interpretation: `interpretation ${i}`,
       boundary: `boundary ${i}`,
@@ -71,20 +69,20 @@ void test("recordRelationshipSignal rejects missing actors and empty fields", ()
     () =>
       recordRelationshipSignal(draft, {
         actorId: "ghost",
-        targetActorId: PROTAGONIST_ACTOR_ID,
+        targetActorId: draft.public.protagonistActorId,
         signal: "pause",
         interpretation: "concern",
         boundary: "no confession",
         sourceEventId: null,
         visibility: "player-known",
       }),
-    /actor ghost 不存在。当前可用 actor id：protagonist=/,
+    new RegExp(`actor ghost 不存在。当前可用 actor id：${draft.public.protagonistActorId}=`),
   );
   assert.throws(
     () =>
       recordRelationshipSignal(draft, {
-        actorId: PROTAGONIST_ACTOR_ID,
-        targetActorId: PROTAGONIST_ACTOR_ID,
+        actorId: draft.public.protagonistActorId,
+        targetActorId: draft.public.protagonistActorId,
         signal: " ",
         interpretation: "concern",
         boundary: "no confession",
@@ -97,12 +95,12 @@ void test("recordRelationshipSignal rejects missing actors and empty fields", ()
 
 void test("recordRelationshipSignal blocks player-known unrevealed secret strings", () => {
   const draft = createInitialState();
-  draft.secrets.actorStates[PROTAGONIST_ACTOR_ID] = {
-    actorId: PROTAGONIST_ACTOR_ID,
+  draft.secrets.actorStates[draft.public.protagonistActorId] = {
+    actorId: draft.public.protagonistActorId,
     secrets: {
-      actorId: PROTAGONIST_ACTOR_ID,
+      actorId: draft.public.protagonistActorId,
       trueName: {
-        id: "protagonist-true-name",
+        id: "player-true-name",
         value: "Artoria Pendragon",
         revealState: "hidden",
         revealConditions: ["revealed in story"],
@@ -116,8 +114,8 @@ void test("recordRelationshipSignal blocks player-known unrevealed secret string
   assert.throws(
     () =>
       recordRelationshipSignal(draft, {
-        actorId: PROTAGONIST_ACTOR_ID,
-        targetActorId: PROTAGONIST_ACTOR_ID,
+        actorId: draft.public.protagonistActorId,
+        targetActorId: draft.public.protagonistActorId,
         signal: "the pause says Artoria Pendragon matters",
         interpretation: "unsafe leak",
         boundary: "unsafe leak",
@@ -128,8 +126,8 @@ void test("recordRelationshipSignal blocks player-known unrevealed secret string
   );
 
   recordRelationshipSignal(draft, {
-    actorId: PROTAGONIST_ACTOR_ID,
-    targetActorId: PROTAGONIST_ACTOR_ID,
+    actorId: draft.public.protagonistActorId,
+    targetActorId: draft.public.protagonistActorId,
     signal: "the pause says Artoria Pendragon matters",
     interpretation: "secret-only interpretation",
     boundary: "do not render directly",

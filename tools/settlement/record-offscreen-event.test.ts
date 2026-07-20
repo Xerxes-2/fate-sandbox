@@ -13,7 +13,7 @@ void test("record_offscreen_event tool persists a foreshadowed offscreen event",
   const result = recordOffscreenEventTool(
     {
       lineId: "caster-ryudou",
-      actorIds: ["protagonist"],
+      actorIds: ["actor-1"],
       timeRange: {
         start: "2004-01-30T07:00:00.000Z",
         end: "2004-01-30T08:00:00.000Z",

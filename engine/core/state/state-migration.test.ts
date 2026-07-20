@@ -217,9 +217,10 @@ void test("migrateState upgrades v8 to v9 with actorImpressions", () => {
 
 void test("migrateState upgrades v10 through v12: renderName copied, displayName renamed to internalName", () => {
   const current = createInitialState();
-  const actor = current.public.actors.protagonist;
+  const playerActorId = current.public.protagonistActorId;
+  const actor = current.public.actors[playerActorId];
   if (actor === undefined) {
-    throw new Error("expected protagonist");
+    throw new Error("expected player actor");
   }
   const { renderName: _renderName, internalName, ...rest } = actor.presentation;
   const presentationV10 = { ...rest, displayName: internalName };
@@ -230,7 +231,7 @@ void test("migrateState upgrades v10 through v12: renderName copied, displayName
       ...current.public,
       actors: {
         ...current.public.actors,
-        protagonist: {
+        [playerActorId]: {
           ...actor,
           presentation: presentationV10,
         },
@@ -239,7 +240,7 @@ void test("migrateState upgrades v10 through v12: renderName copied, displayName
   };
 
   const migrated = migrateState(rawV10);
-  const presentation = migrated.public.actors.protagonist?.presentation;
+  const presentation = migrated.public.actors[playerActorId]?.presentation;
   assert.ok(presentation);
 
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
@@ -250,9 +251,10 @@ void test("migrateState upgrades v10 through v12: renderName copied, displayName
 
 void test("migrateState upgrades v11 to v12 by renaming displayName to internalName", () => {
   const current = createInitialState();
-  const actor = current.public.actors.protagonist;
+  const playerActorId = current.public.protagonistActorId;
+  const actor = current.public.actors[playerActorId];
   if (actor === undefined) {
-    throw new Error("expected protagonist");
+    throw new Error("expected player actor");
   }
   const { internalName, ...rest } = actor.presentation;
   const presentationV11 = { ...rest, displayName: internalName };
@@ -263,7 +265,7 @@ void test("migrateState upgrades v11 to v12 by renaming displayName to internalN
       ...current.public,
       actors: {
         ...current.public.actors,
-        protagonist: {
+        [playerActorId]: {
           ...actor,
           presentation: presentationV11,
         },
@@ -272,7 +274,7 @@ void test("migrateState upgrades v11 to v12 by renaming displayName to internalN
   };
 
   const migrated = migrateState(rawV11);
-  const presentation = migrated.public.actors.protagonist?.presentation;
+  const presentation = migrated.public.actors[playerActorId]?.presentation;
   assert.ok(presentation);
 
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
@@ -282,22 +284,23 @@ void test("migrateState upgrades v11 to v12 by renaming displayName to internalN
 
 void test("migrateState upgrades v12 to v13 by indexing per-actor side tables on actorId", () => {
   const current = createInitialState();
+  const playerActorId = current.public.protagonistActorId;
   const agenda = {
-    actorId: "protagonist",
+    actorId: playerActorId,
     goal: "cross the gate",
     fear: "being watched",
     currentOrder: null,
     lastIndependentActionAt: null,
   };
   const lens = {
-    actorId: "protagonist",
+    actorId: playerActorId,
     knows: ["the gate is open"],
     suspects: [],
     falseBeliefs: [],
     forbiddenKnowledge: [],
   };
   const impression = {
-    actorId: "protagonist",
+    actorId: playerActorId,
     presence: "steady",
     actionStyle: "direct",
     relationshipPosture: "self",
@@ -317,28 +320,29 @@ void test("migrateState upgrades v12 to v13 by indexing per-actor side tables on
   // v12->v13 先把侧表数组按 actorId 索引成 record，v13->v14 再折进 actorStates 聚合。
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
   assert.deepEqual(migrated.secrets.actorStates, {
-    protagonist: { actorId: "protagonist", agenda, knowledgeLens: lens },
+    [playerActorId]: { actorId: playerActorId, agenda, knowledgeLens: lens },
   });
-  assert.deepEqual(migrated.public.actorImpressions, { protagonist: impression });
+  assert.deepEqual(migrated.public.actorImpressions, { [playerActorId]: impression });
 });
 
 void test("migrateState upgrades v13 to v14 by folding per-actor secret tables into actorStates", () => {
   const current = createInitialState();
+  const playerActorId = current.public.protagonistActorId;
   const slots = {
-    actorId: "protagonist",
+    actorId: playerActorId,
     hiddenNoblePhantasms: [],
     privateMotives: [],
     unrevealedAffiliations: [],
   };
   const agenda = {
-    actorId: "protagonist",
+    actorId: playerActorId,
     goal: "cross the gate",
     fear: "being noticed",
     currentOrder: null,
     lastIndependentActionAt: null,
   };
   const lens = {
-    actorId: "protagonist",
+    actorId: playerActorId,
     knows: ["the gate is open"],
     suspects: [],
     falseBeliefs: [],
@@ -350,9 +354,9 @@ void test("migrateState upgrades v13 to v14 by folding per-actor secret tables i
     meta: { ...current.meta, schemaVersion: 13 },
     secrets: {
       ...secretsV13,
-      actorSecrets: { protagonist: slots },
-      actorAgendas: { protagonist: agenda },
-      actorKnowledgeLenses: { protagonist: lens },
+      actorSecrets: { [playerActorId]: slots },
+      actorAgendas: { [playerActorId]: agenda },
+      actorKnowledgeLenses: { [playerActorId]: lens },
     },
   };
 
@@ -360,11 +364,34 @@ void test("migrateState upgrades v13 to v14 by folding per-actor secret tables i
 
   assert.equal(migrated.meta.schemaVersion, CURRENT_STATE_SCHEMA_VERSION);
   assert.deepEqual(migrated.secrets.actorStates, {
-    protagonist: { actorId: "protagonist", secrets: slots, agenda, knowledgeLens: lens },
+    [playerActorId]: { actorId: playerActorId, secrets: slots, agenda, knowledgeLens: lens },
   });
   assert.ok(!Object.hasOwn(migrated.secrets, "actorSecrets"));
   assert.ok(!Object.hasOwn(migrated.secrets, "actorAgendas"));
   assert.ok(!Object.hasOwn(migrated.secrets, "actorKnowledgeLenses"));
+});
+
+void test("current-schema saves keep their existing player actor id", () => {
+  const current = createInitialState();
+  const sourceId = current.public.protagonistActorId;
+  const existing = current.public.actors[sourceId];
+  if (existing === undefined) {
+    throw new Error("expected player actor");
+  }
+  const legacyId = "protagonist";
+  delete current.public.actors[sourceId];
+  current.public.actors[legacyId] = { ...existing, id: legacyId };
+  current.public.protagonistActorId = legacyId;
+  current.public.scene.presentActorIds = [legacyId];
+  current.public.economy.accessibleFunds = current.public.economy.accessibleFunds.map((purse) => ({
+    ...purse,
+    ownerActorId: legacyId,
+  }));
+
+  const hydrated = migrateState(current);
+
+  assert.equal(hydrated.public.protagonistActorId, legacyId);
+  assert.equal(hydrated.public.actors[legacyId]?.id, legacyId);
 });
 
 void test("migrateState upgrades v18 to v19 with an empty dailyEvents log", () => {

@@ -398,12 +398,12 @@ interface TimelinePressureSlot {
 
 ## 19. actor id opaque 化 + name→id resolver（关 firewall key 侧信道 / 换主角地基）
 
-- [ ] 状态：未开始。
+- [ ] 状态：部分完成。玩家 actor 已在新开局中使用显式角色 ID，默认占位改为 `actor-1`，生产代码和常规测试不再依赖预设 `protagonist` ID；NPC opaque ID 与 name→id resolver 尚未实施。
 
 当前 actor id 由 LLM 自由起、编码语义（schema 只是 `Type.String`，无 id 命名约束文档）。同一块底层债从三个角度暴露：
 
 1. **firewall key 侧信道（最要紧，触及 ADR-0001）**：从者真名的权威本体在 secret 侧（`trueName: SecretSlot<string>`），public 侧只有 `trueNameDisplay`（hidden 时填职阶名）。但 actor id 是 `public.actors` 这个 record 的 **key**——是 public state 的结构组成。若 LLM 给隐藏真名的从者起 id=`gilgamesh`/`altria-pendragon`，藏在 secret 侧的真名就从 public key 漏了。字段层 firewall + session-audit 都管不到 key。现状只靠 LLM 自觉用职阶代号（`caster`/`assassin`）兑着——违反“prompt 不是防线，约束下沉 schema/boundary”。威胁模型：不泄叙事输出/面板视图（那些用 `renderName` 不显示 id）、LLM 作为 GM 本就知道真名；真正泄露面是**玩家翻存档 `state.json` 提前剧透**。
-2. **换主角撞谎**：种子主角 id=`protagonist` 编码的是“地位”而非“身份”；换主角后它变成“叫 protagonist 的 NPC”，id 撞谎。
+2. **换主角撞谎（已解决）**：新开局由 `protagonist.actorId` 提供公开角色身份 ID；未初始化占位使用 `actor-1`，“谁是主角”仍只由 `protagonistActorId` 指针决定。
 3. **无 resolver 易填错**：无 name→id 解析层，LLM 直接填 id；换主角后 `{actorId:"protagonist", stance:"ally"}` 这种自相矛盾行会消耗注意力、偶发填错（工具只挡得住“id 不存在”，挡不住“存在但错”）。
 
 **正解 = opaque 生成 id（系统生成、LLM 不再起 id）+ name→id resolver**，一个解同时关掉三件事：不编码身份→不泄真名；不编码地位→换主角不撞谎；有 resolver→LLM 不靠裸 id。项目已有 `createId(draft, prefix)` 生成器（fact/event/objective 都用），生成侧现成。难点在 resolver：剖夺 LLM 起 id 的权后，必须给它别的方式引用 actor（填 renderName / 创建时返回生成 id 让它记住）。
@@ -423,10 +423,10 @@ interface ActorRef {
 
 1. 先建 name→id resolver（模糊匹配 renderName/internalName，参考 `scene.ts` 的 `findEntryBySummary`），作为工具入口的 actor 引用缓冲。
 2. `upsert-public-npc` / `upsert-servant` 改为系统生成 id，返回给 LLM；id 字段从输入降级为可选诊断输出。
-3. 种子主角 id 从 `state-store.ts` 单点常量（已收敛，见 commit `007e5cb`）改为中性生成值。
-4. 清扠20+ 个测试 fixture 里假设主角 id=`protagonist` 的处，改引用 `state.public.protagonistActorId`。
-5. `tools/settlement/upsert-actor.ts` 的 `guardProtagonistTrueName`（现靠 `id==="protagonist"` 字面量、已标 BACKLOG）随流程改靠 kind/指针。
-6. 考虑已有存档：schema migration 是否把存量语义 id rename 为 opaque（跨表引用全图重写），还是仅对新开局生效。
+3. [x] 默认种子改为中性占位 `actor-1`；新游戏用显式角色 ID 重建 state。
+4. [x] 清理测试 fixture 对预设主角 ID 的依赖，改引用 `state.public.protagonistActorId`。
+5. [x] `guardProtagonistTrueName` 改为读取当前 `protagonistActorId` 指针。
+6. [x] 已有存档保持原 actor ID；动态角色 ID 只影响新游戏。
 
 前序工作：`e1d4205`（protagonistActorId 成主角身份唯一真相，消除生产代码对 `id==="protagonist"` 的语义依赖）、`007e5cb`（种子 id 收敛单点）。这两步已把运行时“谁是主角”收到指针唯一真相、种子 id 收到单点，为本 slice 铺好地基。
 

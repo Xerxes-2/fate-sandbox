@@ -107,7 +107,7 @@ void test("presentActorImpressions returns only in-scene cards", () => {
     voiceMaterial: "…学长。",
   });
 
-  draft.public.scene.presentActorIds = ["protagonist", "rin"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId, "rin"];
 
   const present = presentActorImpressions(draft);
   assert.equal(present.length, 1);
@@ -126,7 +126,7 @@ void test("formatPresenceImpressionCards formats cards for injection", () => {
     voiceMaterial: "Tsundere edge",
   });
 
-  draft.public.scene.presentActorIds = ["protagonist", "rin"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId, "rin"];
 
   const text = formatPresenceImpressionCards(draft);
   assert.ok(text !== null);
@@ -137,7 +137,7 @@ void test("formatPresenceImpressionCards formats cards for injection", () => {
 
 void test("formatPresenceImpressionCards returns null when no NPC present", () => {
   const draft = createInitialState();
-  draft.public.scene.presentActorIds = ["protagonist"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId];
   assert.equal(formatPresenceImpressionCards(draft), null);
 });
 
@@ -145,7 +145,7 @@ void test("formatNpcRenderCards excludes the protagonist impression", () => {
   const draft = createInitialState();
   addTestNpc(draft, "rin");
   upsertActorImpression(draft, {
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     presence: "Player-defined presence",
     actionStyle: "Player-defined action",
     relationshipPosture: "Self",
@@ -158,7 +158,7 @@ void test("formatNpcRenderCards excludes the protagonist impression", () => {
     relationshipPosture: "Guarded",
     voiceMaterial: "哼。",
   });
-  draft.public.scene.presentActorIds = ["protagonist", "rin"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId, "rin"];
 
   const text = formatNpcRenderCards(draft);
   assert.ok(text !== null);

@@ -10,7 +10,7 @@ void test("recordActorKnowledgeTool adds and removes lens facts", () => {
   recordActorKnowledgeTool(
     {
       kind: "add-fact",
-      actorId: "protagonist",
+      actorId: "actor-1",
       category: "suspects",
       fact: "someone is watching the gate",
     },
@@ -19,28 +19,28 @@ void test("recordActorKnowledgeTool adds and removes lens facts", () => {
   recordActorKnowledgeTool(
     {
       kind: "add-fact",
-      actorId: "protagonist",
+      actorId: "actor-1",
       category: "forbiddenKnowledge",
       fact: "unrevealed true name",
     },
     undefined,
   );
 
-  let lens = cloneState().secrets.actorStates["protagonist"]?.knowledgeLens;
+  let lens = cloneState().secrets.actorStates["actor-1"]?.knowledgeLens;
   assert.deepEqual(lens?.suspects, ["someone is watching the gate"]);
   assert.deepEqual(lens?.forbiddenKnowledge, ["unrevealed true name"]);
 
   recordActorKnowledgeTool(
     {
       kind: "remove-fact",
-      actorId: "protagonist",
+      actorId: "actor-1",
       category: "suspects",
       fact: "someone is watching the gate",
     },
     undefined,
   );
 
-  lens = cloneState().secrets.actorStates["protagonist"]?.knowledgeLens;
+  lens = cloneState().secrets.actorStates["actor-1"]?.knowledgeLens;
   assert.deepEqual(lens?.suspects, []);
 });
 
@@ -50,7 +50,7 @@ void test("recordActorKnowledgeTool replaces and clears a lens", () => {
   recordActorKnowledgeTool(
     {
       kind: "upsert-lens",
-      actorId: "protagonist",
+      actorId: "actor-1",
       knows: ["the road is blocked"],
       suspects: ["tail"],
       falseBeliefs: ["the school is empty"],
@@ -60,11 +60,11 @@ void test("recordActorKnowledgeTool replaces and clears a lens", () => {
     undefined,
   );
 
-  const lens = cloneState().secrets.actorStates["protagonist"]?.knowledgeLens;
+  const lens = cloneState().secrets.actorStates["actor-1"]?.knowledgeLens;
   assert.equal(lens?.knows[0], "the road is blocked");
 
   const result = recordActorKnowledgeTool(
-    { kind: "clear", actorId: "protagonist", reason: "actor exited tracking" },
+    { kind: "clear", actorId: "actor-1", reason: "actor exited tracking" },
     undefined,
   );
 

@@ -14,6 +14,7 @@ void test("initializeNewGameTool initializes human protagonist and persists deta
       kind: "human-protagonist",
       campaign: { presetId: "fsn_2004_fuyuki" },
       protagonist: {
+        actorId: "fuyuki-student",
         internalName: "你",
         publicIdentity: "不了解魔术的本地学生",
         background: "普通日常被异常打断。",
@@ -22,7 +23,7 @@ void test("initializeNewGameTool initializes human protagonist and persists deta
         demeanor: "谨慎而困惑。",
         ordinaryItems: ["手机", "学生证"],
       },
-      presence: { presentActorIds: ["protagonist"] },
+      presence: { presentActorIds: ["fuyuki-student"] },
       reason: "tool-level 初始化普通人 protagonist",
     },
     sessionManager,
@@ -32,10 +33,38 @@ void test("initializeNewGameTool initializes human protagonist and persists deta
   assert.equal(sessionManager.entries.length, 1);
   // session 可写时 state 只走 custom entry，details 不再冗余携带全量 state。
   assert.equal(result.details[sessionKey()], undefined);
-  assert.deepEqual(getStateDetail(sessionManager).public.scene.presentActorIds, ["protagonist"]);
+  const state = getStateDetail(sessionManager);
+  assert.equal(state.public.protagonistActorId, "fuyuki-student");
+  assert.deepEqual(state.public.scene.presentActorIds, ["fuyuki-student"]);
   assert.equal(
-    getStateDetail(sessionManager).public.actors.protagonist?.identity.publicIdentity,
+    state.public.actors["fuyuki-student"]?.identity.publicIdentity,
     "不了解魔术的本地学生",
+  );
+});
+
+void test("initializeNewGameTool rejects a one-segment player actor id", () => {
+  resetState();
+
+  assert.throws(
+    () =>
+      initializeNewGameTool(
+        {
+          kind: "human-protagonist",
+          campaign: { presetId: "fsn_2004_fuyuki" },
+          protagonist: {
+            actorId: "player",
+            internalName: "你",
+            publicIdentity: "身份待定",
+            background: "开局身份仍在确认。",
+            apparentAge: "青年",
+            outfit: { label: "日常服装", details: "普通衣物。" },
+            demeanor: "谨慎。",
+          },
+          reason: "验证玩家 actor id 契约",
+        },
+        createMockSessionManager(),
+      ),
+    /protagonist\.actorId/,
   );
 });
 
@@ -47,6 +76,7 @@ void test("initializeNewGameTool initializes servant protagonist hidden true nam
       kind: "servant-protagonist",
       campaign: { presetId: "fsf_2008_snowfield" },
       protagonist: {
+        actorId: "snowfield-saber",
         internalName: "Saber",
         publicIdentity: "刚现界且真名未公开的 Saber",
         apparentAge: "青年",
@@ -66,8 +96,12 @@ void test("initializeNewGameTool initializes servant protagonist hidden true nam
   );
 
   const state = getStateDetail(sessionManager);
-  assert.equal(state.public.actors.protagonist?.servantForm?.identity.trueName.status, "hidden");
-  assert.equal(state.secrets.actorStates.protagonist?.secrets !== undefined, true);
+  assert.equal(state.public.protagonistActorId, "snowfield-saber");
+  assert.equal(
+    state.public.actors["snowfield-saber"]?.servantForm?.identity.trueName.status,
+    "hidden",
+  );
+  assert.equal(state.secrets.actorStates["snowfield-saber"]?.secrets !== undefined, true);
 });
 
 void test("initializeNewGameTool rejects public revealed servant protagonist true name", () => {
@@ -80,6 +114,7 @@ void test("initializeNewGameTool rejects public revealed servant protagonist tru
           kind: "servant-protagonist",
           campaign: { presetId: "fsf_2008_snowfield" },
           protagonist: {
+            actorId: "snowfield-saber",
             internalName: "Saber",
             publicIdentity: "真名不该公开的 Saber",
             apparentAge: "青年",
@@ -105,6 +140,7 @@ void test("initializeNewGameTool coerces scalar reveal conditions into an array"
       kind: "servant-protagonist",
       campaign: { presetId: "fsf_2008_snowfield" },
       protagonist: {
+        actorId: "snowfield-saber",
         internalName: "Saber",
         publicIdentity: "刚现界且真名未公开的 Saber",
         apparentAge: "青年",
@@ -121,7 +157,7 @@ void test("initializeNewGameTool coerces scalar reveal conditions into an array"
     createMockSessionManager(),
   );
 
-  const trueName = getState().secrets.actorStates["protagonist"]?.secrets?.trueName;
+  const trueName = getState().secrets.actorStates["snowfield-saber"]?.secrets?.trueName;
   assert.equal(trueName?.value, "隐藏真名");
   assert.deepEqual(trueName?.revealConditions, ["剧情内证据"]);
 });
@@ -144,15 +180,18 @@ function createMockSessionManager(): MockSessionManager {
 
 function getStateDetail(sessionManager: MockSessionManager): {
   public: {
+    protagonistActorId: string;
     scene: { presentActorIds: string[] };
-    actors: {
-      protagonist?: {
-        identity: { publicIdentity: string };
-        servantForm: { identity: { trueName: { status: string } } } | null;
-      };
-    };
+    actors: Record<
+      string,
+      | {
+          identity: { publicIdentity: string };
+          servantForm: { identity: { trueName: { status: string } } } | null;
+        }
+      | undefined
+    >;
   };
-  secrets: { actorStates: { protagonist?: { secrets?: unknown } } };
+  secrets: { actorStates: Record<string, { secrets?: unknown } | undefined> };
 } {
   const entry = sessionManager.entries[sessionManager.entries.length - 1];
   const data =
@@ -166,15 +205,18 @@ function getStateDetail(sessionManager: MockSessionManager): {
 function isStateEntry(value: unknown): value is {
   state: {
     public: {
+      protagonistActorId: string;
       scene: { presentActorIds: string[] };
-      actors: {
-        protagonist?: {
-          identity: { publicIdentity: string };
-          servantForm: { identity: { trueName: { status: string } } } | null;
-        };
-      };
+      actors: Record<
+        string,
+        | {
+            identity: { publicIdentity: string };
+            servantForm: { identity: { trueName: { status: string } } } | null;
+          }
+        | undefined
+      >;
     };
-    secrets: { actorStates: { protagonist?: { secrets?: unknown } } };
+    secrets: { actorStates: Record<string, { secrets?: unknown } | undefined> };
   };
 } {
   return typeof value === "object" && value !== null && "state" in value;

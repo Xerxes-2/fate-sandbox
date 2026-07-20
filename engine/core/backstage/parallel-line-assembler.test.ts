@@ -11,7 +11,7 @@ void test("assembleParallelLineInput fills fields from state automatically", () 
   const draft = createInitialState();
 
   upsertActorAgenda(draft, {
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     goal: "survive the night",
     fear: "being caught",
     currentOrder: "keep moving",
@@ -29,7 +29,7 @@ void test("assembleParallelLineInput fills fields from state automatically", () 
   assert.ok(result.actorGoals.length > 0);
   assert.match(result.actorGoals[0] ?? "", /survive the night/);
   assert.ok(result.activePressurePalette.length > 0);
-  assert.match(result.playerSideSummary, /protagonist|你/);
+  assert.match(result.playerSideSummary, /你/);
   assert.match(result.previousLineState, /No previous line state/);
 });
 

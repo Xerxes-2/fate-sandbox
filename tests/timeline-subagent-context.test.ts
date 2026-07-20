@@ -10,21 +10,22 @@ import { isRecord } from "../engine/core/utils/typebox-validation.ts";
 
 void test("timeline subagent context renders campaign timezone local time", () => {
   const draft = createInitialState();
+  const protagonistActorId = draft.public.protagonistActorId;
   configureCampaign(draft, {
     presetId: "fsf_2008_snowfield",
     reason: "测试 Denver 时区注入。",
   });
   upsertActorAgenda(draft, {
-    actorId: "protagonist",
+    actorId: protagonistActorId,
     goal: "leave the exposed street",
     fear: "being fixed by surveillance",
     currentOrder: "keep moving",
     lastIndependentActionAt: null,
   });
-  recordActorKnowledgeFact(draft, "protagonist", "suspects", "the cordon is not random");
+  recordActorKnowledgeFact(draft, protagonistActorId, "suspects", "the cordon is not random");
   recordRelationshipSignal(draft, {
-    actorId: "protagonist",
-    targetActorId: "protagonist",
+    actorId: protagonistActorId,
+    targetActorId: protagonistActorId,
     signal: "keeps moving instead of asking for help",
     interpretation: "self-protection is overriding trust",
     boundary: "do not frame this as resolved trust",
@@ -63,7 +64,7 @@ void test("timeline subagent context renders campaign timezone local time", () =
   );
   assert.match(context.timeRangeRule, /不得把本地时钟直接加 Z 输出/);
 
-  const protagonist = context.actors.find((actor) => actor.actorId === "protagonist");
+  const protagonist = context.actors.find((actor) => actor.actorId === protagonistActorId);
   assert.ok(protagonist);
   assert.equal(protagonist.agenda?.goal, "leave the exposed street");
   assert.deepEqual(protagonist.knowledgeLens?.suspects, ["the cordon is not random"]);

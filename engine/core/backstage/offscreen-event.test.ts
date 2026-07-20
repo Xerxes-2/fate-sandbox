@@ -14,7 +14,7 @@ void test("offscreen events records secret offscreen events outside the public G
   advanceClock(draft, 60, "测试推进到幕后事件结束后");
   const result = recordOffscreenEvent(draft, {
     lineId: "lancer-church",
-    actorIds: ["protagonist"],
+    actorIds: [draft.public.protagonistActorId],
     timeRange: { start: INITIAL_TIME, end: INITIAL_TIME },
     visibility: "secret",
     summary: "库丘林完成森林外缘侦察。",
@@ -37,7 +37,7 @@ void test("offscreen events rejects direct player-known writes", () => {
     () =>
       recordOffscreenEvent(draft, {
         lineId: "lancer-church",
-        actorIds: ["protagonist"],
+        actorIds: [draft.public.protagonistActorId],
         timeRange: { start: INITIAL_TIME, end: INITIAL_TIME },
         visibility: "player-known",
         summary: "这不应由幕后事件工具直接公开。",

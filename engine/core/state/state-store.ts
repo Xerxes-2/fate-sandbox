@@ -5,20 +5,15 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { pruneExpiredParamModifiers } from "../actor/servant.ts";
 import { formatHumanTime, nowIso } from "../utils/date-time.ts";
 import { generateSeed } from "../utils/seeded-rng.ts";
-import { formatUnknown, isRecord } from "../utils/typebox-validation.ts";
+import { assertNonEmptyString, formatUnknown, isRecord } from "../utils/typebox-validation.ts";
 import { migrateRawGameState } from "./state-migration.ts";
 import { parseStateSchema } from "./state-schema.ts";
 import { CURRENT_STATE_SCHEMA_VERSION } from "./state.ts";
 
 const DEBUG_STATE_PATH = "runtime/state.json";
 const INITIAL_CURRENT_TIME = "2004-01-30T07:00:00.000Z";
-
-/**
- * 种子主角的 actor id——开局唯一真相点。“谁是主角”由 public.protagonistActorId
- * 指针决定；这里只是初始 state 工厂播下的种子值，所有处都引用本常量，
- * 不再各自写死字面量。未来要换种子 id，只改这一处。
- */
-export const PROTAGONIST_ACTOR_ID = "protagonist";
+const INITIAL_PLAYER_ACTOR_ID = "actor-1";
+const ACTOR_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)+$/;
 
 /**
  * 模块级单例。状态在每个入口（context / tool_call / session_start / 面板命令）
@@ -135,9 +130,10 @@ function toStateExport(state: State): StateExport {
   };
 }
 
-export function createInitialState(): State {
+export function createInitialState(playerActorId: string = INITIAL_PLAYER_ACTOR_ID): State {
+  const actorId = assertPlayerActorId(playerActorId);
   const now = nowIso();
-  const protagonist = createInitialProtagonist();
+  const protagonist = createInitialProtagonist(actorId);
   return {
     meta: {
       schemaVersion: CURRENT_STATE_SCHEMA_VERSION,
@@ -169,21 +165,21 @@ export function createInitialState(): State {
         },
         situation: "daily",
         storyWindow: null,
-        presentActorIds: [PROTAGONIST_ACTOR_ID],
+        presentActorIds: [actorId],
         objectives: [],
         threats: [],
         lastResolvedAt: INITIAL_CURRENT_TIME,
       },
-      actors: { [PROTAGONIST_ACTOR_ID]: protagonist },
+      actors: { [actorId]: protagonist },
       trackedItems: {},
-      protagonistActorId: PROTAGONIST_ACTOR_ID,
+      protagonistActorId: actorId,
       allyActorIds: [],
       economy: {
         currency: "JPY",
         accessibleFunds: [
           {
-            id: "purse-protagonist-cash",
-            ownerActorId: PROTAGONIST_ACTOR_ID,
+            id: `purse-${actorId}-cash`,
+            ownerActorId: actorId,
             label: "随身现金",
             amount: 50000,
             access: "held",
@@ -196,7 +192,7 @@ export function createInitialState(): State {
           {
             id: "fact-opening-identity-unfixed",
             scope: "protagonist",
-            subject: PROTAGONIST_ACTOR_ID,
+            subject: actorId,
             text: "玩家角色身份尚未锁定；不得默认是御主、普通人或从者。",
             since: INITIAL_CURRENT_TIME,
             sourceEventId: null,
@@ -228,9 +224,9 @@ export function createInitialState(): State {
   };
 }
 
-function createInitialProtagonist(): HumanActorState {
+function createInitialProtagonist(actorId: string): HumanActorState {
   return {
-    id: PROTAGONIST_ACTOR_ID,
+    id: actorId,
     kind: "human",
     roles: [],
     magecraft: null,
@@ -252,6 +248,16 @@ function createInitialProtagonist(): HumanActorState {
     abilities: [],
     relationshipToProtagonist: { stance: "self", summary: "玩家本人。" },
   };
+}
+
+function assertPlayerActorId(value: string): string {
+  const actorId = assertNonEmptyString(value, "playerActorId");
+  if (!ACTOR_ID_PATTERN.test(actorId)) {
+    throw new Error(
+      "非法 playerActorId：必须是至少两个 kebab-case 段组成的公开角色身份 ID，例如 ayaka-sajyou 或 snowfield-saber。",
+    );
+  }
+  return actorId;
 }
 
 function assertState(raw: unknown): State {

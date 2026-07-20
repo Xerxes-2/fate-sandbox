@@ -44,7 +44,7 @@ void describe("Fate state tool-level smoke flow", () => {
     const spendResult = updateEconomyTool(
       {
         kind: "spend-money",
-        purseId: "purse-protagonist-cash",
+        purseId: "purse-actor-1-cash",
         amount: 1200,
         reason: "smoke test buys food during the move",
       },
@@ -55,7 +55,7 @@ void describe("Fate state tool-level smoke flow", () => {
     const woundResult = updateActorConditionTool(
       {
         kind: "add-wound",
-        actorId: "protagonist",
+        actorId: "actor-1",
         severity: "minor",
         text: "左手手背擦伤。",
         source: "smoke test scripted scrape",
@@ -74,7 +74,7 @@ void describe("Fate state tool-level smoke flow", () => {
     assert.equal(hydrated.public.scene.location.site, "新都");
     assert.equal(hydrated.public.scene.location.detail, "駅前商店街");
     assert.equal(hydrated.public.economy.accessibleFunds[0]?.amount, 48800);
-    assert.equal(hydrated.public.actors.protagonist?.condition.wounds[0]?.severity, "minor");
+    assert.equal(hydrated.public.actors["actor-1"]?.condition.wounds[0]?.severity, "minor");
     assert.deepEqual(hydrated.public, beforeHydration.public);
   });
 
@@ -147,7 +147,7 @@ void describe("Fate state tool-level smoke flow", () => {
     assert.match(textOf(result), /从者已写入：caster/);
     const presenceResult = setScenePresenceTool(
       {
-        presentActorIds: ["protagonist", "caster"],
+        presentActorIds: ["actor-1", "caster"],
         allyActorIds: [],
         reason: "Caster enters scene",
       },
@@ -156,7 +156,7 @@ void describe("Fate state tool-level smoke flow", () => {
     assert.match(textOf(presenceResult), /场景在场 actor 已更新/);
     const state = cloneState();
     assert.equal(state.public.actors["caster"]?.servantForm?.identity.className, "Caster");
-    assert.deepEqual(state.public.scene.presentActorIds, ["protagonist", "caster"]);
+    assert.deepEqual(state.public.scene.presentActorIds, ["actor-1", "caster"]);
     assert.equal(sessionManager.entries.length, 2);
   });
 

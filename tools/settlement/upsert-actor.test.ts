@@ -145,7 +145,7 @@ void test("upsertActorTool rejects revealed true name for protagonist servant se
           kind: "upsert-servant",
           servant: {
             ...baseMasterlessServant(),
-            id: "protagonist",
+            id: "actor-1",
             trueNameDisplay: "两仪式",
             trueNameStatus: "revealed",
           },
@@ -173,7 +173,7 @@ void test("upsertActorTool normalizes undefined protagonist setup optionals", ()
     createNoopSessionManager(),
   );
 
-  const protagonist = getState().public.actors["protagonist"];
+  const protagonist = getState().public.actors["actor-1"];
   const masterRole = protagonist?.roles[0];
   assert.equal(masterRole?.kind, "master");
   if (masterRole?.kind !== "master") throw new Error("expected master role");
@@ -207,7 +207,7 @@ void test("upsertActorTool fills omitted magecraft discipline array", () => {
     createNoopSessionManager(),
   );
 
-  const magecraft = getState().public.actors["protagonist"]?.magecraft;
+  const magecraft = getState().public.actors["actor-1"]?.magecraft;
   assert.deepEqual(magecraft?.disciplines, []);
   assert.deepEqual(magecraft?.circuits.traits, []);
   assert.equal(magecraft?.affiliation, null);
@@ -215,7 +215,7 @@ void test("upsertActorTool fills omitted magecraft discipline array", () => {
 
 function baseProtagonistActor(): Record<string, unknown> {
   return {
-    id: "protagonist",
+    id: "actor-1",
     kind: "human",
     roles: [],
     magecraft: null,

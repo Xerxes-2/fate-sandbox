@@ -12,7 +12,7 @@ void test("buildGmBrief throws when protagonist is missing", () => {
 
   assert.throws(
     () => buildGmBrief({ ...publicState, actors: {} }),
-    /GM brief failed: protagonist protagonist missing/,
+    new RegExp(`GM brief failed: protagonist ${publicState.protagonistActorId} missing`),
   );
 });
 
@@ -53,11 +53,13 @@ void test("GM brief exposes canonical actor ids for domain tools", () => {
     id: "false-assassin",
     presentation: { ...structuredClone(seed.presentation), renderName: "Assassin" },
   };
-  publicState.scene.presentActorIds = ["protagonist", "ayaka-sajyou"];
+  publicState.scene.presentActorIds = [publicState.protagonistActorId, "ayaka-sajyou"];
 
   assert.match(
     buildGmBrief(publicState),
-    /Actor ID 索引[^\n]*protagonist=Saber \[玩家角色, 在场\][^\n]*ayaka-sajyou=绫香·沙条 \[在场\][^\n]*false-assassin=Assassin \[未在场\]/,
+    new RegExp(
+      `Actor ID 索引[^\\n]*${publicState.protagonistActorId}=Saber \\[玩家角色, 在场\\][^\\n]*ayaka-sajyou=绫香·沙条 \\[在场\\][^\\n]*false-assassin=Assassin \\[未在场\\]`,
+    ),
   );
 });
 
@@ -145,7 +147,7 @@ void test("inventory markdown only lists player-known tracked items", () => {
       id: "item-known",
       label: "红宝石吊坠",
       visibility: "player-known",
-      holderActorId: "protagonist",
+      holderActorId: publicState.protagonistActorId,
       notes: ["远坂凛交给士郎的回礼"],
     }),
     "item-secret": buildTrackedItem({
@@ -185,11 +187,12 @@ void test("inventory markdown reports placeholders for empty funds and items", (
 void test("buildStatusMarkdown lists scene summary with present actor display names", () => {
   const draft = createInitialState();
   const publicState = draft.public;
-  publicState.scene.presentActorIds = ["protagonist", "no-such-actor"];
+  publicState.scene.presentActorIds = [publicState.protagonistActorId, "no-such-actor"];
 
   const markdown = buildStatusMarkdown(publicState);
   assert.match(markdown, /## 当前状态/);
-  const protagonistName = publicState.actors["protagonist"]?.presentation.internalName ?? "";
+  const protagonistName =
+    publicState.actors[publicState.protagonistActorId]?.presentation.internalName ?? "";
   // 未知 actor 回退为 actor id，已知 actor 用 internalName。
   assert.match(markdown, new RegExp(`- 在场：${protagonistName}、no-such-actor`));
   assert.match(markdown, /## 资源与物品/);

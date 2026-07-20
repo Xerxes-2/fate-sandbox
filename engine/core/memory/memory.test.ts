@@ -10,7 +10,7 @@ void test("recordMemory stores pinned facts in public campaign memory", () => {
   const result = recordMemory(draft, {
     kind: "pin-fact",
     scope: "protagonist",
-    subject: "protagonist",
+    subject: draft.public.protagonistActorId,
     text: "玩家确认自己是御主。",
     sourceEventId: null,
     claims: [{ kind: "mundane", statement: "玩家确认自己是御主。", certainty: "confirmed" }],
@@ -170,7 +170,7 @@ void test("recordMemory allows pin-fact without claims", () => {
   const result = recordMemory(draft, {
     kind: "pin-fact",
     scope: "protagonist",
-    subject: "protagonist",
+    subject: draft.public.protagonistActorId,
     text: "玩家住在卫宫宅。",
     sourceEventId: null,
   });

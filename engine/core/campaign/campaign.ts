@@ -51,7 +51,7 @@ export function configureCampaign(
   draft.public.economy.currency = currency;
   draft.public.economy.accessibleFunds = [
     {
-      id: "purse-protagonist-cash",
+      id: `purse-${draft.public.protagonistActorId}-cash`,
       ownerActorId: draft.public.protagonistActorId,
       label: purseLabel,
       amount: startingFunds,

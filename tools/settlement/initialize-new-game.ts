@@ -44,7 +44,7 @@ export const initializeNewGameToolDefinition: FateToolDefinition = {
     }),
     protagonist: Type.Unknown({
       description:
-        "human: internalName/renderName/publicIdentity/background/apparentAge/outfit/demeanor；servant additionally className/trueNameDisplay/trueNameStatus(hidden|suspected)。renderName 是正文固定用名，中文名优先。",
+        "human: actorId/internalName/renderName/publicIdentity/background/apparentAge/outfit/demeanor；servant additionally className/trueNameDisplay/trueNameStatus(hidden|suspected)。actorId 按公开角色身份生成至少两段 kebab-case（如 ayaka-sajyou / snowfield-saber），不得编码未公开真名；renderName 是正文固定用名，中文名优先。",
     }),
     presence: Type.Optional(
       Type.Object({

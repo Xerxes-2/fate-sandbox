@@ -18,7 +18,7 @@ void test("updateEconomy reports available purse ids for an unknown purse", () =
         },
         undefined,
       ),
-    /当前可用: purse-protagonist-cash/,
+    /当前可用: purse-actor-1-cash/,
   );
 });
 
@@ -28,7 +28,7 @@ void test("updateEconomyTool renames a purse", () => {
   updateEconomyTool(
     {
       kind: "rename-purse",
-      purseId: "purse-protagonist-cash",
+      purseId: "purse-actor-1-cash",
       label: "绫香的钱包",
       reason: "修正玩家可见资金账户名称",
     },
@@ -44,7 +44,7 @@ void test("updateEconomy reports invalid enum-like fields clearly", () => {
       updateEconomyTool(
         {
           kind: "gain-money",
-          purseId: "purse-protagonist-cash",
+          purseId: "purse-actor-1-cash",
           amount: 100,
           source: "windfall",
           counterparty: "路人",
@@ -60,7 +60,7 @@ void test("updateEconomy reports invalid enum-like fields clearly", () => {
       updateEconomyTool(
         {
           kind: "add-purse",
-          ownerActorId: "protagonist",
+          ownerActorId: "actor-1",
           label: "备用现金",
           amount: 100,
           access: "public",

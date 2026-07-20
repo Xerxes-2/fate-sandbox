@@ -10,14 +10,14 @@ void test("updateActorCondition records discrete wounds", () => {
 
   updateActorCondition(draft, {
     kind: "add-wound",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     severity: "moderate",
     text: "左臂裂伤",
     source: "Lancer 追击",
     recoverable: true,
   });
 
-  const protagonist = draft.public.actors["protagonist"];
+  const protagonist = draft.public.actors[draft.public.protagonistActorId];
   assert.equal(protagonist?.condition.wounds[0]?.text, "左臂裂伤");
   assert.equal(protagonist?.condition.wounds[0]?.severity, "moderate");
 });
@@ -27,7 +27,7 @@ void test("updateActorCondition updates non-servant magecraft circuits", () => {
   upsertActor(draft, {
     kind: "setup-protagonist",
     actor: {
-      id: "protagonist",
+      id: draft.public.protagonistActorId,
       kind: "human",
       roles: [{ kind: "social", label: "测试魔术师" }],
       magecraft: {
@@ -54,12 +54,12 @@ void test("updateActorCondition updates non-servant magecraft circuits", () => {
 
   updateActorCondition(draft, {
     kind: "update-magecraft-circuits",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     circuits: { count: "27", quality: "E", od: 12, status: "depleted", traits: ["低效率"] },
     reason: "强化魔术消耗",
   });
 
-  const actor = draft.public.actors["protagonist"];
+  const actor = draft.public.actors[draft.public.protagonistActorId];
   assert.equal(actor?.magecraft?.circuits.od, 12);
   assert.equal(actor?.magecraft?.circuits.status, "depleted");
 });
@@ -69,27 +69,27 @@ void test("updateActorCondition updates wound treatment in place", () => {
 
   updateActorCondition(draft, {
     kind: "add-wound",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     severity: "minor",
     text: "右膝擦伤",
     source: "石阶滑倒",
     recoverable: true,
   });
-  const woundId = draft.public.actors.protagonist?.condition.wounds[0]?.id;
+  const woundId = draft.public.actors[draft.public.protagonistActorId]?.condition.wounds[0]?.id;
   if (woundId === undefined) {
     throw new Error("expected wound id");
   }
 
   updateActorCondition(draft, {
     kind: "update-wound",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     conditionId: woundId,
     text: "右膝擦伤——已清洁包扎",
     treatment: "消毒棉清创，消炎软膏，新绷带包扎",
     reason: "正式处理擦伤",
   });
 
-  const wounds = draft.public.actors.protagonist?.condition.wounds;
+  const wounds = draft.public.actors[draft.public.protagonistActorId]?.condition.wounds;
   assert.equal(wounds?.length, 1);
   assert.equal(wounds?.[0]?.text, "右膝擦伤——已清洁包扎");
   assert.equal(wounds?.[0]?.treatment, "消毒棉清创，消炎软膏，新绷带包扎");
@@ -100,26 +100,27 @@ void test("updateActorCondition resolves recovered afflictions", () => {
 
   updateActorCondition(draft, {
     kind: "add-affliction",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     text: "魔术回路近乎干涸",
     source: "连续强化",
     expectedDuration: "睡眠一夜",
   });
-  const afflictionId = draft.public.actors.protagonist?.condition.afflictions[0]?.id;
+  const afflictionId =
+    draft.public.actors[draft.public.protagonistActorId]?.condition.afflictions[0]?.id;
   if (afflictionId === undefined) {
     throw new Error("expected affliction id");
   }
 
   updateActorCondition(draft, {
     kind: "resolve-condition",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     conditionKind: "affliction",
     conditionId: afflictionId,
     outcome: "recovered",
     reason: "睡眠后恢复",
   });
 
-  const protagonist = draft.public.actors["protagonist"];
+  const protagonist = draft.public.actors[draft.public.protagonistActorId];
   assert.deepEqual(protagonist?.condition.afflictions, []);
 });
 
@@ -128,12 +129,13 @@ void test("updateActorCondition lists available afflictions when resolve id is m
 
   updateActorCondition(draft, {
     kind: "add-affliction",
-    actorId: "protagonist",
+    actorId: draft.public.protagonistActorId,
     text: "魔术回路近乎干涸",
     source: "连续强化",
     expectedDuration: "睡眠一夜",
   });
-  const afflictionId = draft.public.actors.protagonist?.condition.afflictions[0]?.id;
+  const afflictionId =
+    draft.public.actors[draft.public.protagonistActorId]?.condition.afflictions[0]?.id;
   if (afflictionId === undefined) {
     throw new Error("expected affliction id");
   }
@@ -142,14 +144,14 @@ void test("updateActorCondition lists available afflictions when resolve id is m
     () =>
       updateActorCondition(draft, {
         kind: "resolve-condition",
-        actorId: "protagonist",
+        actorId: draft.public.protagonistActorId,
         conditionKind: "affliction",
         conditionId: "ayaka-mana-strain-resting-fatigue",
         outcome: "recovered",
         reason: "睡眠后恢复",
       }),
     {
-      message: `affliction 不存在于 protagonist（你）: ayaka-mana-strain-resting-fatigue。当前 actor 可用 affliction: ${afflictionId}（魔术回路近乎干涸）`,
+      message: `affliction 不存在于 ${draft.public.protagonistActorId}（你）: ayaka-mana-strain-resting-fatigue。当前 actor 可用 affliction: ${afflictionId}（魔术回路近乎干涸）`,
     },
   );
 });
@@ -184,14 +186,14 @@ void test("updateActorCondition points to the actor that owns the missing condit
     () =>
       updateActorCondition(draft, {
         kind: "resolve-condition",
-        actorId: "protagonist",
+        actorId: draft.public.protagonistActorId,
         conditionKind: "affliction",
         conditionId: afflictionId,
         outcome: "recovered",
         reason: "睡眠后恢复",
       }),
     {
-      message: `affliction 不存在于 protagonist（你）: ${afflictionId}。当前 actor 可用 affliction: 无。该 affliction 存在于 ayaka-sajyou（绫香·沙条）；请改用 actorId=ayaka-sajyou`,
+      message: `affliction 不存在于 ${draft.public.protagonistActorId}（你）: ${afflictionId}。当前 actor 可用 affliction: 无。该 affliction 存在于 ayaka-sajyou（绫香·沙条）；请改用 actorId=ayaka-sajyou`,
     },
   );
 });
@@ -204,7 +206,7 @@ void test("updateActorCondition rejects missing tracked item transfer", () => {
       updateActorCondition(draft, {
         kind: "transfer-tracked-item",
         itemId: "missing-item",
-        holderActorId: "protagonist",
+        holderActorId: draft.public.protagonistActorId,
         reason: "测试",
       }),
     /tracked item 不存在/,
@@ -217,7 +219,7 @@ void test("add-tracked-item creates item in trackedItems map", () => {
   upsertActor(draft, {
     kind: "setup-protagonist",
     actor: {
-      id: "protagonist",
+      id: draft.public.protagonistActorId,
       kind: "human",
       roles: [],
       magecraft: null,
@@ -246,7 +248,7 @@ void test("add-tracked-item creates item in trackedItems map", () => {
     kind: "add-tracked-item",
     label: "魔力遮蔽用玻璃珠",
     itemKind: "mystic-code",
-    holderActorId: "protagonist",
+    holderActorId: draft.public.protagonistActorId,
     ownerActorId: null,
     condition: "intact",
     visibility: "player-known",
@@ -261,7 +263,7 @@ void test("add-tracked-item creates item in trackedItems map", () => {
   assert.equal(items.length, 1);
   assert.equal(items[0]?.label, "魔力遮蔽用玻璃珠");
   assert.equal(items[0]?.kind, "mystic-code");
-  assert.equal(items[0]?.holderActorId, "protagonist");
+  assert.equal(items[0]?.holderActorId, draft.public.protagonistActorId);
   assert.equal(items[0]?.condition, "intact");
   assert.equal(items[0]?.visibility, "player-known");
   assert.equal(items[0]?.notes.length, 2);
@@ -274,8 +276,8 @@ void test("update-tracked-item records item consumption", () => {
     kind: "add-tracked-item",
     label: "药妆店应急处理用品",
     itemKind: "mundane",
-    holderActorId: "protagonist",
-    ownerActorId: "protagonist",
+    holderActorId: draft.public.protagonistActorId,
+    ownerActorId: draft.public.protagonistActorId,
     condition: "intact",
     visibility: "player-known",
     notes: ["宽绷带×1", "消毒棉×1包", "消炎软膏×1管"],

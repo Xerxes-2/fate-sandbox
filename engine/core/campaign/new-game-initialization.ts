@@ -23,7 +23,7 @@ import { setScenePresence, upsertActor } from "../actor/actor.ts";
 import { recordMemory } from "../memory/memory.ts";
 import { getActorSecretSlots } from "../secrets/secret-actor-state.ts";
 import { configureServantSecrets } from "../secrets/secrets.ts";
-import { createInitialState, PROTAGONIST_ACTOR_ID } from "../state/state-store.ts";
+import { createInitialState } from "../state/state-store.ts";
 import { configureCampaign } from "./campaign.ts";
 
 export type NewGameInitializationInput = HumanNewGameInput | ServantNewGameInput;
@@ -54,6 +54,7 @@ export interface ServantNewGameInput {
 }
 
 export interface HumanProtagonistOpeningInput {
+  actorId: ActorId;
   internalName: string;
   renderName?: string;
   publicIdentity: string;
@@ -68,6 +69,7 @@ export interface HumanProtagonistOpeningInput {
 }
 
 export interface ServantProtagonistOpeningInput {
+  actorId: ActorId;
   internalName: string;
   renderName?: string;
   publicIdentity: string;
@@ -108,6 +110,7 @@ export interface NewGameKnownFactInput {
 
 export interface NewGameInitializationResult {
   message: string;
+  playerActorId: ActorId;
   steps: string[];
 }
 
@@ -125,7 +128,8 @@ export function initializeNewGame(
   input: NewGameInitializationInput,
 ): NewGameInitializationResult {
   const steps: string[] = [];
-  Object.assign(draft, createInitialState());
+  const playerActorId = input.protagonist.actorId;
+  Object.assign(draft, createInitialState(playerActorId));
   steps.push("reset-state");
 
   configureCampaign(draft, { ...input.campaign, reason: input.campaign.reason ?? input.reason });
@@ -155,7 +159,7 @@ export function initializeNewGame(
     recordMemory(draft, {
       kind: "pin-fact",
       scope: fact.scope,
-      subject: fact.subject ?? PROTAGONIST_ACTOR_ID,
+      subject: fact.subject ?? playerActorId,
       text: fact.text,
       claims: fact.claims ?? [{ kind: "mundane", statement: fact.text, certainty: "confirmed" }],
       sourceEventId: null,
@@ -164,7 +168,11 @@ export function initializeNewGame(
   }
 
   assertNewGameInitialized(draft, input);
-  return { message: "新游戏 state 已初始化。", steps };
+  return {
+    message: `新游戏 state 已初始化；玩家 actor id：${playerActorId}。`,
+    playerActorId,
+    steps,
+  };
 }
 
 function initializeServantProtagonist(
@@ -187,7 +195,7 @@ function initializeServantProtagonist(
   if (input.hiddenTrueName !== undefined || input.hiddenNoblePhantasms !== undefined) {
     configureServantSecrets(draft, {
       kind: "configure-servant-secrets",
-      actorId: PROTAGONIST_ACTOR_ID,
+      actorId: input.protagonist.actorId,
       trueName: input.hiddenTrueName,
       hiddenNoblePhantasms: input.hiddenNoblePhantasms,
       reason: input.reason,
@@ -198,7 +206,7 @@ function initializeServantProtagonist(
 
 function buildHumanProtagonist(input: HumanProtagonistOpeningInput): PublicActorState {
   return {
-    id: PROTAGONIST_ACTOR_ID,
+    id: input.actorId,
     kind: "human",
     roles: input.roles ?? [],
     magecraft: input.magecraft ?? null,
@@ -218,7 +226,7 @@ function buildHumanProtagonist(input: HumanProtagonistOpeningInput): PublicActor
     condition: { wounds: [], afflictions: [], permanentEffects: [] },
     inventory: { ordinaryItems: input.ordinaryItems ?? [] },
     abilities: (input.abilities ?? []).map((summary, index) => ({
-      id: `ability-protagonist-${index + 1}`,
+      id: `ability-${input.actorId}-${index + 1}`,
       label: summary,
       summary,
     })),
@@ -228,7 +236,7 @@ function buildHumanProtagonist(input: HumanProtagonistOpeningInput): PublicActor
 
 function buildServantProtagonist(input: ServantProtagonistOpeningInput): ServantInput {
   return {
-    id: PROTAGONIST_ACTOR_ID,
+    id: input.actorId,
     internalName: input.internalName,
     renderName: input.renderName,
     publicIdentity: input.publicIdentity,
@@ -260,12 +268,13 @@ function buildServantProtagonist(input: ServantProtagonistOpeningInput): Servant
 }
 
 function assertNewGameInitialized(state: State, input: NewGameInitializationInput): void {
-  const protagonist = state.public.actors[PROTAGONIST_ACTOR_ID];
+  const playerActorId = input.protagonist.actorId;
+  const protagonist = state.public.actors[playerActorId];
   if (protagonist === undefined) {
-    throw new Error("新游戏初始化失败：protagonist actor 不存在。");
+    throw new Error(`新游戏初始化失败：玩家 actor ${playerActorId} 不存在。`);
   }
-  if (state.public.protagonistActorId !== PROTAGONIST_ACTOR_ID) {
-    throw new Error("新游戏初始化失败：protagonistActorId 必须是 protagonist。");
+  if (state.public.protagonistActorId !== playerActorId) {
+    throw new Error("新游戏初始化失败：protagonistActorId 未指向玩家 actor。");
   }
   if (state.public.campaign.title.trim().length === 0) {
     throw new Error("新游戏初始化失败：campaign 未配置。");
@@ -280,7 +289,7 @@ function assertNewGameInitialized(state: State, input: NewGameInitializationInpu
     }
     if (
       input.hiddenTrueName !== undefined &&
-      getActorSecretSlots(state.secrets, PROTAGONIST_ACTOR_ID) === undefined
+      getActorSecretSlots(state.secrets, playerActorId) === undefined
     ) {
       throw new Error("新游戏初始化失败：隐藏真名未写入 Secret Game State。");
     }

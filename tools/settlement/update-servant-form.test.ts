@@ -22,7 +22,7 @@ void test("updateServantForm reports invalid contract enums clearly", () => {
           kind: "change-contract",
           actorId: "test-saber",
           contract: {
-            masterActorId: "protagonist",
+            masterActorId: "actor-1",
             masterName: "绫香",
             status: "healthy",
             manaSupply: "sufficient",

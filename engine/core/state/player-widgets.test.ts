@@ -46,7 +46,7 @@ void test("buildRelationsMarkdown shows allies and present NPCs", () => {
   addTestNpc(draft, "rin", "Guarded ally");
   addTestNpc(draft, "shinji", "Hostile rival");
   draft.public.allyActorIds = ["rin"];
-  draft.public.scene.presentActorIds = ["protagonist", "rin", "shinji"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId, "rin", "shinji"];
 
   const md = buildRelationsMarkdown(draft.public);
 
@@ -76,7 +76,7 @@ void test("buildRelationsMarkdown surfaces appearance for protagonist and NPCs",
     };
   }
   draft.public.allyActorIds = ["rin"];
-  draft.public.scene.presentActorIds = ["protagonist", "rin"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId, "rin"];
 
   const md = buildRelationsMarkdown(draft.public);
 
@@ -89,7 +89,7 @@ void test("buildRelationsMarkdown surfaces appearance for protagonist and NPCs",
 void test("buildRelationsMarkdown shows impression cards for present actors", () => {
   const draft = createInitialState();
   addTestNpc(draft, "rin", "Ally");
-  draft.public.scene.presentActorIds = ["protagonist", "rin"];
+  draft.public.scene.presentActorIds = [draft.public.protagonistActorId, "rin"];
 
   upsertActorImpression(draft, {
     actorId: "rin",
@@ -112,7 +112,7 @@ void test("buildRelationsMarkdown shows recent relationship signals", () => {
   draft.public.relationshipSignals.push({
     id: "sig-1",
     actorId: "rin",
-    targetActorId: "protagonist",
+    targetActorId: draft.public.protagonistActorId,
     signal: "Protected protagonist in battle",
     interpretation: "Trust growing",
     boundary: "Would not sacrifice self yet",
@@ -228,7 +228,7 @@ void test("buildRecapMarkdown shows campaign overview", () => {
 
   assert.match(md, /前情提要/);
   assert.match(md, /Fate 叙事/);
-  assert.match(md, /protagonist/i);
+  assert.ok(md.includes(draft.public.protagonistActorId));
   assert.match(md, /Summoning/);
   assert.match(md, /当前悬念/);
   assert.match(md, /柳洞寺结界/);

@@ -25,6 +25,8 @@ const MIN_TIME = { kind: "elapsed", elapsedMinutes: 1, reason: "推进一个最�
 
 void test("commitTurn applies mandatory travel time before domain events", () => {
   const draft = createInitialState();
+  const purseId = draft.public.economy.accessibleFunds[0]?.id;
+  assert.ok(purseId);
 
   const result = commitTurn(draft, {
     summary: "移动到新都并采购基础物资。",
@@ -44,7 +46,7 @@ void test("commitTurn applies mandatory travel time before domain events", () =>
         kind: "economy",
         event: {
           kind: "spend-money",
-          purseId: "purse-protagonist-cash",
+          purseId,
           amount: 3800,
           reason: "采购基础物资",
         },
@@ -171,6 +173,7 @@ void test("commitTurn refuses to resolve the last objective of an active beat", 
 
 void test("commitTurn records presence with explicit elapsed time policy", () => {
   const draft = createInitialState();
+  const playerActorId = draft.public.protagonistActorId;
 
   const result = commitTurn(draft, {
     summary: "凛暂时离场。",
@@ -179,7 +182,7 @@ void test("commitTurn records presence with explicit elapsed time policy", () =>
       {
         kind: "scene-presence",
         event: {
-          presentActorIds: ["protagonist"],
+          presentActorIds: [playerActorId],
           allyActorIds: [],
           reason: "凛暂时离场",
         },
@@ -187,7 +190,7 @@ void test("commitTurn records presence with explicit elapsed time policy", () =>
     ],
   });
 
-  assert.deepEqual(draft.public.scene.presentActorIds, ["protagonist"]);
+  assert.deepEqual(draft.public.scene.presentActorIds, [playerActorId]);
   assert.equal(result.results[0]?.kind, "scene");
   assert.equal(result.results[1]?.kind, "scene-presence");
 });

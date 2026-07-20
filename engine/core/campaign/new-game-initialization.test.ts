@@ -13,6 +13,7 @@ void describe("initializeNewGame", () => {
       kind: "human-protagonist",
       campaign: { presetId: "fsn_2004_fuyuki" },
       protagonist: {
+        actorId: "fuyuki-student",
         internalName: "你",
         publicIdentity: "不了解魔术的本地学生",
         background: "在冬木的异常夜晚前仍过着普通生活。",
@@ -21,13 +22,13 @@ void describe("initializeNewGame", () => {
         demeanor: "被异常逼到必须行动。",
         ordinaryItems: ["学生证", "手机"],
       },
-      presence: { presentActorIds: ["protagonist"] },
+      presence: { presentActorIds: ["fuyuki-student"] },
       knownFacts: [{ scope: "protagonist", text: "你不知道圣杯战争规则。" }],
       reason: "新手模式初始化普通人 protagonist",
     });
 
     const state = draft;
-    const protagonist = state.public.actors["protagonist"];
+    const protagonist = state.public.actors["fuyuki-student"];
 
     assert.deepEqual(result.steps, [
       "reset-state",
@@ -36,10 +37,12 @@ void describe("initializeNewGame", () => {
       "set-scene-presence",
       "record-known-fact",
     ]);
+    assert.equal(result.playerActorId, "fuyuki-student");
+    assert.equal(state.public.protagonistActorId, "fuyuki-student");
     assert.equal(state.public.campaign.timeline, "fsn");
     assert.equal(protagonist?.identity.publicIdentity, "不了解魔术的本地学生");
     assert.equal(protagonist?.servantForm, null);
-    assert.deepEqual(state.public.scene.presentActorIds, ["protagonist"]);
+    assert.deepEqual(state.public.scene.presentActorIds, ["fuyuki-student"]);
     assert.equal(
       state.public.memory.pinnedFacts.some((fact) => fact.text === "你不知道圣杯战争规则。"),
       true,
@@ -52,6 +55,7 @@ void describe("initializeNewGame", () => {
       kind: "servant-protagonist",
       campaign: { presetId: "fsf_2008_snowfield" },
       protagonist: {
+        actorId: "snowfield-saber",
         internalName: "Saber",
         publicIdentity: "刚现界且真名未公开的 Saber",
         apparentAge: "青年",
@@ -69,10 +73,11 @@ void describe("initializeNewGame", () => {
     });
 
     const state = draft;
-    const protagonist = state.public.actors["protagonist"];
+    const protagonist = state.public.actors["snowfield-saber"];
 
+    assert.equal(state.public.protagonistActorId, "snowfield-saber");
     assert.equal(protagonist?.servantForm?.identity.trueName.status, "hidden");
     assert.equal(protagonist?.servantForm?.identity.trueName.display, "Saber");
-    assert.notEqual(state.secrets.actorStates["protagonist"]?.secrets, undefined);
+    assert.notEqual(state.secrets.actorStates["snowfield-saber"]?.secrets, undefined);
   });
 });

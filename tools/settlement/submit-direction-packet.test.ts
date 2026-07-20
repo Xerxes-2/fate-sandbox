@@ -63,7 +63,7 @@ function seedHiddenTrueName(trueName: string): void {
   );
   const draft = cloneState();
   // stance 引用 saber_shiki：它必须在场才能通过 direction packet 语义校验。
-  draft.public.scene.presentActorIds = ["protagonist", "saber_shiki"];
+  draft.public.scene.presentActorIds = ["actor-1", "saber_shiki"];
   draft.secrets.actorStates["saber_shiki"] = {
     actorId: "saber_shiki",
     secrets: {
@@ -150,7 +150,7 @@ void test("submitDirectionPacketTool rejects a stance for a non-existent actor",
 void test("submitDirectionPacketTool rejects a stance for an off-scene actor", () => {
   seedHiddenTrueName("两仪式");
   const draft = cloneState();
-  draft.public.scene.presentActorIds = ["protagonist"];
+  draft.public.scene.presentActorIds = ["actor-1"];
   commitState(draft);
   assert.throws(() => submitDirectionPacketTool(RENDER_PACKET), /指向不在场的 actor：saber_shiki/u);
 });

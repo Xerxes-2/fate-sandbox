@@ -17,7 +17,7 @@ void test("updateActorImpressionTool persists the committed impression to the se
 
   const result = updateActorImpressionTool(
     {
-      actorId: "protagonist",
+      actorId: "actor-1",
       presence: "安静但警觉",
       actionStyle: "先观察出口再回答",
       relationshipPosture: "谨慎合作",
@@ -37,7 +37,7 @@ void test("updateActorImpressionTool persists the committed impression to the se
   assert.ok(isRecord(publicState));
   const impressions = publicState["actorImpressions"];
   assert.ok(isRecord(impressions));
-  const impression = impressions["protagonist"];
+  const impression = impressions["actor-1"];
   assert.ok(isRecord(impression));
   assert.equal(impression["presence"], "安静但警觉");
 });

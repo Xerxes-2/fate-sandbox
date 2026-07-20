@@ -42,6 +42,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
       kind: "human-protagonist",
       campaign: { presetId: "fsn_2004_fuyuki" },
       protagonist: {
+        actorId: "fuyuki-student",
         internalName: "走查主角",
         publicIdentity: "不了解魔术的本地学生",
         background: "普通日常被异常打断。",
@@ -50,12 +51,12 @@ void test("full Fate slice runs end to end through the tool layer", () => {
         demeanor: "谨慎而困惑。",
         ordinaryItems: ["手机", "学生证"],
       },
-      presence: { presentActorIds: ["protagonist"] },
+      presence: { presentActorIds: ["fuyuki-student"] },
       reason: "集成走查开局",
     },
     session,
   );
-  assert.ok(getState().public.actors["protagonist"]);
+  assert.ok(getState().public.actors["fuyuki-student"]);
 
   // ---- 场景：NPC skeleton + 在场 ----
   upsertActorTool(
@@ -71,7 +72,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
     session,
   );
   setScenePresenceTool(
-    { presentActorIds: ["protagonist", "tohsaka-rin"], allyActorIds: [], reason: "凛加入调查" },
+    { presentActorIds: ["fuyuki-student", "tohsaka-rin"], allyActorIds: [], reason: "凛加入调查" },
     session,
   );
   assert.ok(getState().public.scene.presentActorIds.includes("tohsaka-rin"));
@@ -107,7 +108,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
           kind: "actor-condition",
           event: {
             kind: "add-wound",
-            actorId: "protagonist",
+            actorId: "fuyuki-student",
             severity: "minor",
             text: "翻墙时擦伤左掌。",
             source: "夜巡翻墙",
@@ -118,7 +119,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
           kind: "economy",
           event: {
             kind: "spend-money",
-            purseId: "purse-protagonist-cash",
+            purseId: "purse-fuyuki-student-cash",
             amount: 800,
             reason: "便利店买绷带和饮料。",
           },
@@ -166,7 +167,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
     session,
   );
   const afterMixed = getState();
-  assert.equal(afterMixed.public.actors["protagonist"]?.condition.wounds.length, 1);
+  assert.equal(afterMixed.public.actors["fuyuki-student"]?.condition.wounds.length, 1);
   assert.equal(afterMixed.public.memory.dailyEvents.length, 1);
   assert.equal(afterMixed.public.memory.eventLog.length >= 1, true);
 
@@ -230,7 +231,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
           kind: "actor-condition",
           event: {
             kind: "add-wound",
-            actorId: "protagonist",
+            actorId: "fuyuki-student",
             severity: "minor",
             text: "撤离时被术式余波灼伤小臂。",
             source: "术式余波",
@@ -328,7 +329,7 @@ void test("full Fate slice runs end to end through the tool layer", () => {
   recordRelationshipSignalTool(
     {
       actorId: "tohsaka-rin",
-      targetActorId: "protagonist",
+      targetActorId: "fuyuki-student",
       signal: "解释术式时不自觉放慢了语速",
       interpretation: "把同行者当成了需要照顾的搭档",
       boundary: "仍然拒绝透露家族目标",

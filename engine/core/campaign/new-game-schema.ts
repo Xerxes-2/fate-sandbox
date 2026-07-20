@@ -30,7 +30,13 @@ const NEW_GAME_PRESENCE_INPUT_SCHEMA = Type.Object({
   allyActorIds: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
 });
 
+const PLAYER_ACTOR_ID_SCHEMA = Type.String({
+  minLength: 3,
+  pattern: "^[a-z0-9]+(?:-[a-z0-9]+)+$",
+});
+
 const HUMAN_PROTAGONIST_OPENING_SCHEMA = Type.Object({
+  actorId: PLAYER_ACTOR_ID_SCHEMA,
   internalName: Type.String({ minLength: 1 }),
   renderName: Type.Optional(Type.String({ minLength: 1 })),
   publicIdentity: Type.String({ minLength: 1 }),
@@ -43,6 +49,7 @@ const HUMAN_PROTAGONIST_OPENING_SCHEMA = Type.Object({
 });
 
 const SERVANT_PROTAGONIST_OPENING_SCHEMA = Type.Object({
+  actorId: PLAYER_ACTOR_ID_SCHEMA,
   internalName: Type.String({ minLength: 1 }),
   renderName: Type.Optional(Type.String({ minLength: 1 })),
   publicIdentity: Type.String({ minLength: 1 }),
