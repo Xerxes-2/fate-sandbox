@@ -23,6 +23,11 @@ export interface TextMessage {
   timestamp: number;
 }
 
+export interface SettlementPromptContext {
+  hasInitializedState: boolean;
+  lastRenderedProse?: string;
+}
+
 function loadPassPreset(pass: PromptPass): PromptPreset {
   return loadPromptPreset(PROJECT_ROOT, pass);
 }
@@ -49,17 +54,17 @@ export function buildSystemPrompt(baseSystemPrompt: string): string {
 /** 结算器（Pass A）主循环注入：只装 settlement/both 模块，零 style/render 模块。 */
 export function injectGmPromptMessages<TMessage>(
   messages: ReadonlyArray<TMessage>,
-  lastRenderedProse?: string,
+  context: SettlementPromptContext,
 ): Array<TMessage | TextMessage> {
   if (!hasUserMessage(messages)) {
     return [...messages];
   }
 
   return [
-    ...buildSlotMessages("pre-history"),
-    ...insertProseContinuityBeforeLastUserMessage(messages, lastRenderedProse),
-    ...buildSlotMessages("pre-response"),
-    ...buildSlotMessages("final-contract"),
+    ...buildSlotMessages("pre-history", context.hasInitializedState),
+    ...insertProseContinuityBeforeLastUserMessage(messages, context.lastRenderedProse),
+    ...buildSlotMessages("pre-response", context.hasInitializedState),
+    ...buildSlotMessages("final-contract", context.hasInitializedState),
   ];
 }
 
@@ -122,16 +127,18 @@ export function buildRendererSystemPrompt(mode: RendererMode): string {
       const openingProtocol = readPromptFile("prompts/render/opening-protocol.md").trim();
       sections.push(`<opening_protocol>\n${openingProtocol}\n</opening_protocol>`);
     }
-    for (const module of promptModulesForSlot(slot, "render")) {
+    for (const module of promptModulesForSlot(slot, "render", true)) {
       sections.push(`<${module.header}>\n${module.body.trim()}\n</${module.header}>`);
     }
   }
   return sections.join("\n\n");
 }
 
-function buildPromptModules(pass: PromptPass): PromptModule[] {
+function buildPromptModules(pass: PromptPass, includeRuntimeSources: boolean): PromptModule[] {
   return loadPassPreset(pass)
-    .modules.filter((module) => module.enabled)
+    .modules.filter(
+      (module) => module.enabled && (includeRuntimeSources || module.source.kind !== "runtime"),
+    )
     .map(resolvePromptModule)
     .filter((module) => module.body.length > 0);
 }
@@ -172,12 +179,18 @@ function resolvePromptFilePath(path: string): string {
   return join(PROJECT_ROOT, path);
 }
 
-function buildSlotMessages(slot: PromptSlot): TextMessage[] {
-  return promptModulesForSlot(slot, "settlement").map(buildPromptModuleMessage);
+function buildSlotMessages(slot: PromptSlot, hasInitializedState: boolean): TextMessage[] {
+  return promptModulesForSlot(slot, "settlement", hasInitializedState).map(
+    buildPromptModuleMessage,
+  );
 }
 
-function promptModulesForSlot(slot: PromptSlot, pass: PromptPass): PromptModule[] {
-  return buildPromptModules(pass)
+function promptModulesForSlot(
+  slot: PromptSlot,
+  pass: PromptPass,
+  includeRuntimeSources: boolean,
+): PromptModule[] {
+  return buildPromptModules(pass, includeRuntimeSources)
     .filter((module) => module.slot === slot)
     .toSorted(comparePromptModules);
 }

@@ -27,11 +27,28 @@ void test("buildSystemPrompt appends only the settlement director identity", () 
   assert.doesNotMatch(systemPrompt, /Final Output Contract/);
 });
 
+void test("injectGmPromptMessages omits runtime projections before state initialization", () => {
+  resetState();
+  const messages: UserMessage[] = [createUserMessage("/skill:start-game")];
+
+  const injected = injectGmPromptMessages<UserMessage>(messages, {
+    hasInitializedState: false,
+  });
+  const prompt = injected.map((message) => textOf(message)).join("\n");
+
+  assert.doesNotMatch(prompt, /<mechanical_state>/);
+  assert.doesNotMatch(prompt, /<backstage_ledger>/);
+  assert.doesNotMatch(prompt, /<presence_impressions>/);
+  assert.doesNotMatch(prompt, /穗群原学园|50,000/);
+  assert.match(prompt, /<settlement_principles>/);
+  assert.match(prompt, /<direction_contract>/);
+});
+
 void test("injectGmPromptMessages inserts slot-based prompt stack", () => {
   resetState();
   const messages: UserMessage[] = [createUserMessage("继续。")];
 
-  const injected = injectGmPromptMessages<UserMessage>(messages);
+  const injected = injectGmPromptMessages<UserMessage>(messages, { hasInitializedState: true });
   const texts = injected.map((message) => textOf(message));
 
   assert.equal(injected.length, 12);
@@ -121,7 +138,7 @@ void test("injectGmPromptMessages keeps conversation history contiguous before r
   resetState();
   const messages: UserMessage[] = [createUserMessage("第一句。"), createUserMessage("第二句。")];
 
-  const injected = injectGmPromptMessages<UserMessage>(messages);
+  const injected = injectGmPromptMessages<UserMessage>(messages, { hasInitializedState: true });
   const texts = injected.map((message) => textOf(message));
 
   assert.equal(texts[6], "第一句。");
@@ -134,7 +151,10 @@ void test("injectGmPromptMessages injects prose continuity when last rendered pr
   const messages: UserMessage[] = [createUserMessage("继续。")];
   const prose = "你抱起少女走进通道。";
 
-  const injected = injectGmPromptMessages<UserMessage>(messages, prose);
+  const injected = injectGmPromptMessages<UserMessage>(messages, {
+    hasInitializedState: true,
+    lastRenderedProse: prose,
+  });
   const texts = injected.map((message) => textOf(message));
 
   // prose_continuity 插在最后一条真实玩家输入之前：保留旧历史 prefix cache，又避免被误判为当前输入。
@@ -152,7 +172,10 @@ void test("injectGmPromptMessages places prose continuity before only the latest
   resetState();
   const messages: UserMessage[] = [createUserMessage("旧输入。"), createUserMessage("最新输入。")];
 
-  const injected = injectGmPromptMessages<UserMessage>(messages, "上一轮正文。");
+  const injected = injectGmPromptMessages<UserMessage>(messages, {
+    hasInitializedState: true,
+    lastRenderedProse: "上一轮正文。",
+  });
   const texts = injected.map((message) => textOf(message));
 
   assert.equal(texts[6], "旧输入。");
@@ -165,8 +188,13 @@ void test("injectGmPromptMessages skips prose continuity when no prose provided"
   resetState();
   const messages: UserMessage[] = [createUserMessage("继续。")];
 
-  const withUndefined = injectGmPromptMessages<UserMessage>(messages, undefined);
-  const withEmpty = injectGmPromptMessages<UserMessage>(messages, "");
+  const withUndefined = injectGmPromptMessages<UserMessage>(messages, {
+    hasInitializedState: true,
+  });
+  const withEmpty = injectGmPromptMessages<UserMessage>(messages, {
+    hasInitializedState: true,
+    lastRenderedProse: "",
+  });
 
   assert.equal(withUndefined.length, 12);
   assert.equal(withEmpty.length, 12);

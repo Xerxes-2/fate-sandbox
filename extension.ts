@@ -34,7 +34,7 @@ export default function extension(pi: ExtensionAPI): void {
   });
 
   pi.on("context", async (event, ctx) => {
-    syncStateFromSessionManager(ctx.sessionManager);
+    const hasInitializedState = syncStateFromSessionManager(ctx.sessionManager);
     // 结算器（Pass A）投影：渲染产物不作为对话流消息进结算上下文，但最后一轮渲染正文
     // 作为物理连续性锚注入 pre-response slot，防止跨轮物理状态断裂。
     const workingSet = projectSettlementWorkingSet(event.messages, toolResultRetention);
@@ -45,10 +45,10 @@ export default function extension(pi: ExtensionAPI): void {
       // 传给结算模型的 per-call 视图，不改存档。新存档由 message_end 源头收口，
       // 这层负责处理老存档，二者互补。
       .map((message) => stripLeakedSettlementProse(message) ?? message);
-    const injected = injectGmPromptMessages<ContextEvent["messages"][number]>(
-      settlementMessages,
+    const injected = injectGmPromptMessages<ContextEvent["messages"][number]>(settlementMessages, {
+      hasInitializedState,
       lastRenderedProse,
-    );
+    });
     dumpPassA(ctx.getSystemPrompt(), injected);
     return { messages: injected };
   });
