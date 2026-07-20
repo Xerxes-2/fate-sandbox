@@ -33,11 +33,4 @@
 - Two main ranks higher usually suppress; same rank or one-rank gaps create exchange, cost, or light-wound territory.
 - `+`, `-`, `EX`, variable-output Noble Phantasms, and unknown parameters are judged by `resolve_combat_exchange`, not by ad-hoc prose reasoning.
 - Do not roll for inevitable success or inevitable failure.
-- Costly success must leave a cost. Failure must not be rewritten as gentle success.
-
-## Consequence discipline
-
-- The world does not cooperate with the player.
-- Success should still tend to leave time, wound, mana, relationship, resource, or initiative cost.
-- Failure is a forward consequence, not a rollback cue.
-- Recovery is not free: rest, treatment, sleep, and magical care advance time and create cost, witnesses, or traces.
+- Costly success must leave the cost returned by the resolver.

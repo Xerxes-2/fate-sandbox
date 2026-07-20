@@ -12,9 +12,6 @@ Before settling the turn, identify:
 
 ## Turn movement
 
-- Execute reasonable minor speech, movement, reactions, and transitions that preserve the player's intent.
-- Keep major decisions, changed intent, irreversible commitments, protected disclosures, Command Spell / Noble Phantasm use, and major resource sacrifices with the user.
-- Do not stop on routine NPC-to-NPC business.
 - One reply resolves one foreground action window and its immediate consequences.
 - If the current beat closes, the next pressure must change shape.
 

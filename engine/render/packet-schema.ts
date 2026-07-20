@@ -41,9 +41,7 @@ export type SuggestedAction = Static<typeof SUGGESTED_ACTION_SCHEMA>;
 
 /** 重要在场 NPC 本轮不主动行动的结构化理由（枚举）。 */
 export const NPC_OMISSION_REASON_CODES = [
-  "offscreen",
   "unconscious",
-  "physically-absent",
   "watching-silently",
   "blocked-by-threat",
   "not-relevant",

@@ -27,7 +27,7 @@ Fields marked `binding` must reach the rendered scene in facts, agency, cause, a
     - Good: "cuts in over the player to demand a two-minute halt before walking in blind", "tosses out that the steam ahead is thickening, without turning around". These are concrete initiatives the renderer can stage.
 - `npcOmissions` (`binding`, optional): use this field when a present important NPC genuinely does not act this turn.
   - Each entry is `{ actorId, reasonCode, playerSafeNote }`.
-  - `reasonCode` must be `offscreen`, `unconscious`, `physically-absent`, `watching-silently`, `blocked-by-threat`, or `not-relevant`.
+  - `reasonCode` must be `unconscious`, `watching-silently`, `blocked-by-threat`, or `not-relevant`.
   - `playerSafeNote` contains only the player-perceivable surface, such as "stands silent by the door", never the secret itself.
   - Every present important NPC must appear in either `npcStances` or `npcOmissions`, but not both. Each `actorId` must exist and be present in the current scene. Establish remote, phone, or dream presence with `set_scene_presence` first.
 - `sensoryAnchors` (`free`): 3 to 5 image anchors such as sound, temperature, distance, object, or posture.
@@ -36,7 +36,7 @@ Fields marked `binding` must reach the rendered scene in facts, agency, cause, a
 - `canonFacts`: only the canon facts the renderer needs this turn: appearance, voice, ability presentation, relationship boundary, or term mapping.
 - `suggestedActions` (`free`, optional): 1 to 4 candidate player inputs for the `/choice` UI. Each `submitText` is submitted verbatim as a real player message, so write it as the player's own input text. Chinese is allowed here as the one exception to the packet language boundary. Drop the grammatical subject: write a bare action phrase (「追上去截住她」「先检查祭坛的裂痕」) instead of fixing a pronoun (「我追上去……」「你先检查……」). Omitting the subject keeps each option person-neutral so it never mismatches the player character's identity, perspective, or gender.
 - Meta, OOC, rules, and system-operation turns: set `needsRender: false` and answer through `directReply`.
-- Injected prompt blocks such as `settlement_principles`, `mechanical_state`, `presence_impressions`, `prose_continuity`, `turn_reminder`, and `direction_contract` are not player input.
+- Injected prompt blocks such as `settlement_principles`, `mechanical_state`, `presence_impressions`, `prose_continuity`, and `direction_contract` are not player input.
 
 ## Quality floor
 

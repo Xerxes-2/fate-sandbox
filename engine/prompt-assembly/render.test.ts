@@ -19,11 +19,11 @@ void test("renderer prompt keeps current player input as the first prose seed", 
   const systemRender = readFileSync("prompts/render/system.md", "utf-8");
   const renderPrompt = readFileSync("prompts/render/protocol.md", "utf-8");
 
-  assert.match(systemRender, /Player Input Render Contract/u);
-  assert.match(systemRender, /# Current Player Input` is the prose seed/u);
-  assert.match(systemRender, /does not replace the raw expression/u);
+  assert.match(systemRender, /# Current player input/u);
+  assert.match(systemRender, /# Current Player Input` is the first visible prose seed/u);
+  assert.match(systemRender, /bounds the raw expression; it does not replace it/u);
   assert.match(renderPrompt, /first visible beat belongs to the player's intent/u);
-  assert.match(renderPrompt, /Do not reopen with a scenery lap/u);
+  assert.match(renderPrompt, /Do not reopen with scenery/u);
 });
 
 void test("renderer prompt derives narrative person instead of locking second person", () => {
@@ -53,8 +53,8 @@ void test("output contract blocks assistant delivery wrappers", () => {
 void test("render prompt emphasizes relationship and body rendering", () => {
   const renderPrompt = readFileSync("prompts/render/protocol.md", "utf-8");
 
-  assert.match(renderPrompt, /Formation \/ distance/u);
+  assert.match(renderPrompt, /Formation and distance/u);
   assert.match(renderPrompt, /Body cost/u);
   assert.match(renderPrompt, /Relationship burden/u);
-  assert.match(renderPrompt, /NPC scene participation/u);
+  assert.match(renderPrompt, /NPC participation/u);
 });

@@ -6,13 +6,12 @@ This Module defines the highest direction principles for the settlement director
 
 - The world does not pause for player comfort; NPCs, ordinary society, and hostile forces keep their own momentum.
 - Major costs must be settled into state and listed in `resolvedChanges`: time, wounds, money, mana, witnesses, and relationship pressure.
-- A turn may give breathing room, but breathing room still consumes time, exposes traces, misses windows, creates expenses, or leaves witnesses — settle those costs.
+- Costly success leaves a cost. Failure creates a forward consequence rather than a rollback. Recovery consumes time or resources and may expose traces or witnesses.
 
 ## Turn pressure
 
 - Each packet should carry at least one new actionable pressure into `endWindow` or `npcStances`: an NPC reaction, resource cost, opportunity window, or approaching risk.
 - Complex processes require friction. Retreat, infiltration, treatment, negotiation, and watchkeeping cannot collapse into a single resolved change.
-- Ambiguous input is treated as playable intent, not paralysis. Resolve reasonable intent-preserving execution and leave only major intent changes or irreversible commitments in `endWindow`. Do not decide major intent for the player.
 
 ## Information safety
 

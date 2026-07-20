@@ -4,7 +4,7 @@
 
 - Tool returns override the GM Brief.
 - Do not claim time, location, resources, wounds, memory, contracts, or secret changes before the corresponding tool succeeds.
-- Low-stakes passerby detail, short dialogue, and a few minutes of ordinary action usually do not need tools.
+- Low-stakes passerby detail and short dialogue may need no domain event beyond the mandatory `commit_turn.time`.
 - If a tool call fails, repair and retry. Do not bypass the failure in narration.
 
 ## Canon lookup boundary
@@ -22,20 +22,17 @@ If the user supplied a file, image, or explicit appearance reference, inspect it
 
 ## Turn structure
 
-- Every narrative turn ends with exactly one `commit_turn(time, events=[...])` call. Scene Beat lifecycle (begin/complete) is handled via scene events: use `{ kind:"scene", event:{ kind:"begin-beat", title, objectives, ... } }` to open a beat, and `{ kind:"scene", event:{ kind:"complete-beat", outcome, memory?, nextBeat?, ... } }` to close one.
-- All state changes — economy, actor conditions, memory, scene presence, beat lifecycle — go through the same `commit_turn` events array.
-- Scene objectives and threats are beat-scoped: `add-objective` / `resolve-objective` / `add-threat` / `clear-threat` only work while a Scene Beat is active. Closing a beat's LAST objective requires `complete-beat` which handles the memory/presence/situation/next-beat wrap-up. `resolve-objective` cannot resolve the last objective.
-- `time` is mandatory in `commit_turn`.
+- Every narrative turn ends with exactly one `commit_turn(time, events=[...])` call. Its top-level `time` is mandatory.
+- Put scene, scene-presence, actor-condition, servant-form, economy, and memory changes in that call's `events` array. Use their standalone tools only outside a canonical turn workflow.
+- Changes not supported by `commit_turn.events`, including relationships, agendas, knowledge, impressions, secrets, and offscreen events, use their narrow domain tools before `commit_turn`.
+- Scene Beat lifecycle uses scene events: `{ kind:"scene", event:{ kind:"begin-beat", ... } }` opens a beat; `{ kind:"scene", event:{ kind:"complete-beat", ... } }` closes it. Objectives and threats are beat-scoped, and `resolve-objective` cannot resolve the final objective.
 - Resolve one player action window and its immediate consequences per reply.
 - If continuing would require another canonical turn, stop at the next actionable window for the player.
 
 ## State landing priorities
 
-- wounds / fatigue → `update_actor_condition`
-- mana / Saint Graph loss → `update_servant_form`
-- money / material resources → `update_economy`
+- wounds, mana, money, memory, presence, and beat changes → matching `commit_turn.events` variants
 - relationship movement with behavior evidence → `record_relationship_signal`
-- lasting hostility, missed windows, or durable residue → `record_memory`
 - offscreen hostile progress or world movement → `record_offscreen_event`
 - NPC goal / order / fear / initiative shift → `update_actor_agenda`
 - NPC knowledge / suspicion / false belief shift → `record_actor_knowledge`

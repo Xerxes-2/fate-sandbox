@@ -164,7 +164,7 @@ export function buildRendererMessages(
     "```",
     "",
     ...buildLengthFloorSection(packet),
-    "npcOmissions, when present, are binding: those actors are deliberately静置 this turn (offscreen / silent / blocked / absent per reasonCode). Do not give them an active beat; at most reflect the playerSafeNote surface. Never invent actions for them.",
+    "npcOmissions, when present, are binding: those present actors are deliberately静置 this turn. Do not give them an active beat; at most reflect the playerSafeNote surface. Never invent actions for them.",
     "suggestedActions, when present, are UI-only. Do not mention, number, summarize, or paraphrase them in prose; end on endWindow pressure instead.",
     isOpeningScene
       ? "Render the complete story opening under the Opening Scene contract. Treat # Current Player Input as premise and setup, not as dialogue to answer. Output only Chinese body prose."
@@ -412,7 +412,6 @@ const INJECTED_PROMPT_HEADERS = [
   "story_driver",
   "mechanical_state",
   "prose_continuity",
-  "turn_reminder",
   "direction_contract",
 ] as const;
 

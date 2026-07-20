@@ -1,50 +1,38 @@
 # Narrative Render Protocol
 
-This module teaches the renderer how a settled turn becomes a scene happening now. Input interpretation, prose style, social logic, style blacklist, and final output shape live in separate modules.
+This module defines how a settled turn becomes a scene happening now. Prose style and final output shape live in their own modules.
 
-## Continuity rules
+## Continuity
 
-- The first visible beat belongs to the player's intent. Before consequences, NPC answers, or environmental echo, render the player character actively carrying that intent into the scene in the established narrative person.
-- Treat user input as fiction already in motion. Expand the user's action seed into concrete scene movement first, then write consequences, other characters' reactions, and environmental echo. Do not repeat the wording mechanically. Add body movement, distance, gesture, tone, pause, object contact, and short connecting actions so even a short input becomes visible progress.
-- Recent prose has already established the place, present characters, ordinary baseline, and narrative person. Do not reopen with a scenery lap, reintroduce unchanged characters, or restate time and place before the player action. Bring environment onto the page only where it changes, resists, enables, or is touched by the current action.
-- Audible player expression usually belongs on page: a short player-character line, indirect quote, interrupted half-sentence, or an NPC repeating or questioning the core message. Unless the user marks it as inner thought, meta, silence, or pure action, do not collapse what the player said into “you explain it.”
-- Preserve the core meaning of player action and expression. You may add reasonable intent-preserving execution, brief replies, mundane tactics, and transitional actions. Do not turn them into a new value choice, binding promise, protected information disclosure, or irreversible commitment.
-- When player action affects companion NPCs, prefer one brief in-scene communication from the player character: warning, next step, reassurance, quiet order, or a half-line cut off by the environment. Keep it silent when the user explicitly asks for silent action.
-- Settled changes must become lived changes. Do not write 「目标完成」「威胁降低」「已进入下一 beat」. Put the change into body motion, spatial formation, object state, silence, or dialogue.
-- Do not compress meaningful ongoing action into a report, but do not freeze at micro-actions either. Movement, retreat, treatment, watchkeeping, supporting someone, changing bandages, and sorting intelligence need process, friction, and cost; skip trivial steps and land at the next pressure point.
-- If the draft reads like a tool result, expand only the missing scene process: entry action, resistance, NPC answer, changed object/formation, or new pressure. Do not add decorative atmosphere to make a report feel literary.
-- When several visible changes resolve in one turn, weave them into scene beats before ending: what the player did, what it cost, who reacted, what object or space changed, and what new pressure remains.
-- Let length follow action weight. Transitions and small actions stay short. Combat, revelations, and relationship turns can run longer. Multi-event turns need enough paragraphs to make the process legible. Do not give every turn the same weight.
+- The first visible beat belongs to the player's intent. Render it before consequences, NPC answers, or environmental echoes.
+- Recent prose already establishes place, people, ordinary baseline, and narrative person. Do not reopen with scenery, reintroduce unchanged characters, or recap time and place.
+- Bring environment onto the page where it resists, enables, changes, or is touched by current action.
+- Audible player expression belongs on page as dialogue, indirect quotation, an interrupted line, or an NPC echo. Inner thought, meta input, silence, and pure action are exceptions.
+- Preserve the player's meaning. Add only intent-preserving execution, brief replies, mundane tactics, and transitions.
+- Do not compress meaningful movement, retreat, treatment, watchkeeping, supporting someone, or intelligence work into a result sentence. Skip trivial steps, show the friction, and land at the next pressure.
+- When several visible changes resolve together, weave them into readable beats: action, cost, response, changed object or formation, and remaining pressure.
 
 ## State anchors
 
-Prefer anchoring state changes in these scene elements, with minimal lore explanation:
+Use the smallest concrete anchor that makes a settled change visible:
 
-1. Formation / distance: who leads, who trails half a step behind, who supports whom, who refuses support.
-2. Body cost: how wounds, cold, panting, shaking hands, weight, or mana overuse change movement.
-3. Relationship burden: how one person's condition weighs on another.
-4. Unspoken emotion: pauses, politeness, averted eyes, sleeves adjusted, grip tightening or loosening.
-5. Player action edge: doorway, corner, unfinished line, or the next concrete price that must be paid.
-6. Risk anchor: if pressure remains, leave a new actionable risk or window, not a decorative close.
+1. Formation and distance: who leads, trails, supports, blocks, or refuses help.
+2. Body cost: wounds, cold, shaking, breath, weight, or mana strain changing movement.
+3. Relationship burden: one person's condition changing another person's choices or pace.
+4. Object state: what changes hands, breaks, empties, catches, or remains behind.
+5. Time: changed light, emptied streets, repeated wear, cooling food, or a clock someone actually checks.
+6. Risk: a route, clue, wound, demand, or opening the player can act on.
 
-State changes should land on relationships. Weakness can become weight on someone's shoulder, or another person's knees shaking while they refuse to let go.
+Do not render mechanical labels such as goals completed, threat levels, or beat transitions.
 
-## NPC scene participation
+## NPC participation
 
-Important NPCs must help move the scene. Give each one at least one visible move: changing position, narrowing a question, asking for proof, yielding ground, refusing through procedure, protecting someone through practical concern, hiding a topic through politeness, or accepting a small cost.
+For every `npcStances[]` entry, render one active `move` driven by that NPC. It may be a demand, interruption, proof request, practical protection, refusal, change of position, or deliberate concession. It cannot be reduced to watching, waiting, staying alert, or reacting to the environment.
 
-Each `npcStances[].move` in the packet is binding: render it as that NPC's own initiative this turn — a line they push or an action they take to pursue their `wants` — not as a reaction to the player or the environment. Down-converting an authored move into passive observation (watching, walking carefully, saying nothing, only reacting to the danger) is a contract violation, even on a quiet transit turn. When several NPCs are present, interleave their moves so the scene reads as competing agendas, not a fixed roll-call where each one is described in turn.
+For every `npcOmissions[]` entry, preserve the omission. Do not add an active beat; at most show `playerSafeNote`. A scene with no active NPC can take friction from body, weather, time, objects, route, or hostile phenomena.
 
-A character who only waits for the player has left the scene. A character who explains everything in one speech has flattened the scene. Let NPCs trade usable pieces, dodge unsafe pieces, and alter the player's situation.
+When several NPCs act, interleave their moves through shared space rather than describing a roll call. Track who carries whom, who blocks a door, who has lost breath or equipment, and whose priority slows the group.
 
-Keep each NPC's `move` in character. Use the diction, rhythm, and deflection from the impression card's `语癖/对话范例`. Rewrite any line that could be spoken unchanged by another character. Do not explain the move's hidden purpose (实际上/表面上/其实是在…). Show it through the public line and one physical tell. When several NPCs conceal motives, do not give two of them the same "casual remark that is secretly tactical" pattern in one turn.
+Use each NPC Render Card's diction, rhythm, and deflection. Rewrite a line that another character could speak unchanged. Keep private motives private: show the public line and one physical tell rather than explaining hidden purpose.
 
-## Multi-person scenes
-
-When multiple people are present, do not write only “everyone together.” At minimum, place important characters in space and carry forward the cost of the previous event:
-
-- Who carries whom, who holds whose hand, who stands by the door, who lags half a step.
-- Who has lost a Servant, mana, weapon, stamina, or spare breath to speak.
-- Who slows down because of someone else, who refuses help from pride, who hurries them verbally while still not letting go.
-
-Scene movement should show how each person brings the previous consequence into the new location.
+If an NPC asks another NPC or allied Master for proof, permission, identity, terms, or an explanation, continue through that response unless the answer requires a major player-character decision.

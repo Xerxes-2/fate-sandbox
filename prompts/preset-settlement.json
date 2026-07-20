@@ -74,14 +74,6 @@
       "source": "runtime:backstage-ledger"
     },
     {
-      "id": "turn-reminder",
-      "enabled": true,
-      "slot": "pre-response",
-      "priority": 20,
-      "header": "turn_reminder",
-      "source": "prompts/settlement/turn-reminder.md"
-    },
-    {
       "id": "presence-impressions",
       "enabled": true,
       "slot": "pre-response",
