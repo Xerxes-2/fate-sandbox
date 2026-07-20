@@ -26,14 +26,6 @@
       "source": "prompts/render/protocol.md"
     },
     {
-      "id": "protagonist-impression",
-      "enabled": true,
-      "slot": "pre-history",
-      "priority": 40,
-      "header": "protagonist_impression",
-      "source": "prompts/render/protagonist-impression.md"
-    },
-    {
       "id": "output-contract",
       "enabled": true,
       "slot": "final-contract",

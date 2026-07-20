@@ -86,7 +86,7 @@ void test("buildRendererSystemPrompt assembles clean-room continuation stack", (
   assert.match(prompt, /<style_rules>/);
   assert.match(prompt, /<style_blacklist>/);
   assert.match(prompt, /<render_protocol>/);
-  assert.match(prompt, /<protagonist_impression>/);
+  assert.doesNotMatch(prompt, /<protagonist_impression>|Current protagonist: TBD/);
   assert.match(prompt, /<output_contract>/);
   assert.match(prompt, /Narrative Perspective Contract/);
   assert.match(prompt, /No narrative person is globally fixed/);
@@ -116,15 +116,15 @@ void test("buildRendererSystemPrompt adds opening guidance only for the first pr
 
 void test("prompt assembly prefers local user prompt overrides", () => {
   resetState();
-  const overridePath = "prompts/user/render/protagonist-impression.md";
+  const overridePath = "prompts/user/render/output-contract.md";
   const original = existsSync(overridePath) ? readFileSync(overridePath, "utf-8") : null;
   mkdirSync("prompts/user/render", { recursive: true });
-  writeFileSync(overridePath, "# 本地主角印象\n\n本地覆盖测试。\n");
+  writeFileSync(overridePath, "# 本地输出契约\n\n本地覆盖测试。\n");
   try {
     const prompt = buildRendererSystemPrompt("continuation");
 
     assert.match(prompt, /本地覆盖测试/);
-    assert.doesNotMatch(prompt, /待填写/);
+    assert.doesNotMatch(prompt, /Final Output Contract/);
   } finally {
     if (original === null) {
       rmSync(overridePath, { force: true });

@@ -10,7 +10,7 @@
 
 核心组成：
 
-- `prompts/`：GM prompt 模块，按 pass 分目录：`settlement/`（system、principles、world-context、input-guide、tool-policy、hard-rules、story-driver、turn-reminder、direction-contract）、`render/`（system、protocol、style-rules、style-blacklist、protagonist-impression、output-contract）、`user/`（本地覆盖层，镜像同构）。
+- `prompts/`：GM prompt 模块，按 pass 分目录：`settlement/`（system、principles、world-context、input-guide、tool-policy、hard-rules、story-driver、turn-reminder、direction-contract）、`render/`（system、protocol、style-rules、style-blacklist、output-contract）、`user/`（本地覆盖层，镜像同构）。
 - `skills/start-game/`：新游戏初始化流程机。只负责新游戏/重新开始/创建角色，不负责续局或修档。
 - `engine/core/`：确定性领域引擎。state、scene、actor、servant、economy、memory、secret、offscreen 等逻辑在这里落地。
 - `tools/`：GM 领域事件工具。工具不是状态栏更新器，而是 GM 改变世界的接口。
