@@ -36,6 +36,31 @@ void test("GM brief shows special boundaries; status markdown hides them", () =>
   assert.match(buildGmBrief(publicState), /地点：冬木市 · 深山镇\n/);
 });
 
+void test("GM brief exposes canonical actor ids for domain tools", () => {
+  const draft = createInitialState();
+  const publicState = draft.public;
+  const seed = publicState.actors[publicState.protagonistActorId];
+  if (seed === undefined) throw new Error("seed protagonist missing");
+  seed.presentation.renderName = "Saber";
+
+  publicState.actors["ayaka-sajyou"] = {
+    ...structuredClone(seed),
+    id: "ayaka-sajyou",
+    presentation: { ...structuredClone(seed.presentation), renderName: "绫香·沙条" },
+  };
+  publicState.actors["false-assassin"] = {
+    ...structuredClone(seed),
+    id: "false-assassin",
+    presentation: { ...structuredClone(seed.presentation), renderName: "Assassin" },
+  };
+  publicState.scene.presentActorIds = ["protagonist", "ayaka-sajyou"];
+
+  assert.match(
+    buildGmBrief(publicState),
+    /Actor ID 索引[^\n]*protagonist=Saber \[玩家角色, 在场\][^\n]*ayaka-sajyou=绫香·沙条 \[在场\][^\n]*false-assassin=Assassin \[未在场\]/,
+  );
+});
+
 void test("GM brief lists only unresolved objectives", () => {
   const draft = createInitialState();
   const publicState = draft.public;

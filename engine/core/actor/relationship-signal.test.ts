@@ -78,7 +78,7 @@ void test("recordRelationshipSignal rejects missing actors and empty fields", ()
         sourceEventId: null,
         visibility: "player-known",
       }),
-    /actor ghost 不存在/,
+    /actor ghost 不存在。当前可用 actor id：protagonist=/,
   );
   assert.throws(
     () =>

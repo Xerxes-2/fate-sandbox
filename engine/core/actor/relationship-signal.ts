@@ -115,7 +115,10 @@ function pickNoblePhantasmName(value: unknown): string | undefined {
 }
 
 function assertActorExists(state: State, actorId: ActorId): void {
-  if (state.public.actors[actorId] === undefined) {
-    throw new Error(`actor ${actorId} 不存在。`);
-  }
+  if (state.public.actors[actorId] !== undefined) return;
+  const available = Object.values(state.public.actors)
+    .toSorted((left, right) => left.id.localeCompare(right.id))
+    .map((actor) => `${actor.id}=${actor.presentation.renderName}`)
+    .join("；");
+  throw new Error(`actor ${actorId} 不存在。当前可用 actor id：${available}。`);
 }

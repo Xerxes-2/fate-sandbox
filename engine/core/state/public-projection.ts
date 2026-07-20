@@ -18,6 +18,7 @@ export function buildGmBrief(publicState: PublicGameState): string {
     `态势：${publicState.scene.situation}`,
     `剧情窗口：${formatStoryWindow(publicState)}`,
     `玩家角色：${formatActorLine(protagonist)}`,
+    `Actor ID 索引（工具 actorId/targetActorId 必须逐字使用等号左侧 id）：${formatActorIdIndex(publicState)}`,
     `同行者：${formatAllies(publicState)}`,
     `资源：${formatGmBriefFunds(publicState)}`,
     `伤势/长期影响：${formatCondition(protagonist.condition)}`,
@@ -146,6 +147,27 @@ function formatStoryWindow(publicState: PublicGameState): string {
   const criteria =
     window.completionCriteria.length === 0 ? "未列出" : window.completionCriteria.join("、");
   return `${window.currentArcId}/${window.currentBeatId}《${window.title}》；允许：${allowed}；禁区：${forbidden}；完成：${criteria}`;
+}
+
+function formatActorIdIndex(publicState: PublicGameState): string {
+  const orderedIds = [
+    publicState.protagonistActorId,
+    ...publicState.scene.presentActorIds,
+    ...Object.keys(publicState.actors).toSorted(),
+  ];
+  const seen = new Set<string>();
+  const entries: string[] = [];
+  for (const actorId of orderedIds) {
+    const actor = publicState.actors[actorId];
+    if (actor === undefined || seen.has(actorId)) continue;
+    seen.add(actorId);
+    const labels = [
+      actorId === publicState.protagonistActorId ? "玩家角色" : undefined,
+      publicState.scene.presentActorIds.includes(actorId) ? "在场" : "未在场",
+    ].filter((label) => label !== undefined);
+    entries.push(`${actorId}=${actor.presentation.renderName} [${labels.join(", ")}]`);
+  }
+  return entries.join("；");
 }
 
 function formatActorLine(actor: NonNullable<PublicGameState["actors"][string]>): string {
