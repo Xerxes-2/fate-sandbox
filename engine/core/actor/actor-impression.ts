@@ -51,7 +51,18 @@ export function presentActorImpressions(state: State): ActorImpression[] {
  * 格式化 presence 驱动的 NPC 印象卡片段（注入 pre-response slot）。
  */
 export function formatPresenceImpressionCards(state: State): string | null {
-  const cards = presentActorImpressions(state);
+  return formatImpressionCards(state, presentActorImpressions(state));
+}
+
+export function formatNpcRenderCards(state: State): string | null {
+  const protagonistActorId = state.public.protagonistActorId;
+  const cards = presentActorImpressions(state).filter(
+    (card) => card.actorId !== protagonistActorId,
+  );
+  return formatImpressionCards(state, cards);
+}
+
+function formatImpressionCards(state: State, cards: readonly ActorImpression[]): string | null {
   if (cards.length === 0) return null;
   const lines: string[] = [];
   for (const card of cards) {

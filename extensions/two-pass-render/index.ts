@@ -16,6 +16,7 @@ import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Markdown, Text } from "@earendil-works/pi-tui";
 
 import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts";
+import { formatNpcRenderCards } from "../../engine/core/actor/actor-impression.ts";
 import { syncStateFromSessionManager } from "../../engine/core/state/session-hydration.ts";
 import { getState } from "../../engine/core/state/state-store.ts";
 import { dumpPassB } from "../../engine/debug/api-trace.ts";
@@ -207,6 +208,7 @@ async function renderProse(
     packet,
     loadProseDigests(),
     rendererNameEntries(state),
+    formatNpcRenderCards(state) ?? undefined,
   );
   const rendererMessages =
     options.variantKey === undefined

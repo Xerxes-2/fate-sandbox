@@ -112,6 +112,7 @@ export function buildRendererMessages(
   packet: DirectionPacket,
   digestOverrides?: ProseDigestOverrides,
   nameEntries: readonly RendererNameEntry[] = [],
+  npcRenderCards?: string,
 ): RendererMessage[] {
   const { turns, currentInputs } = collectRenderedTurns(messages, digestOverrides);
   const fullStart = resolveFullLayerStart(turns);
@@ -145,6 +146,16 @@ export function buildRendererMessages(
   }
   finalSections.push("# Current Player Input", "", currentPlayerInput, "");
   finalSections.push(...buildRendererNameSection(nameEntries));
+  if (npcRenderCards !== undefined && npcRenderCards.length > 0) {
+    finalSections.push(
+      "# NPC Render Cards",
+      "",
+      "Use these player-safe cards to stage NPC posture, action texture, and dialogue voice. They do not authorize new facts or actions beyond the Direction Packet.",
+      "",
+      npcRenderCards,
+      "",
+    );
+  }
   finalSections.push(
     "# Direction Packet",
     "",

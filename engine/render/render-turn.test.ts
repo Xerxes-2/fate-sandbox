@@ -258,6 +258,22 @@ void test("buildRendererMessages injects actor render names", () => {
   assert.match(final, /Use each renderName exactly for every appearance in Chinese prose/);
 });
 
+void test("buildRendererMessages injects player-safe NPC render cards", () => {
+  const messages = buildRendererMessages(
+    [userMessage("继续。")],
+    parseDirectionPacket(PACKET_ARGS, "packet"),
+    undefined,
+    [],
+    "【绫香】\n  行动风格：迟疑时先后退半步\n  语癖/对话范例：『等、等一下。』",
+  );
+
+  const final = messages.at(-1)?.text ?? "";
+  assert.match(final, /# NPC Render Cards/);
+  assert.match(final, /【绫香】/);
+  assert.match(final, /『等、等一下。』/);
+  assert.match(final, /do not authorize new facts or actions beyond the Direction Packet/i);
+});
+
 void test("buildRendererMessages keeps player input and filters injected settlement prompts", () => {
   const messages = buildRendererMessages(
     [

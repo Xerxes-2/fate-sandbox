@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { createInitialState } from "../state/state-store.ts";
 import {
+  formatNpcRenderCards,
   formatPresenceImpressionCards,
   presentActorImpressions,
   upsertActorImpression,
@@ -138,4 +139,29 @@ void test("formatPresenceImpressionCards returns null when no NPC present", () =
   const draft = createInitialState();
   draft.public.scene.presentActorIds = ["protagonist"];
   assert.equal(formatPresenceImpressionCards(draft), null);
+});
+
+void test("formatNpcRenderCards excludes the protagonist impression", () => {
+  const draft = createInitialState();
+  addTestNpc(draft, "rin");
+  upsertActorImpression(draft, {
+    actorId: "protagonist",
+    presence: "Player-defined presence",
+    actionStyle: "Player-defined action",
+    relationshipPosture: "Self",
+    voiceMaterial: "Player-defined voice",
+  });
+  upsertActorImpression(draft, {
+    actorId: "rin",
+    presence: "Confident",
+    actionStyle: "Direct",
+    relationshipPosture: "Guarded",
+    voiceMaterial: "哼。",
+  });
+  draft.public.scene.presentActorIds = ["protagonist", "rin"];
+
+  const text = formatNpcRenderCards(draft);
+  assert.ok(text !== null);
+  assert.match(text, /Rin|哼。/);
+  assert.doesNotMatch(text, /Player-defined/);
 });
