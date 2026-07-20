@@ -114,6 +114,27 @@ void test("submitDirectionPacketTool rejects malformed packets", () => {
   );
 });
 
+void test("submitDirectionPacketTool rejects a choice menu in endWindow", () => {
+  seedHiddenTrueName("两仪式");
+  assert.throws(
+    () =>
+      submitDirectionPacketTool({
+        ...RENDER_PACKET,
+        endWindow: "Saber 必须决定：给她时间，还是替她做出选择。",
+      }),
+    /endWindow 必须是单一局势停点/u,
+  );
+});
+
+void test("submitDirectionPacketTool accepts non-choice use of 还是 in endWindow", () => {
+  seedHiddenTrueName("两仪式");
+  const result = submitDirectionPacketTool({
+    ...RENDER_PACKET,
+    endWindow: "敌人还是没有后退，唯一出口正在被封死。",
+  });
+  assert.equal(result.terminate, true);
+});
+
 void test("submitDirectionPacketTool rejects a stance for a non-existent actor", () => {
   seedHiddenTrueName("两仪式");
   assert.throws(

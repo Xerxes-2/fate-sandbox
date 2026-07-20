@@ -66,6 +66,8 @@ export function validateRenderDirectionPacket(
   ctx: PacketValidationContext,
 ): void {
   const errors: string[] = [];
+  assertDeclarativeEndWindow(packet.endWindow, errors);
+
   const stanceActorIds = new Set<ActorId>();
   packet.npcStances.forEach((stance, index) => {
     assertExistingPresentActor(stance.actorId, `npcStances[${index}].actorId`, ctx, errors);
@@ -109,6 +111,24 @@ export function validateRenderDirectionPacket(
         ...errors.map((error) => `- ${error}`),
         `当前在场 actor：${formatActorList(ctx.presentActorIds)}。`,
       ].join("\n"),
+    );
+  }
+}
+
+const END_WINDOW_MENU_PATTERNS: readonly RegExp[] = [
+  /(?:^|[，,；;])\s*(?:还是|或者|或是)\s*/u,
+  /要么[^。！？\n]{1,80}要么/u,
+  /你可以[^。！？\n]{1,80}(?:也可以|或者|或是)/u,
+  /是[^。！？\n，,]{1,40}还是[^。！？\n]{1,40}[？?]?$/u,
+  /(?:^|\n)\s*(?:\d+[.)、]|[-*])\s+/mu,
+  /\beither\b[^.?!\n]{1,80}\bor\b/iu,
+  /\b(?:choose|decide)\b[^.?!\n]{1,80}\bor\b/iu,
+];
+
+function assertDeclarativeEndWindow(endWindow: string, errors: string[]): void {
+  if (END_WINDOW_MENU_PATTERNS.some((pattern) => pattern.test(endWindow))) {
+    errors.push(
+      "endWindow 必须是单一局势停点；不得列出选项、二选一或编号菜单。候选行动请只写入 suggestedActions。",
     );
   }
 }

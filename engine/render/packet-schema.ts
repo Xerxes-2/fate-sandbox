@@ -11,7 +11,7 @@ import { isRecord, parseTypeBoxValue, trimStringsDeep } from "../core/utils/type
  * 接缝契约已由 docs/spikes/two-pass/ 验证（GO）。
  *
  * 分层语义：
- * - binding（playerAction / resolvedChanges / endWindow / npcStances[].move）：渲染器必须落地，不得改写。
+ * - binding（playerAction / resolvedChanges / endWindow / npcStances[].move）：事实、主动性、因果与结果必须落地，措辞由渲染器完成。
  * - free（sensoryAnchors / npcStances 的 stance·wants·refusesToSay）：质感建议，渲染器可自由取舍。
  * - needsRender=false 的轮（meta/OOC）跳过渲染，直接回复 directReply。
  */

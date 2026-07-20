@@ -60,7 +60,7 @@ function formatAccepted(packet: DirectionPacket): string {
 export const submitDirectionPacketToolDefinition: FateToolDefinition = {
   name: SUBMIT_DIRECTION_PACKET_TOOL,
   description:
-    "提交本轮 direction packet 并结束结算；每轮唯一收尾动作。\n\n" +
+    "提交本轮 direction packet 并结束结算；每轮最终只能有一次成功提交，校验失败后修正重试。\n\n" +
     "使用边界：全部领域工具结算完成后调用；meta/OOC 轮用 needsRender=false + directReply 直接作答。\n" +
     "禁区：调用前后输出叙事正文、泄露未揭示真名/隐藏宝具名、替代领域工具落账，或把 UI 候选行动写进 suggestedActions 以外的位置。",
   parameters: Type.Object({
@@ -115,7 +115,9 @@ export const submitDirectionPacketToolDefinition: FateToolDefinition = {
       Type.Array(Type.String(), { description: "free：3-5 条建议落点意象，渲染器可取舍" }),
     ),
     endWindow: Type.Optional(
-      Type.String({ description: "binding：结尾必须落在自然接续点（叙事轮必填）" }),
+      Type.String({
+        description: "binding：单一的自然接续压力（叙事轮必填）；不得写候选行动、二选一或编号菜单",
+      }),
     ),
     eventWeight: Type.Optional(stringEnumSchema(EVENT_WEIGHTS)),
     suggestedActions: Type.Optional(
