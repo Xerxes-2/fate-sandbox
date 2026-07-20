@@ -189,7 +189,7 @@ Local rules cannot disable the built-in blocks for unrevealed names and Noble Ph
 The first run creates an isolated pi configuration under `.pi/agent/`. Local authentication files, subprocess transcripts, sessions, and runtime state stay out of release packages.
 
 - `sessions/` contains play sessions.
-- `runtime/` contains state and debug exports.
+- `runtime/` contains state and debug exports. Per-call settlement and render contexts are written to `runtime/debug/` by default; set `FATE_DEBUG_API=0` to disable them.
 - `.pi/agent/auth.json` contains local credentials. Do not share it.
 - Backstage and showrunner subprocess sessions remain under the gitignored `.pi/agent/` tree.
 

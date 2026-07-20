@@ -171,7 +171,7 @@ prompts/user/prose-lint.json
 ## Tester Notes
 
 - 游玩存档在 `sessions/`。
-- `runtime/` 存放运行时状态和 debug export，不是发布内容。
+- `runtime/` 存放运行时状态和 debug export，不是发布内容。结算与渲染的逐次调用上下文默认写入 `runtime/debug/`；设置 `FATE_DEBUG_API=0` 可关闭。
 - `.pi/agent/auth.json` 包含本地认证信息，不要分享。
 - 后台导演与 showrunner 审计由引擎直接 fork `pi -p` 子进程（ADR 0005 / 0007），不依赖任何子代理框架；其 session 落在 gitignored 的 `.pi/agent/` 树下。
 

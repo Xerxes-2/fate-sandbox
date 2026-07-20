@@ -3,10 +3,16 @@ import test from "node:test";
 
 import { isApiTraceEnabled, renderTranscript } from "./api-trace.ts";
 
-void test("api trace is disabled under node:test even if the env flag is set", () => {
-  process.env["FATE_DEBUG_API"] = "1";
-  assert.equal(isApiTraceEnabled(), false);
-  delete process.env["FATE_DEBUG_API"];
+void test("api trace defaults to enabled outside tests", () => {
+  assert.equal(isApiTraceEnabled({}), true);
+});
+
+void test("api trace can be explicitly disabled", () => {
+  assert.equal(isApiTraceEnabled({ FATE_DEBUG_API: " 0 " }), false);
+});
+
+void test("api trace is disabled under node:test even if explicitly enabled", () => {
+  assert.equal(isApiTraceEnabled({ FATE_DEBUG_API: "1", NODE_TEST_CONTEXT: "test" }), false);
 });
 
 void test("renderTranscript renders system prompt, text, toolCall and thinking parts", () => {

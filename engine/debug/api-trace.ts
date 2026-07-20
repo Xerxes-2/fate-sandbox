@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { isRecord } from "../core/utils/typebox-validation.ts";
 
 const DEBUG_DIR = join("runtime", "debug");
+const TRACE_DISABLED_ENV_VALUE = "0";
 
 /** 简化的渲染消息形态（Pass-B 用 {role,text}，见 render-turn.ts RendererMessage）。 */
 export interface TraceMessage {
@@ -12,13 +13,14 @@ export interface TraceMessage {
 }
 
 /**
- * 调试开关（回流自 lonestar api-trace）：设置 FATE_DEBUG_API（非空）时，把当前轮次
- * 每次 LLM API 输入导出到 runtime/debug/passA-N.md（结算的每次调用）+ passB-N.md
- * （渲染调用：首写 / lint 重写 / reroll / digest 各一份）。测试环境下禁用。
+ * API 输入追踪默认开启，把当前轮次每次 LLM 调用导出到 runtime/debug/passA-N.md
+ * （结算）和 passB-N.md（首写 / lint 重写 / reroll / digest）。设置 FATE_DEBUG_API=0
+ * 可关闭；测试环境始终禁用，避免测试运行写入 runtime。
  */
-export function isApiTraceEnabled(): boolean {
+export function isApiTraceEnabled(environment: NodeJS.ProcessEnv = process.env): boolean {
   return (
-    process.env["NODE_TEST_CONTEXT"] === undefined && (process.env["FATE_DEBUG_API"] ?? "") !== ""
+    environment["NODE_TEST_CONTEXT"] === undefined &&
+    environment["FATE_DEBUG_API"]?.trim() !== TRACE_DISABLED_ENV_VALUE
   );
 }
 
