@@ -144,6 +144,18 @@ _Avoid_: State dump, JSON snapshot, status panel
 The durable session tree retained for audit, rewind, repair, and debugging. It records interaction and execution history but is not an authoritative campaign fact store and is not automatically the context shown to the game master.
 _Avoid_: Model context, Game State, canonical event ledger
 
+**Session Chronology**:
+A deterministic, read-only interpretation of the active Session Log branch that groups player input, accepted turn directions, and their player-visible deliveries into ordered Narrative Turns and Direct Turns. It represents an accepted turn awaiting delivery explicitly, reports contradictory history instead of guessing associations, and never overrides Game State.
+_Avoid_: Session timeline, turnLog mirror, message scanner, canonical event ledger
+
+**Narrative Turn**:
+A Session Chronology turn whose settled outcome is delivered as scene prose. Delivered Narrative Turns provide render history and prose continuity; a settled Narrative Turn may temporarily await delivery.
+_Avoid_: Scene Beat, Game State turnLog entry, prose message
+
+**Direct Turn**:
+A Session Chronology turn whose settled response is delivered directly for meta or out-of-character interaction rather than as scene prose. It remains part of settlement chronology but never becomes render history or narrative prose continuity.
+_Avoid_: Narrative Turn, skipped turn, system message
+
 **Settlement Working Set**:
 The bounded operational context given to the settlement pass for the active player turn. It is derived from the active Session Log branch, current Game State projections, unresolved workflow handoffs, Settlement Turn Capsules, and the latest prose anchor; it is not a persistence layer or a complete transcript.
 _Avoid_: Session history, compaction summary, prompt state
