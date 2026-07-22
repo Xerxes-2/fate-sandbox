@@ -10,10 +10,11 @@ export interface RenderedProseDeliveryInput {
 }
 
 type ProseDeliveryDetails =
-  | { kind: "direct-reply" }
-  | { kind: "render-fallback" }
+  | { kind: "direct-reply"; toolCallId: string }
+  | { kind: "render-fallback"; toolCallId: string }
   | {
       kind: "rendered";
+      toolCallId: string;
       lintRuleIds: readonly string[];
       suggestedActions: readonly SuggestedAction[];
     };
@@ -30,24 +31,26 @@ export interface SettledProseDelivery {
 
 export function createProseDelivery(
   packet: DirectionPacket,
+  toolCallId: string,
   rendered?: RenderedProseDeliveryInput,
 ): PendingProseDelivery {
   if (!packet.needsRender) {
     return {
       text: packet.directReply,
-      details: { kind: "direct-reply" },
+      details: { kind: "direct-reply", toolCallId },
     };
   }
   if (rendered === undefined) {
     return {
       text: buildFallbackProse(packet),
-      details: { kind: "render-fallback" },
+      details: { kind: "render-fallback", toolCallId },
     };
   }
   return {
     text: rendered.text,
     details: {
       kind: "rendered",
+      toolCallId,
       lintRuleIds: rendered.lintRuleIds,
       suggestedActions: packet.suggestedActions ?? [],
     },

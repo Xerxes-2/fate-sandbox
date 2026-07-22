@@ -42,12 +42,15 @@ interface SentMessage {
   };
 }
 
-void test("prose delivery maps direct, fallback, and rendered packet outcomes", () => {
-  assert.deepEqual(createProseDelivery({ needsRender: false, directReply: "这是场外回答。" }), {
-    text: "这是场外回答。",
-    details: { kind: "direct-reply" },
-  });
-  assert.deepEqual(createProseDelivery(RENDER_PACKET), {
+void test("prose delivery persists the packet call id for every outcome", () => {
+  assert.deepEqual(
+    createProseDelivery({ needsRender: false, directReply: "这是场外回答。" }, "direct-call"),
+    {
+      text: "这是场外回答。",
+      details: { kind: "direct-reply", toolCallId: "direct-call" },
+    },
+  );
+  assert.deepEqual(createProseDelivery(RENDER_PACKET, "fallback-call"), {
     text: [
       "（渲染器暂不可用，以下为本轮结算摘要）",
       "",
@@ -55,14 +58,18 @@ void test("prose delivery maps direct, fallback, and rendered packet outcomes", 
       "",
       "> 玩家必须创造破绽",
     ].join("\n"),
-    details: { kind: "render-fallback" },
+    details: { kind: "render-fallback", toolCallId: "fallback-call" },
   });
   assert.deepEqual(
-    createProseDelivery(RENDER_PACKET, { text: "渲染正文。", lintRuleIds: ["style-rule"] }),
+    createProseDelivery(RENDER_PACKET, "render-call", {
+      text: "渲染正文。",
+      lintRuleIds: ["style-rule"],
+    }),
     {
       text: "渲染正文。",
       details: {
         kind: "rendered",
+        toolCallId: "render-call",
         lintRuleIds: ["style-rule"],
         suggestedActions: [{ submitText: "寻找侧翼" }],
       },
@@ -73,8 +80,11 @@ void test("prose delivery maps direct, fallback, and rendered packet outcomes", 
 void test("settled prose delivery preserves queued continuations and delivers them once", () => {
   const proseDelivery = createSettledProseDelivery();
   const delivered: PendingProseDelivery[] = [];
-  const first = createProseDelivery({ needsRender: false, directReply: "第一轮正文。" });
-  const second = createProseDelivery(RENDER_PACKET);
+  const first = createProseDelivery(
+    { needsRender: false, directReply: "第一轮正文。" },
+    "direct-call",
+  );
+  const second = createProseDelivery(RENDER_PACKET, "fallback-call");
 
   proseDelivery.queue(first);
   proseDelivery.queue(second);
@@ -93,7 +103,10 @@ void test("settled rendered prose forwards suggested actions and clears its prev
   const choices: unknown[] = [];
   let clearCount = 0;
   proseDelivery.queue(
-    createProseDelivery(RENDER_PACKET, { text: "渲染正文。", lintRuleIds: ["style-rule"] }),
+    createProseDelivery(RENDER_PACKET, "render-call", {
+      text: "渲染正文。",
+      lintRuleIds: ["style-rule"],
+    }),
   );
 
   deliverSettledProse(
@@ -207,7 +220,7 @@ void test("two-pass lifecycle appends a packet once on agent_settled and cleans 
         customType: "fsn-prose",
         content: "这是场外回答。",
         display: true,
-        details: { kind: "direct-reply" },
+        details: { kind: "direct-reply", toolCallId: "direct-reply-call" },
       },
       options: { triggerTurn: false },
     },

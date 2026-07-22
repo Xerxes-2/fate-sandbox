@@ -119,17 +119,17 @@ export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): 
     renderedToolCallIds.add(pending.toolCallId);
     const { packet } = pending;
     if (!packet.needsRender) {
-      proseDelivery.queue(createProseDelivery(packet));
+      proseDelivery.queue(createProseDelivery(packet, pending.toolCallId));
       return;
     }
     syncStateFromSessionManager(ctx.sessionManager);
     const unrevealedSecrets = collectUnrevealedSecretStrings(getState().secrets);
     const prose = await renderProse(ctx, renderMessages, packet, unrevealedSecrets);
     if (prose === undefined) {
-      proseDelivery.queue(createProseDelivery(packet));
+      proseDelivery.queue(createProseDelivery(packet, pending.toolCallId));
       return;
     }
-    proseDelivery.queue(createProseDelivery(packet, prose));
+    proseDelivery.queue(createProseDelivery(packet, pending.toolCallId, prose));
     // backlog #13：独立 writer 异步产出本轮高质量摘要，供后续轮次的摘要层使用。
     // 失败时不影响主流程，机械 packet 摘要作为后备输出。
     void writeTurnDigest(ctx, pending, prose.text);
