@@ -30,6 +30,27 @@ interface PruneCapabilities {
 
 type PrunableSessionManager = SessionReadAccess & PruneCapabilities;
 
+/**
+ * reroll 专用：仅当废弃子树里只有 fsn-prose 正文时才物理删除。
+ * 任何其它 entry（隐藏状态快照、消息分支等）都说明子树承载了
+ * 正文之外的历史，此时保留旧分支（返回 false，调用方提示未删除）。
+ */
+export function pruneRerolledProse(
+  sessionManager: SessionReadAccess,
+  proseEntryId: string,
+  newLeafId: string | null,
+): boolean {
+  const doomed = collectSubtreeIds(sessionManager.getEntries(), proseEntryId);
+  const doomedEntries = sessionManager.getEntries().filter((entry) => doomed.has(entry.id));
+  const onlyProse = doomedEntries.every(
+    (entry) => entry.type === "custom_message" && entry.customType === "fsn-prose",
+  );
+  if (!onlyProse) {
+    return false;
+  }
+  return pruneAbandonedSubtree(sessionManager, proseEntryId, newLeafId);
+}
+
 export function pruneAbandonedSubtree(
   sessionManager: SessionReadAccess,
   doomedRootId: string,

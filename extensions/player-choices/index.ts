@@ -1,5 +1,4 @@
 import type {
-  CustomMessageEntry,
   ExtensionAPI,
   ExtensionCommandContext,
   ExtensionContext,
@@ -8,7 +7,7 @@ import type {
 
 import type { SuggestedAction } from "../../engine/render/packet-schema.ts";
 
-import { PROSE_CUSTOM_TYPE } from "../../engine/render/render-turn.ts";
+import { projectSessionChronology } from "../../engine/session-chronology/session-chronology.ts";
 
 const CHOICE_WIDGET_KEY = "fsn-player-choices";
 
@@ -130,53 +129,16 @@ function refreshChoiceWidget(ctx: ExtensionContext): void {
 }
 
 export function findLatestChoiceSet(branch: readonly SessionEntry[]): ChoiceSet | undefined {
-  const proseIndex = findLastProseIndex(branch);
-  if (proseIndex === undefined) {
+  const projection = projectSessionChronology(
+    { kind: "session-branch", entries: branch },
+    { kind: "reroll" },
+  );
+  if (projection.kind !== "ready" || projection.value.kind !== "ready") {
     return undefined;
   }
-  const hasLaterMessage = branch.slice(proseIndex + 1).some((entry) => entry.type === "message");
-  if (hasLaterMessage) {
-    return undefined;
-  }
-  const entry = branch[proseIndex];
-  if (entry === undefined || !isProseEntry(entry)) {
-    return undefined;
-  }
-  const actions = readSuggestedActions(entry.details);
-  return actions.length === 0 ? undefined : { proseEntryId: entry.id, actions };
-}
-
-function findLastProseIndex(branch: readonly SessionEntry[]): number | undefined {
-  for (let index = branch.length - 1; index >= 0; index--) {
-    const entry = branch[index];
-    if (entry !== undefined && isProseEntry(entry)) {
-      return index;
-    }
-  }
-  return undefined;
-}
-
-function isProseEntry(entry: SessionEntry): entry is CustomMessageEntry {
-  return entry.type === "custom_message" && entry.customType === PROSE_CUSTOM_TYPE;
-}
-
-function readSuggestedActions(details: unknown): SuggestedAction[] {
-  if (!isRecord(details) || !Array.isArray(details["suggestedActions"])) {
-    return [];
-  }
-  const out: SuggestedAction[] = [];
-  for (const action of details["suggestedActions"]) {
-    if (!isRecord(action)) {
-      continue;
-    }
-    const submitText = action["submitText"];
-    if (typeof submitText === "string") {
-      out.push({ submitText });
-    }
-  }
-  return out;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  const packet = projection.value.packet;
+  const actions = packet.needsRender ? (packet.suggestedActions ?? []) : [];
+  return actions.length === 0
+    ? undefined
+    : { proseEntryId: projection.value.proseEntryId, actions: [...actions] };
 }

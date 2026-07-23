@@ -4,8 +4,9 @@ import type {
   SessionBeforeCompactEvent,
 } from "@earendil-works/pi-coding-agent";
 
-import { dumpCompaction } from "../../engine/debug/api-trace.ts";
+import { dumpChronologyAnomalies, dumpCompaction } from "../../engine/debug/api-trace.ts";
 import { buildSettlementCompactionSummary } from "../../engine/render/settlement-compaction.ts";
+import { projectSessionChronology } from "../../engine/session-chronology/session-chronology.ts";
 
 /**
  * 结算侧 compaction 接管：确定性截断，不调 LLM。
@@ -44,7 +45,17 @@ function runFateCompaction(
   if (allMessages.length === 0) {
     return undefined;
   }
-  const summary = buildSettlementCompactionSummary(allMessages, previousSummary);
+  const chronology = projectSessionChronology(
+    { kind: "messages", messages: allMessages },
+    { kind: "settlement" },
+  );
+  dumpChronologyAnomalies("settlement-compaction", chronology.anomalies);
+  if (chronology.kind === "blocked") {
+    throw new Error(
+      `Session Chronology blocked compaction: ${chronology.anomalies.map((entry) => entry.kind).join(", ")}`,
+    );
+  }
+  const summary = buildSettlementCompactionSummary(chronology.value.turns, previousSummary);
   dumpCompaction(summary, { firstKeptEntryId, tokensBefore });
   return { compaction: { summary, firstKeptEntryId, tokensBefore } };
 }

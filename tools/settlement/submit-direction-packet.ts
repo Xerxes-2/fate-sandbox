@@ -19,7 +19,7 @@ import {
   buildPacketValidationContext,
   validateRenderDirectionPacket,
 } from "../../engine/render/packet-validation.ts";
-import { SUBMIT_DIRECTION_PACKET_TOOL } from "../../engine/render/render-turn.ts";
+import { SUBMIT_DIRECTION_PACKET_TOOL } from "../../engine/session-chronology/session-chronology.ts";
 import { textResult, type ToolResult } from "../runtime/tool-result.ts";
 
 /**

@@ -1,6 +1,6 @@
 import type { BuildSystemPromptOptions } from "@earendil-works/pi-coding-agent";
 
-import type { RendererMode } from "../render/render-turn.ts";
+import type { RendererMode } from "../session-chronology/session-chronology.ts";
 
 import { formatSkillsForPrompt } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync } from "node:fs";

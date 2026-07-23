@@ -23,6 +23,7 @@ interface ChainSpec {
   text?: string;
   toolCalls?: Array<{ id: string; name: string; args?: unknown }>;
   toolCallId?: string;
+  toolName?: string;
   isError?: boolean;
   secrets?: unknown;
 }
@@ -54,6 +55,7 @@ function buildJsonl(specs: readonly ChainSpec[]): string {
           parentId: parent,
           content: spec.text ?? "",
           display: true,
+          details: { kind: "rendered", toolCallId: spec.toolCallId },
         }),
       );
     } else if (spec.kind === "toolResult") {
@@ -65,6 +67,7 @@ function buildJsonl(specs: readonly ChainSpec[]): string {
           message: {
             role: "toolResult",
             toolCallId: spec.toolCallId,
+            ...(spec.toolName === undefined ? {} : { toolName: spec.toolName }),
             isError: spec.isError ?? false,
             content: [],
           },
@@ -124,10 +127,25 @@ function twoPassTurn(callId: string, prose: string): ChainSpec[] {
     {
       kind: "assistant",
       text: "结算完成。",
-      toolCalls: [{ id: callId, name: "submit_direction_packet", args: { needsRender: true } }],
+      toolCalls: [
+        {
+          id: callId,
+          name: "submit_direction_packet",
+          args: {
+            needsRender: true,
+            playerAction: "玩家行动",
+            resolvedChanges: ["行动已结算"],
+            npcStances: [],
+            sensoryAnchors: ["雨声"],
+            endWindow: "下一步压力",
+            eventWeight: "normal",
+            canonFacts: [],
+          },
+        },
+      ],
     },
-    { kind: "toolResult", toolCallId: callId },
-    { kind: "prose", text: prose },
+    { kind: "toolResult", toolCallId: callId, toolName: "submit_direction_packet" },
+    { kind: "prose", text: prose, toolCallId: callId },
   ];
 }
 
@@ -314,15 +332,19 @@ void test("measureLint reports underlength two-pass prose from packet context", 
           name: "submit_direction_packet",
           args: {
             needsRender: true,
+            playerAction: "玩家行动",
             eventWeight: "normal",
             resolvedChanges: ["她抵达门前"],
             npcStances: [],
+            sensoryAnchors: ["门环冰凉"],
+            endWindow: "门后有动静",
+            canonFacts: [],
           },
         },
       ],
     },
-    { kind: "toolResult", toolCallId: "p1" },
-    { kind: "prose", text: "她抵达门前。" },
+    { kind: "toolResult", toolCallId: "p1", toolName: "submit_direction_packet" },
+    { kind: "prose", text: "她抵达门前。", toolCallId: "p1" },
   ]);
   const lint = measureLint(groupTurns(reconstructActivePath(parseSessionJsonl(jsonl))));
   assert.equal(lint.findingsByRule["underlength-prose"], 1);

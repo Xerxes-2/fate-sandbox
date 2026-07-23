@@ -5,17 +5,25 @@ import type {
   SessionEntry,
 } from "@earendil-works/pi-coding-agent";
 
-import type { RenderDirectionPacket } from "../../engine/render/packet-schema.ts";
-import type { PendingDirectionPacket } from "../../engine/render/render-turn.ts";
+import type { DirectionPacket, RenderDirectionPacket } from "../../engine/render/packet-schema.ts";
+import type { RenderChronologyView } from "../../engine/session-chronology/session-chronology.ts";
 
 import { randomUUID } from "node:crypto";
 
-import { PROSE_CUSTOM_TYPE, findPendingDirectionPacket } from "../../engine/render/render-turn.ts";
-import { pruneAbandonedSubtree } from "../rewind/prune.ts";
+import {
+  projectSessionChronology,
+  PROSE_CUSTOM_TYPE,
+} from "../../engine/session-chronology/session-chronology.ts";
+import { pruneRerolledProse } from "../rewind/prune.ts";
 
 export interface RerollRenderedProse {
   text: string;
   lintRuleIds: readonly string[];
+}
+
+interface PendingDirectionPacket {
+  packet: DirectionPacket;
+  toolCallId: string;
 }
 
 interface RenderablePendingDirectionPacket {
@@ -26,7 +34,7 @@ interface RenderablePendingDirectionPacket {
 interface RerollCommandCallbacks {
   render(
     ctx: ExtensionCommandContext,
-    messages: ReadonlyArray<unknown>,
+    chronology: RenderChronologyView,
     packet: RenderDirectionPacket,
     variantKey: string,
   ): Promise<RerollRenderedProse | undefined>;
@@ -43,7 +51,7 @@ export interface ReadyRerollTarget {
   proseEntry: CustomMessageEntry;
   parentId: string;
   pending: PendingDirectionPacket;
-  renderMessages: ReadonlyArray<unknown>;
+  renderChronology: RenderChronologyView;
 }
 
 export type RerollTarget =
@@ -51,7 +59,7 @@ export type RerollTarget =
   | { kind: "no-prose" }
   | { kind: "not-leaf"; proseEntryId: string; leafId: string | null }
   | { kind: "root-prose"; proseEntryId: string }
-  | { kind: "no-packet"; proseEntryId: string };
+  | { kind: "invalid-chronology"; anomalyKinds: readonly string[] };
 
 export function registerRerollCommand(
   pi: Pick<ExtensionAPI, "registerCommand" | "sendMessage">,
@@ -70,41 +78,36 @@ export function registerRerollCommand(
 }
 
 export function findRerollTarget(branch: readonly SessionEntry[]): RerollTarget {
-  const proseIndex = findLastProseIndex(branch);
-  if (proseIndex === undefined) {
+  const projection = projectSessionChronology(
+    { kind: "session-branch", entries: branch },
+    { kind: "reroll" },
+  );
+  if (projection.kind === "blocked") {
+    return {
+      kind: "invalid-chronology",
+      anomalyKinds: projection.anomalies.map((anomaly) => anomaly.kind),
+    };
+  }
+  const target = projection.value;
+  if (target.kind === "session-branch-required") {
+    return { kind: "invalid-chronology", anomalyKinds: [target.kind] };
+  }
+  if (target.kind !== "ready") {
+    return target;
+  }
+  const proseEntry = branch.find(
+    (entry): entry is CustomMessageEntry => entry.id === target.proseEntryId && isProseEntry(entry),
+  );
+  if (proseEntry === undefined) {
     return { kind: "no-prose" };
   }
-  const proseEntry = branch[proseIndex];
-  if (proseEntry === undefined || !isProseEntry(proseEntry)) {
-    return { kind: "no-prose" };
-  }
-
-  const blockingEntry = branch.slice(proseIndex + 1).find(isMessageEntry);
-  if (blockingEntry !== undefined) {
-    return { kind: "not-leaf", proseEntryId: proseEntry.id, leafId: blockingEntry.id };
-  }
-  if (proseEntry.parentId === null) {
-    return { kind: "root-prose", proseEntryId: proseEntry.id };
-  }
-
-  const renderMessages = sessionEntriesToRendererMessages(branch.slice(0, proseIndex));
-  const pending = findPendingDirectionPacket(renderMessages);
-  if (pending === undefined) {
-    return { kind: "no-packet", proseEntryId: proseEntry.id };
-  }
-  return { kind: "ready", proseEntry, parentId: proseEntry.parentId, pending, renderMessages };
-}
-
-export function sessionEntriesToRendererMessages(entries: readonly SessionEntry[]): unknown[] {
-  const messages: unknown[] = [];
-  for (const entry of entries) {
-    if (entry.type === "message") {
-      messages.push(entry.message);
-    } else if (entry.type === "custom_message") {
-      messages.push(customEntryToMessage(entry));
-    }
-  }
-  return messages;
+  return {
+    kind: "ready",
+    proseEntry,
+    parentId: target.parentId,
+    pending: { packet: target.packet, toolCallId: target.toolCallId },
+    renderChronology: target.render,
+  };
 }
 
 export function isRerollTargetStillCurrent(
@@ -157,7 +160,12 @@ async function renderAndReplaceProse(
 ): Promise<void> {
   try {
     ctx.ui.setWorkingMessage("重 roll 本轮正文…");
-    const prose = await callbacks.render(ctx, target.renderMessages, pending.packet, randomUUID());
+    const prose = await callbacks.render(
+      ctx,
+      target.renderChronology,
+      pending.packet,
+      randomUUID(),
+    );
     if (prose === undefined) {
       ctx.ui.notify("正文 reroll 失败：渲染器不可用，已保留原正文", "warning");
       return;
@@ -175,7 +183,7 @@ async function renderAndReplaceProse(
       return;
     }
 
-    const pruned = pruneAbandonedSubtree(ctx.sessionManager, target.proseEntry.id, target.parentId);
+    const pruned = pruneRerolledProse(ctx.sessionManager, target.proseEntry.id, target.parentId);
     sendRerolledProse(pi, target, prose, pending.packet.suggestedActions);
     callbacks.afterSend?.(ctx, pending, prose.text);
     ctx.ui.notify(rerollSuccessMessage({ pruned }), "info");
@@ -212,34 +220,8 @@ function sendRerolledProse(
   );
 }
 
-function findLastProseIndex(branch: readonly SessionEntry[]): number | undefined {
-  for (let index = branch.length - 1; index >= 0; index--) {
-    const entry = branch[index];
-    if (entry !== undefined && isProseEntry(entry)) {
-      return index;
-    }
-  }
-  return undefined;
-}
-
 function isProseEntry(entry: SessionEntry): entry is CustomMessageEntry {
   return entry.type === "custom_message" && entry.customType === PROSE_CUSTOM_TYPE;
-}
-
-function isMessageEntry(entry: SessionEntry): boolean {
-  return entry.type === "message";
-}
-
-function customEntryToMessage(entry: CustomMessageEntry): Record<string, unknown> {
-  const timestamp = Date.parse(entry.timestamp);
-  return {
-    role: "custom",
-    customType: entry.customType,
-    content: entry.content,
-    display: entry.display,
-    details: entry.details,
-    timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
-  };
 }
 
 function rerollProblemMessage(target: Exclude<RerollTarget, ReadyRerollTarget>): string {
@@ -250,8 +232,8 @@ function rerollProblemMessage(target: Exclude<RerollTarget, ReadyRerollTarget>):
       return "只能重 roll 当前最后一条正文；如果已经继续输入，先用 /fuck 回到那一轮";
     case "root-prose":
       return "最后一条正文缺少父节点，无法安全替换";
-    case "no-packet":
-      return "找不到这条正文对应的结算包，无法只重 roll 文本";
+    case "invalid-chronology":
+      return `Session Chronology 异常（${target.anomalyKinds.join(", ")}），无法安全重 roll`;
     default:
       return "当前正文无法安全重 roll";
   }

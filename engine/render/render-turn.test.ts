@@ -1,17 +1,20 @@
+import type { DirectionPacket } from "./packet-schema.ts";
+import type { ProseDigestOverrides, RendererMessage, RendererNameEntry } from "./render-turn.ts";
+
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import {
+  projectSessionChronology,
+  PROSE_CUSTOM_TYPE,
+  SUBMIT_DIRECTION_PACKET_TOOL,
+} from "../session-chronology/session-chronology.ts";
 import { parseDirectionPacket } from "./packet-schema.ts";
 import {
   buildLintRetryMessages,
-  buildRendererMessages,
-  findLatestNarrativeProse,
-  findPendingDirectionPacket,
+  buildRendererMessages as formatRendererMessages,
   lintRenderedProse,
-  PROSE_CUSTOM_TYPE,
   redactSecrets,
-  rendererModeForMessages,
-  SUBMIT_DIRECTION_PACKET_TOOL,
 } from "./render-turn.ts";
 
 const PACKET_ARGS = {
@@ -29,22 +32,34 @@ function userMessage(text: string): Record<string, unknown> {
   return { role: "user", content: [{ type: "text", text }], timestamp: 0 };
 }
 
-function proseMessage(text: string): Record<string, unknown> {
-  return { role: "custom", customType: PROSE_CUSTOM_TYPE, content: text, display: true };
-}
-
-function directReplyMessage(text: string): Record<string, unknown> {
+function proseMessage(text: string, toolCallId = "tc-1"): Record<string, unknown> {
   return {
     role: "custom",
     customType: PROSE_CUSTOM_TYPE,
     content: text,
     display: true,
-    details: { kind: "direct-reply" },
+    details: { kind: "rendered", toolCallId },
   };
 }
 
-function proseCustomEntry(text: string): Record<string, unknown> {
-  return { type: "custom_message", customType: PROSE_CUSTOM_TYPE, content: text, display: true };
+function directReplyMessage(text: string, toolCallId = "collect"): Record<string, unknown> {
+  return {
+    role: "custom",
+    customType: PROSE_CUSTOM_TYPE,
+    content: text,
+    display: true,
+    details: { kind: "direct-reply", toolCallId },
+  };
+}
+
+function proseCustomEntry(text: string, toolCallId = "tc-1"): Record<string, unknown> {
+  return {
+    role: "custom",
+    customType: PROSE_CUSTOM_TYPE,
+    content: text,
+    display: true,
+    details: { kind: "rendered", toolCallId },
+  };
 }
 
 function injectedPromptMessage(header: string): Record<string, unknown> {
@@ -66,43 +81,69 @@ function packetCallMessage(args: Record<string, unknown>, id = "tc-1"): Record<s
   };
 }
 
-void test("findPendingDirectionPacket returns the latest unrendered packet with its call id", () => {
-  const pending = findPendingDirectionPacket([
-    userMessage("贴上去！"),
-    packetCallMessage(PACKET_ARGS),
-  ]);
-  assert.ok(pending);
-  assert.equal(pending.packet.needsRender, true);
-  assert.equal(pending.toolCallId, "tc-1");
-});
+function buildRendererMessages(
+  messages: ReadonlyArray<unknown>,
+  packet: DirectionPacket,
+  digestOverrides?: ProseDigestOverrides,
+  nameEntries: readonly RendererNameEntry[] = [],
+  npcRenderCards?: string,
+): RendererMessage[] {
+  const acceptedMessages = withAcceptedPacketResults(messages);
+  let chronology = renderChronology(acceptedMessages);
+  if (chronology.awaitingDelivery === undefined) {
+    chronology = renderChronology([
+      ...acceptedMessages,
+      packetCallMessage(packet, "fixture-current"),
+      {
+        role: "toolResult",
+        toolCallId: "fixture-current",
+        toolName: SUBMIT_DIRECTION_PACKET_TOOL,
+        isError: false,
+      },
+    ]);
+  }
+  return formatRendererMessages(chronology, packet, digestOverrides, nameEntries, npcRenderCards);
+}
 
-void test("findPendingDirectionPacket ignores already-rendered turns", () => {
-  const pending = findPendingDirectionPacket([
-    userMessage("贴上去！"),
-    packetCallMessage(PACKET_ARGS),
-    proseMessage("已渲染的正文。"),
-  ]);
-  assert.equal(pending, undefined);
-});
+function renderChronology(messages: ReadonlyArray<unknown>) {
+  const projection = projectSessionChronology({ kind: "messages", messages }, { kind: "render" });
+  if (projection.kind !== "ready") {
+    assert.fail(`unexpected chronology anomalies: ${JSON.stringify(projection.anomalies)}`);
+  }
+  return projection.value;
+}
 
-void test("findPendingDirectionPacket ignores persisted custom_message prose entries", () => {
-  const pending = findPendingDirectionPacket([
-    userMessage("贴上去！"),
-    packetCallMessage(PACKET_ARGS),
-    proseCustomEntry("已持久化的正文。"),
-  ]);
-  assert.equal(pending, undefined);
-});
-
-void test("findPendingDirectionPacket returns undefined without a packet call", () => {
-  assert.equal(
-    findPendingDirectionPacket([
-      userMessage("继续。"),
-      { role: "assistant", content: [{ type: "text", text: "……" }], timestamp: 0 },
-    ]),
-    undefined,
-  );
-});
+function withAcceptedPacketResults(messages: ReadonlyArray<unknown>): unknown[] {
+  const accepted: unknown[] = [];
+  for (const message of messages) {
+    accepted.push(message);
+    if (typeof message !== "object" || message === null || !("content" in message)) {
+      continue;
+    }
+    const content = message.content;
+    if (!Array.isArray(content)) {
+      continue;
+    }
+    for (const part of content) {
+      if (
+        typeof part === "object" &&
+        part !== null &&
+        "name" in part &&
+        part.name === SUBMIT_DIRECTION_PACKET_TOOL &&
+        "id" in part &&
+        typeof part.id === "string"
+      ) {
+        accepted.push({
+          role: "toolResult",
+          toolCallId: part.id,
+          toolName: SUBMIT_DIRECTION_PACKET_TOOL,
+          isError: false,
+        });
+      }
+    }
+  }
+  return accepted;
+}
 
 void test("buildRendererMessages builds an append-only conversation shape", () => {
   const messages = buildRendererMessages(
@@ -111,7 +152,7 @@ void test("buildRendererMessages builds an append-only conversation shape", () =
       packetCallMessage(PACKET_ARGS),
       proseMessage("第一轮正文。"),
       userMessage("贴上去！"),
-      packetCallMessage(PACKET_ARGS),
+      packetCallMessage(PACKET_ARGS, "tc-2"),
     ],
     parseDirectionPacket(PACKET_ARGS, "packet"),
   );
@@ -164,41 +205,15 @@ void test("buildRendererMessages starts the first rendered scene without direct-
   assert.doesNotMatch(openingPrompt, /开始游戏/);
 });
 
-void test("findLatestNarrativeProse ignores a later direct reply", () => {
-  assert.equal(
-    findLatestNarrativeProse([
-      proseMessage("真正的上一轮正文。"),
-      directReplyMessage("请选择开局。"),
-    ]),
-    "真正的上一轮正文。",
-  );
-});
-
-void test("findLatestNarrativeProse returns undefined for direct-reply-only history", () => {
-  assert.equal(findLatestNarrativeProse([directReplyMessage("请选择开局。")]), undefined);
-});
-
-void test("rendererModeForMessages derives mode from rendered prose rather than direct replies", () => {
-  assert.equal(rendererModeForMessages([userMessage("开局")]), "opening");
-  assert.equal(
-    rendererModeForMessages([userMessage("开局"), directReplyMessage("请选择开局。")]),
-    "opening",
-  );
-  assert.equal(
-    rendererModeForMessages([userMessage("第一轮输入"), proseMessage("第一轮正文。")]),
-    "continuation",
-  );
-});
-
 void test("buildRendererMessages excludes direct replies between rendered turns", () => {
   const messages = buildRendererMessages(
     [
       userMessage("第一轮输入"),
       packetCallMessage(PACKET_ARGS, "render-1"),
-      proseMessage("第一轮正文。"),
+      proseMessage("第一轮正文。", "render-1"),
       userMessage("规则问题"),
       packetCallMessage({ needsRender: false, directReply: "规则回答。" }, "direct"),
-      directReplyMessage("规则回答。"),
+      directReplyMessage("规则回答。", "direct"),
       userMessage("继续行动"),
       packetCallMessage(PACKET_ARGS, "render-2"),
     ],
@@ -222,7 +237,7 @@ void test("buildRendererMessages includes persisted custom_message prose history
       packetCallMessage(PACKET_ARGS),
       proseCustomEntry("第一轮持久化正文。"),
       userMessage("继续。"),
-      packetCallMessage(PACKET_ARGS),
+      packetCallMessage(PACKET_ARGS, "tc-2"),
     ],
     parseDirectionPacket(PACKET_ARGS, "packet"),
   );
@@ -300,7 +315,7 @@ function turnsFixture(total: number): Record<string, unknown>[] {
     messages.push(
       userMessage(`输入 ${turn}`),
       packetCallMessage({ ...PACKET_ARGS, playerAction: `行动 ${turn}` }, `tc-${turn}`),
-      proseMessage(`正文 ${turn}。`),
+      proseMessage(`正文 ${turn}。`, `tc-${turn}`),
     );
   }
   messages.push(userMessage("最新输入"));
@@ -364,8 +379,8 @@ void test("buildRendererMessages demotes turns to digest when prose exceeds the 
   for (let turn = 1; turn <= 12; turn++) {
     messages.push(
       userMessage(`输入 ${turn}`),
-      packetCallMessage({ ...PACKET_ARGS, playerAction: `行动 ${turn}` }),
-      proseMessage(`正文 ${turn}。` + "字".repeat(5000)),
+      packetCallMessage({ ...PACKET_ARGS, playerAction: `行动 ${turn}` }, `tc-${turn}`),
+      proseMessage(`正文 ${turn}。` + "字".repeat(5000), `tc-${turn}`),
     );
   }
   messages.push(userMessage("最新输入"));

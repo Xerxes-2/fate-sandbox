@@ -26,21 +26,39 @@ function assistantToolCall(
   name: string,
   args: Record<string, unknown> = {},
 ): Record<string, unknown> {
+  const toolArgs =
+    name === "submit_direction_packet" && args["needsRender"] === true
+      ? {
+          resolvedChanges: ["变化"],
+          npcStances: [],
+          sensoryAnchors: ["锚点"],
+          endWindow: "下一步",
+          eventWeight: "normal",
+          canonFacts: [],
+          ...args,
+        }
+      : args;
   return {
     role: "assistant",
     content: [
       { type: "thinking", thinking: "scratch reasoning" },
-      { type: "toolCall", id, name, arguments: args },
+      { type: "toolCall", id, name, arguments: toolArgs },
     ],
   };
 }
 
-function toolResult(id: string, text: string, isError = false): Record<string, unknown> {
+function toolResult(
+  id: string,
+  text: string,
+  isError = false,
+  toolName?: string,
+): Record<string, unknown> {
   return {
     role: "toolResult",
     toolCallId: id,
     content: [{ type: "text", text }],
     isError,
+    ...(toolName === undefined ? {} : { toolName }),
   };
 }
 
@@ -153,7 +171,12 @@ void test("projectSettlementWorkingSet replaces completed packets with stable pl
     canonFacts: ["一次性渲染事实"],
   });
   const currentUser = user("翻过围墙");
-  const messages = [user("不交"), oldPacket, toolResult("packet-1", "accepted"), currentUser];
+  const messages = [
+    user("不交"),
+    oldPacket,
+    toolResult("packet-1", "accepted", false, "submit_direction_packet"),
+    currentUser,
+  ];
 
   const projected = projectSettlementWorkingSet(messages, RETENTION_FOR);
   const capsuleMessage = projected[1];
@@ -198,7 +221,7 @@ void test("completed-turn prefix stays byte-stable while the active loop grows",
       playerAction: "观察巷口",
       resolvedChanges: ["发现脚印"],
     }),
-    toolResult("packet-1", "accepted"),
+    toolResult("packet-1", "accepted", false, "submit_direction_packet"),
   ];
   const currentUser = user("追上去");
   const initial = projectSettlementWorkingSet([...completed, currentUser], RETENTION_FOR);
@@ -229,7 +252,7 @@ void test("projectSettlementWorkingSet condenses a completed skill expansion", (
       playerAction: "休息到清晨",
       resolvedChanges: ["时间推进至次日"],
     }),
-    toolResult("packet-1", "accepted"),
+    toolResult("packet-1", "accepted", false, "submit_direction_packet"),
     user("出门"),
   ];
 
@@ -254,7 +277,7 @@ void test("projectSettlementWorkingSet retains start-game until initialization c
   const secondTurn = [
     invocation,
     collectionPacket,
-    toolResult("packet-1", "accepted"),
+    toolResult("packet-1", "accepted", false, "submit_direction_packet"),
     user("FSF，新手模式"),
     initialization,
     toolResult("init-1", "initialized"),
@@ -283,7 +306,7 @@ void test("an earlier initialization does not terminate a newer start-game invoc
       needsRender: false,
       directReply: "选择新开局",
     }),
-    toolResult("packet-1", "accepted"),
+    toolResult("packet-1", "accepted", false, "submit_direction_packet"),
     user("默认"),
   ];
 

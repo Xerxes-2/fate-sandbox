@@ -9,7 +9,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 import { isRecord } from "../../engine/core/utils/typebox-validation.ts";
-import { pruneAbandonedSubtree } from "./prune.ts";
+import { pruneAbandonedSubtree, pruneRerolledProse } from "./prune.ts";
 import {
   collectSubtreeIds,
   extractUserMessageText,
@@ -176,6 +176,45 @@ void test("pruneAbandonedSubtree 对未持久化 session 安全跳过", () => {
   sessionManager.appendMessage(userMessage("内存输入"));
 
   assert.equal(pruneAbandonedSubtree(sessionManager, "whatever", null), false);
+});
+
+void test("pruneRerolledProse 只删纯正文子树", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "reroll-prune-test-"));
+  t.after(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  const sessionManager = SessionManager.create(dir, dir);
+  sessionManager.appendMessage(userMessage("行动"));
+  const a1 = sessionManager.appendMessage(assistantMessage("GM 回复"));
+  const p1 = sessionManager.appendCustomMessageEntry("fsn-prose", "旧正文", true, {
+    kind: "rendered",
+    toolCallId: "call-1",
+  });
+
+  assert.equal(pruneRerolledProse(sessionManager, p1, a1), true);
+  assert.equal(sessionManager.getEntry(p1), undefined);
+  assert.equal(sessionManager.getLeafId(), a1);
+});
+
+void test("pruneRerolledProse 拒绝删除携带状态历史的子树", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "reroll-prune-state-test-"));
+  t.after(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  const sessionManager = SessionManager.create(dir, dir);
+  sessionManager.appendMessage(userMessage("行动"));
+  const a1 = sessionManager.appendMessage(assistantMessage("GM 回复"));
+  const p1 = sessionManager.appendCustomMessageEntry("fsn-prose", "旧正文", true, {
+    kind: "rendered",
+    toolCallId: "call-1",
+  });
+  const s1 = sessionManager.appendCustomEntry("fsn-state", { state: {} });
+
+  assert.equal(pruneRerolledProse(sessionManager, p1, a1), false);
+  assert.notEqual(sessionManager.getEntry(p1), undefined);
+  assert.notEqual(sessionManager.getEntry(s1), undefined);
 });
 
 function parseJsonLine(line: string): Record<string, unknown> {

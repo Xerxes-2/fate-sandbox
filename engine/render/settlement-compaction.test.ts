@@ -1,10 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { SUBMIT_DIRECTION_PACKET_TOOL } from "./render-turn.ts";
 import {
-  buildSettlementCompactionSummary,
-  buildSettlementWorkingSetCapsules,
+  projectSessionChronology,
+  PROSE_CUSTOM_TYPE,
+  SUBMIT_DIRECTION_PACKET_TOOL,
+} from "../session-chronology/session-chronology.ts";
+import {
+  buildSettlementCompactionSummary as formatSettlementCompactionSummary,
+  buildSettlementWorkingSetCapsules as formatSettlementWorkingSetCapsules,
 } from "./settlement-compaction.ts";
 
 function userMessage(text: string): Record<string, unknown> {
@@ -25,15 +29,101 @@ function skillUserMessage(name: string, args?: string): Record<string, unknown> 
 
 function packetCallMessage(
   args: Record<string, unknown>,
-  toolCallId = "tc",
+  toolCallId = packetFixtureId(args),
 ): Record<string, unknown> {
+  const packetArgs =
+    args["needsRender"] === true
+      ? {
+          resolvedChanges: ["变化"],
+          npcStances: [],
+          sensoryAnchors: ["锚点"],
+          endWindow: "下一步",
+          eventWeight: "normal",
+          canonFacts: [],
+          ...args,
+        }
+      : args;
   return {
     role: "assistant",
     content: [
-      { type: "toolCall", id: toolCallId, name: SUBMIT_DIRECTION_PACKET_TOOL, arguments: args },
+      {
+        type: "toolCall",
+        id: toolCallId,
+        name: SUBMIT_DIRECTION_PACKET_TOOL,
+        arguments: packetArgs,
+      },
     ],
     timestamp: 0,
   };
+}
+
+function packetFixtureId(args: Record<string, unknown>): string {
+  const label =
+    typeof args["playerAction"] === "string"
+      ? args["playerAction"]
+      : typeof args["directReply"] === "string"
+        ? args["directReply"]
+        : "turn";
+  return `tc-${label}`;
+}
+
+function buildSettlementCompactionSummary(
+  messages: ReadonlyArray<unknown>,
+  previousSummary: string | undefined,
+): string {
+  return formatSettlementCompactionSummary(settlementTurns(messages), previousSummary);
+}
+
+function buildSettlementWorkingSetCapsules(
+  messages: ReadonlyArray<unknown>,
+): ReadonlyMap<string, string> {
+  return formatSettlementWorkingSetCapsules(settlementTurns(messages));
+}
+
+function settlementTurns(messages: ReadonlyArray<unknown>) {
+  const acceptedMessages: unknown[] = [];
+  for (const message of messages) {
+    acceptedMessages.push(message);
+    if (!isAssistantPacket(message)) {
+      continue;
+    }
+    for (const part of message.content) {
+      if (
+        typeof part === "object" &&
+        part !== null &&
+        "id" in part &&
+        typeof part.id === "string"
+      ) {
+        acceptedMessages.push({
+          role: "toolResult",
+          toolCallId: part.id,
+          toolName: SUBMIT_DIRECTION_PACKET_TOOL,
+          isError: false,
+        });
+      }
+    }
+  }
+  const projection = projectSessionChronology(
+    { kind: "messages", messages: acceptedMessages },
+    { kind: "settlement" },
+  );
+  if (projection.kind !== "ready") {
+    assert.fail(`unexpected chronology anomalies: ${JSON.stringify(projection.anomalies)}`);
+  }
+  return projection.value.turns;
+}
+
+function isAssistantPacket(
+  message: unknown,
+): message is { role: "assistant"; content: Array<Record<string, unknown>> } {
+  return (
+    typeof message === "object" &&
+    message !== null &&
+    "role" in message &&
+    message.role === "assistant" &&
+    "content" in message &&
+    Array.isArray(message.content)
+  );
 }
 
 void test("buildSettlementCompactionSummary indexes turns from packet calls", () => {
@@ -130,12 +220,23 @@ void test("buildSettlementCompactionSummary includes prose excerpt when prose me
   const summary = buildSettlementCompactionSummary(
     [
       userMessage("抱起她"),
-      proseMessage("你一手托住膝弯，一手稳住她的后背，站起来的瞬间她整个人的重量压过来。"),
-      packetCallMessage({
-        needsRender: true,
-        playerAction: "Saber offers to carry",
-        resolvedChanges: ["princess carry established"],
-      }),
+      packetCallMessage(
+        {
+          needsRender: true,
+          playerAction: "Saber offers to carry",
+          resolvedChanges: ["princess carry established"],
+          npcStances: [],
+          sensoryAnchors: ["体温"],
+          endWindow: "她如何回应",
+          eventWeight: "normal",
+          canonFacts: [],
+        },
+        "carry-call",
+      ),
+      proseMessage(
+        "carry-call",
+        "你一手托住膝弯，一手稳住她的后背，站起来的瞬间她整个人的重量压过来。",
+      ),
     ],
     undefined,
   );
@@ -153,8 +254,13 @@ void test("buildSettlementCompactionSummary omits prose marker when no prose mes
   assert.doesNotMatch(summary, /▸ 正文/);
 });
 
-function proseMessage(text: string): Record<string, unknown> {
-  return { role: "custom", customType: "fsn-prose", content: text };
+function proseMessage(toolCallId: string, text: string): Record<string, unknown> {
+  return {
+    role: "custom",
+    customType: PROSE_CUSTOM_TYPE,
+    content: text,
+    details: { kind: "rendered", toolCallId },
+  };
 }
 
 void test("recent turns keep ruling details; older turns collapse to one line", () => {

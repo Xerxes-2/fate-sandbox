@@ -1,5 +1,6 @@
 import type { LintFinding } from "../audit/lint-rules.ts";
-import type { DirectionPacket } from "./packet-schema.ts";
+import type { RenderChronologyView } from "../session-chronology/session-chronology.ts";
+import type { DirectionPacket, RenderDirectionPacket } from "./packet-schema.ts";
 
 import {
   findSecretLeaks,
@@ -8,13 +9,6 @@ import {
   minimumProseUnits,
   proseLengthContextFromPacket,
 } from "../audit/lint-rules.ts";
-import { isRecord } from "../core/utils/typebox-validation.ts";
-import { parseDirectionPacket } from "./packet-schema.ts";
-
-/** 渲染产物落 session 的 customType；结算投影按它过滤，渲染史按它装配。 */
-export const PROSE_CUSTOM_TYPE = "fsn-prose";
-export const SUBMIT_DIRECTION_PACKET_TOOL = "submit_direction_packet";
-export type RendererMode = "continuation" | "opening";
 
 /**
  * 散文史分层窗口（缓存友好：高低水位滞回，边界只在跨过高水位时
@@ -29,35 +23,6 @@ const FULL_TURNS_LOW = 10;
 const FULL_LAYER_CHAR_BUDGET = 45_000;
 const DIGEST_TURNS_HIGH = 32;
 const DIGEST_TURNS_LOW = 16;
-
-export interface PendingDirectionPacket {
-  packet: DirectionPacket;
-  /** 提交该 packet 的 toolCall id，供扩展层去重（防竞态下双重渲染）。 */
-  toolCallId: string;
-}
-
-/**
- * 从 agent loop 的消息流中找出「已提交、尚未渲染」的 direction packet。
- * 从尾部回扫：先遇到 prose 消息说明本轮已渲染过（或无新 packet），返回 undefined。
- */
-export function findPendingDirectionPacket(
-  messages: ReadonlyArray<unknown>,
-): PendingDirectionPacket | undefined {
-  for (let index = messages.length - 1; index >= 0; index--) {
-    const message = messages[index];
-    if (isProseMessage(message)) {
-      return undefined;
-    }
-    const call = findSubmitPacketCall(message);
-    if (call !== undefined) {
-      return {
-        packet: parseDirectionPacket(call.args, "direction packet"),
-        toolCallId: call.toolCallId,
-      };
-    }
-  }
-  return undefined;
-}
 
 /** 渲染器输入消息：扩展层映射成 pi-ai 消息后走 stream()。 */
 export interface RendererMessage {
@@ -89,32 +54,26 @@ export type ProseDigestOverrides = ReadonlyMap<string, string>;
  * + user(本轮输入 + packet)。旧正文放 assistant 位：前缀逐轮可缓存，
  * 且模型把它们当「自己写的」，文风延续更自然。
  */
-export function rendererModeForMessages(messages: ReadonlyArray<unknown>): RendererMode {
-  return collectRenderedTurns(messages).turns.length === 0 ? "opening" : "continuation";
-}
-
-export function findLatestNarrativeProse(messages: ReadonlyArray<unknown>): string | undefined {
-  let latest: string | undefined;
-  for (const message of messages) {
-    if (!isProseMessage(message) || isDirectReplyMessage(message)) {
-      continue;
-    }
-    const text = customMessageText(message).trim();
-    if (text.length > 0) {
-      latest = text;
-    }
-  }
-  return latest;
-}
-
 export function buildRendererMessages(
-  messages: ReadonlyArray<unknown>,
+  chronology: RenderChronologyView,
   packet: DirectionPacket,
   digestOverrides?: ProseDigestOverrides,
   nameEntries: readonly RendererNameEntry[] = [],
   npcRenderCards?: string,
 ): RendererMessage[] {
-  const { turns, currentInputs } = collectRenderedTurns(messages, digestOverrides);
+  const turns: RenderedTurn[] = chronology.turns.map((turn, index) => {
+    const turnNumber = index + 1;
+    const writerDigest = digestOverrides?.get(turn.toolCallId);
+    return {
+      turn: turnNumber,
+      playerInput: turn.playerInput,
+      prose: turn.prose,
+      digest:
+        writerDigest === undefined
+          ? buildTurnDigest(turnNumber, turn.packet)
+          : `Turn ${turnNumber}: ${writerDigest}`,
+    };
+  });
   const fullStart = resolveFullLayerStart(turns);
   const digestStart = hysteresisStart(fullStart, DIGEST_TURNS_HIGH, DIGEST_TURNS_LOW);
 
@@ -136,10 +95,9 @@ export function buildRendererMessages(
   }
 
   const currentPlayerInput =
-    currentInputs.length > 0
-      ? currentInputs.join("\n\n")
-      : "(No current player input was captured. Use packet.playerAction only.)";
-  const isOpeningScene = turns.length === 0;
+    chronology.awaitingDelivery?.playerInput ??
+    "(No current player input was captured. Use packet.playerAction only.)";
+  const isOpeningScene = chronology.mode === "opening";
   const finalSections: string[] = [];
   if (isOpeningScene) {
     finalSections.push(...buildOpeningSceneSection());
@@ -228,64 +186,10 @@ function buildLengthFloorSection(packet: DirectionPacket): string[] {
   ];
 }
 
-function collectRenderedTurns(
-  messages: ReadonlyArray<unknown>,
-  digestOverrides?: ProseDigestOverrides,
-): {
-  turns: RenderedTurn[];
-  currentInputs: string[];
-} {
-  const turns: RenderedTurn[] = [];
-  let currentInputs: string[] = [];
-  let pendingPacket: { args: Record<string, unknown>; toolCallId: string } | undefined;
-  for (const message of messages) {
-    const call = findSubmitPacketCall(message);
-    if (call !== undefined) {
-      pendingPacket = call;
-    }
-    if (isDirectReplyMessage(message)) {
-      currentInputs = [];
-      pendingPacket = undefined;
-      continue;
-    }
-    if (isProseMessage(message)) {
-      const turn = turns.length + 1;
-      const writerDigest =
-        pendingPacket === undefined ? undefined : digestOverrides?.get(pendingPacket.toolCallId);
-      turns.push({
-        turn,
-        playerInput: currentInputs.join("\n\n") || "(No player input captured for this turn.)",
-        prose: customMessageText(message),
-        digest:
-          writerDigest !== undefined
-            ? `Turn ${turn}: ${writerDigest}`
-            : buildTurnDigest(turn, pendingPacket?.args),
-      });
-      currentInputs = [];
-      pendingPacket = undefined;
-      continue;
-    }
-    const userText = playerInputText(message);
-    if (userText !== undefined) {
-      currentInputs.push(userText);
-    }
-  }
-  return { turns, currentInputs };
-}
-
-/**
- * 从该轮 packet 参数提取一行摘要；旧 packet 不重新验证，防御式读取。
- * 格式刻意避开箭头/分号的报告体：摘要层是渲染器上下文的第一段文本，
- * 机械调性会污染整轮文风（见 06-12 反模式回归复盘）。
- */
-function buildTurnDigest(turn: number, args: Record<string, unknown> | undefined): string {
-  const playerAction =
-    typeof args?.["playerAction"] === "string" ? args["playerAction"] : "（未知行动）";
-  const changes = Array.isArray(args?.["resolvedChanges"])
-    ? args["resolvedChanges"].filter((entry): entry is string => typeof entry === "string")
-    : [];
-  const changeText = changes.length > 0 ? `。${changes.join("，")}` : "";
-  return `Turn ${turn}: ${playerAction}${changeText}`;
+function buildTurnDigest(turn: number, packet: RenderDirectionPacket): string {
+  const changeText =
+    packet.resolvedChanges.length > 0 ? `。${packet.resolvedChanges.join("，")}` : "";
+  return `Turn ${turn}: ${packet.playerAction}${changeText}`;
 }
 
 /**
@@ -367,98 +271,4 @@ export function buildLintRetryMessages(
       ].join("\n"),
     },
   ];
-}
-
-function isProseMessage(message: unknown): message is Record<string, unknown> {
-  return isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE;
-}
-
-function isDirectReplyMessage(message: unknown): boolean {
-  if (!isProseMessage(message)) {
-    return false;
-  }
-  const details = message["details"];
-  return isRecord(details) && details["kind"] === "direct-reply";
-}
-
-function customMessageText(message: Record<string, unknown>): string {
-  const content = message["content"];
-  if (typeof content === "string") {
-    return content;
-  }
-  return joinTextParts(content);
-}
-
-/** 玩家输入：user 消息的文本部分；非 user（assistant/toolResult/bash 等）返回 undefined。 */
-function playerInputText(message: unknown): string | undefined {
-  if (!isRecord(message) || message["role"] !== "user") {
-    return undefined;
-  }
-  const content = message["content"];
-  const text = (typeof content === "string" ? content : joinTextParts(content)).trim();
-  if (text.length === 0 || isInjectedPromptText(text)) {
-    return undefined;
-  }
-  return text;
-}
-
-const INJECTED_PROMPT_HEADERS = [
-  "settlement_principles",
-  "world_context",
-  "input_guide",
-  "social_guide",
-  "tool_policy",
-  "hard_rules",
-  "story_driver",
-  "mechanical_state",
-  "prose_continuity",
-  "direction_contract",
-] as const;
-
-function isInjectedPromptText(text: string): boolean {
-  const match = /^<([a-z][a-z0-9_-]*)>\n[\s\S]*\n<\/\1>$/u.exec(text.trim());
-  const header = match?.[1];
-  return header !== undefined && INJECTED_PROMPT_HEADERS.some((value) => value === header);
-}
-
-function joinTextParts(content: unknown): string {
-  if (!Array.isArray(content)) {
-    return "";
-  }
-  return content
-    .filter(
-      (part): part is { type: "text"; text: string } =>
-        isRecord(part) && part["type"] === "text" && typeof part["text"] === "string",
-    )
-    .map((part) => part.text)
-    .join("\n")
-    .trim();
-}
-
-function findSubmitPacketCall(
-  message: unknown,
-): { args: Record<string, unknown>; toolCallId: string } | undefined {
-  if (!isRecord(message) || message["role"] !== "assistant") {
-    return undefined;
-  }
-  const content = message["content"];
-  if (!Array.isArray(content)) {
-    return undefined;
-  }
-  for (let index = content.length - 1; index >= 0; index--) {
-    const part: unknown = content[index];
-    if (
-      isRecord(part) &&
-      part["type"] === "toolCall" &&
-      part["name"] === SUBMIT_DIRECTION_PACKET_TOOL &&
-      isRecord(part["arguments"])
-    ) {
-      const id = part["id"];
-      return {
-        args: part["arguments"],
-        toolCallId: typeof id === "string" ? id : "unknown-tool-call",
-      };
-    }
-  }
-  return undefined;
 }

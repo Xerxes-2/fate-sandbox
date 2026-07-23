@@ -7,12 +7,8 @@
  * 的参数机械提取一行摘要，零成本、零漂移、字节稳定。
  */
 
-import { isRecord } from "../core/utils/typebox-validation.ts";
-import {
-  formatSkillPlayerInput,
-  parseSkillInvocation,
-} from "../prompt-assembly/skill-invocation.ts";
-import { PROSE_CUSTOM_TYPE, SUBMIT_DIRECTION_PACKET_TOOL } from "./render-turn.ts";
+import type { SessionTurn } from "../session-chronology/session-chronology.ts";
+import type { RenderDirectionPacket } from "./packet-schema.ts";
 
 /** 摘要条目（回合）总数上限（含上次摘要折叠进来的行）。 */
 const MAX_DIGEST_LINES = 160;
@@ -40,14 +36,14 @@ const SUMMARY_HEADER = [
  * 完全确定性：同样的输入永远产出同样的摘要。
  */
 export function buildSettlementCompactionSummary(
-  messages: ReadonlyArray<unknown>,
+  turns: readonly SessionTurn[],
   previousSummary: string | undefined,
 ): string {
   const previousEntries: TurnDigestEntry[] = previousDigestLines(previousSummary).map((line) => ({
     header: line,
     details: [],
   }));
-  const entries = [...previousEntries, ...extractTurnEntries(messages)];
+  const entries = [...previousEntries, ...turns.map(turnDigestEntry)];
   const kept = entries.slice(-MAX_DIGEST_LINES);
   const dropped = entries.length - kept.length;
   const sections = [SUMMARY_HEADER];
@@ -70,11 +66,9 @@ export function buildSettlementCompactionSummary(
  * The twelve-turn detail gradient matches compaction, so only the oldest rich capsule changes per turn.
  */
 export function buildSettlementWorkingSetCapsules(
-  messages: ReadonlyArray<unknown>,
+  turns: readonly SessionTurn[],
 ): ReadonlyMap<string, string> {
-  const entries = extractTurnEntries(messages).filter(
-    (entry): entry is TurnDigestEntry & { toolCallId: string } => entry.toolCallId !== undefined,
-  );
+  const entries = turns.map(turnDigestEntry);
   const fullFrom = Math.max(0, entries.length - RECENT_FULL_TURNS);
   return new Map(
     entries.map((entry, index) => [
@@ -96,74 +90,27 @@ interface TurnDigestEntry {
   details: string[];
 }
 
-function extractTurnEntries(messages: ReadonlyArray<unknown>): TurnDigestEntry[] {
-  const entries: TurnDigestEntry[] = [];
-  let currentInputs: string[] = [];
-  let pendingProse: string | undefined;
-  for (const message of messages) {
-    const userText = playerInputText(message);
-    if (userText !== undefined) {
-      currentInputs.push(userText);
-      continue;
-    }
-    const prose = proseMessageText(message);
-    if (prose !== undefined) {
-      pendingProse = prose;
-      continue;
-    }
-    const packetCall = submitPacketCall(message);
-    if (packetCall !== undefined) {
-      entries.push({
-        toolCallId: packetCall.toolCallId,
-        header: formatTurnLine(
-          currentInputs,
-          packetCall.args,
-          pendingProse === undefined ? undefined : excerpt(pendingProse, PROSE_EXCERPT_CHARS),
-        ),
-        details: formatTurnDetails(packetCall.args, pendingProse),
-      });
-      currentInputs = [];
-      pendingProse = undefined;
-    }
-  }
-  return entries;
+function turnDigestEntry(turn: SessionTurn): TurnDigestEntry & { toolCallId: string } {
+  const prose = turn.kind === "narrative" && turn.status === "delivered" ? turn.prose : undefined;
+  return {
+    toolCallId: turn.toolCallId,
+    header: formatTurnLine(turn, prose),
+    details: turn.kind === "narrative" ? formatTurnDetails(turn.packet, prose) : [],
+  };
 }
 
 /** 近期轮的裁决细节：收尾窗口 + NPC 主动/静置 beat + 更长正文摘录。 */
-function formatTurnDetails(args: Record<string, unknown>, prose: string | undefined): string[] {
-  if (args["needsRender"] === false) {
-    return [];
+function formatTurnDetails(packet: RenderDirectionPacket, prose: string | undefined): string[] {
+  const details: string[] = [
+    `  ⌛ 收尾窗口：${excerpt(packet.endWindow, END_WINDOW_EXCERPT_CHARS)}`,
+  ];
+  for (const stance of packet.npcStances) {
+    details.push(`  ☰ ${stance.actorId}：${excerpt(stance.move, NPC_BEAT_EXCERPT_CHARS)}`);
   }
-  const details: string[] = [];
-  if (typeof args["endWindow"] === "string" && args["endWindow"].trim() !== "") {
-    details.push(`  ⌛ 收尾窗口：${excerpt(args["endWindow"], END_WINDOW_EXCERPT_CHARS)}`);
-  }
-  if (Array.isArray(args["npcStances"])) {
-    for (const stance of args["npcStances"]) {
-      if (
-        isRecord(stance) &&
-        typeof stance["actorId"] === "string" &&
-        typeof stance["move"] === "string"
-      ) {
-        details.push(
-          `  ☰ ${stance["actorId"]}：${excerpt(stance["move"], NPC_BEAT_EXCERPT_CHARS)}`,
-        );
-      }
-    }
-  }
-  if (Array.isArray(args["npcOmissions"])) {
-    for (const omission of args["npcOmissions"]) {
-      if (
-        isRecord(omission) &&
-        typeof omission["actorId"] === "string" &&
-        typeof omission["reasonCode"] === "string" &&
-        typeof omission["playerSafeNote"] === "string"
-      ) {
-        details.push(
-          `  ◌ ${omission["actorId"]}（${omission["reasonCode"]}）：${excerpt(omission["playerSafeNote"], NPC_BEAT_EXCERPT_CHARS)}`,
-        );
-      }
-    }
+  for (const omission of packet.npcOmissions ?? []) {
+    details.push(
+      `  ◌ ${omission.actorId}（${omission.reasonCode}）：${excerpt(omission.playerSafeNote, NPC_BEAT_EXCERPT_CHARS)}`,
+    );
   }
   if (prose !== undefined) {
     details.push(`  ▸ 正文（长摘）：${excerpt(prose, RECENT_PROSE_EXCERPT_CHARS)}`);
@@ -173,35 +120,15 @@ function formatTurnDetails(args: Record<string, unknown>, prose: string | undefi
 
 const PROSE_EXCERPT_CHARS = 60;
 
-function formatTurnLine(
-  inputs: readonly string[],
-  args: Record<string, unknown>,
-  proseExcerpt?: string,
-): string {
-  const input = excerpt(inputs.join(" / "), PLAYER_INPUT_EXCERPT_CHARS);
-  if (args["needsRender"] === false) {
-    const directReply =
-      typeof args["directReply"] === "string"
-        ? excerpt(args["directReply"], DIRECT_REPLY_EXCERPT_CHARS)
-        : "（直答内容缺失）";
-    return `- 玩家「${input}」｜meta/OOC 轮，直答：${directReply}`;
+function formatTurnLine(turn: SessionTurn, prose: string | undefined): string {
+  const input = excerpt(turn.playerInput, PLAYER_INPUT_EXCERPT_CHARS);
+  if (turn.kind === "direct") {
+    return `- 玩家「${input}」｜meta/OOC 轮，直答：${excerpt(turn.packet.directReply, DIRECT_REPLY_EXCERPT_CHARS)}`;
   }
-  const playerAction =
-    typeof args["playerAction"] === "string" ? args["playerAction"] : "（未知行动）";
-  const changes = Array.isArray(args["resolvedChanges"])
-    ? args["resolvedChanges"].filter((entry): entry is string => typeof entry === "string")
-    : [];
-  const changeText = changes.length > 0 ? `→ ${changes.join("；")}` : "";
-  const proseText = proseExcerpt !== undefined ? ` ▸ 正文：${proseExcerpt}` : "";
-  return `- 玩家「${input}」｜${playerAction}${changeText}${proseText}`;
-}
-
-function proseMessageText(message: unknown): string | undefined {
-  if (!isRecord(message) || message["role"] !== "custom") return undefined;
-  if (message["customType"] !== PROSE_CUSTOM_TYPE) return undefined;
-  const content = message["content"];
-  if (typeof content === "string") return content.trim() === "" ? undefined : content;
-  return undefined;
+  const changeText =
+    turn.packet.resolvedChanges.length > 0 ? `→ ${turn.packet.resolvedChanges.join("；")}` : "";
+  const proseText = prose === undefined ? "" : ` ▸ 正文：${excerpt(prose, PROSE_EXCERPT_CHARS)}`;
+  return `- 玩家「${input}」｜${turn.packet.playerAction}${changeText}${proseText}`;
 }
 
 /** 上次摘要里的索引行（"- " 开头）原样折叠进来，保持跨多次 compaction 的连续性。 */
@@ -214,48 +141,4 @@ function excerpt(text: string, maxChars: number): string {
   const collapsed = text.replaceAll(/\s+/g, " ").trim();
   if (collapsed.length <= maxChars) return collapsed === "" ? "（无输入）" : collapsed;
   return `${collapsed.slice(0, maxChars)}…`;
-}
-
-function playerInputText(message: unknown): string | undefined {
-  if (!isRecord(message) || message["role"] !== "user") return undefined;
-  const content = message["content"];
-  if (typeof content === "string") return normalizedPlayerText(content);
-  if (!Array.isArray(content)) return undefined;
-  const text = content
-    .filter(
-      (part): part is { type: "text"; text: string } =>
-        isRecord(part) && part["type"] === "text" && typeof part["text"] === "string",
-    )
-    .map((part) => normalizedPlayerText(part.text))
-    .filter((part): part is string => part !== undefined)
-    .join("\n")
-    .trim();
-  return text === "" ? undefined : text;
-}
-
-function normalizedPlayerText(text: string): string | undefined {
-  const trimmed = text.trim();
-  if (trimmed === "") return undefined;
-  const invocation = parseSkillInvocation(trimmed);
-  return invocation === undefined ? trimmed : formatSkillPlayerInput(invocation);
-}
-
-function submitPacketCall(
-  message: unknown,
-): { toolCallId: string; args: Record<string, unknown> } | undefined {
-  if (!isRecord(message) || message["role"] !== "assistant") return undefined;
-  const content = message["content"];
-  if (!Array.isArray(content)) return undefined;
-  for (const part of content) {
-    if (
-      isRecord(part) &&
-      part["type"] === "toolCall" &&
-      typeof part["id"] === "string" &&
-      part["name"] === SUBMIT_DIRECTION_PACKET_TOOL &&
-      isRecord(part["arguments"])
-    ) {
-      return { toolCallId: part["id"], args: part["arguments"] };
-    }
-  }
-  return undefined;
 }

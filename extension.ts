@@ -11,15 +11,18 @@ import { fileURLToPath } from "node:url";
 
 import { syncStateFromSessionManager } from "./engine/core/state/session-hydration.ts";
 import { isRecord } from "./engine/core/utils/typebox-validation.ts";
-import { beginTurnTrace, dumpPassA } from "./engine/debug/api-trace.ts";
+import { beginTurnTrace, dumpChronologyAnomalies, dumpPassA } from "./engine/debug/api-trace.ts";
 import { maybeForceCompact } from "./engine/debug/force-compact.ts";
 import {
   buildSettlementSystemPrompt,
   injectGmPromptMessages,
 } from "./engine/prompt-assembly/injection.ts";
 import { projectSettlementWorkingSet } from "./engine/prompt-assembly/settlement-working-set.ts";
-import { findLatestNarrativeProse, PROSE_CUSTOM_TYPE } from "./engine/render/render-turn.ts";
 import { stripLeakedSettlementProse } from "./engine/render/settlement-prose-firewall.ts";
+import {
+  projectSessionChronology,
+  PROSE_CUSTOM_TYPE,
+} from "./engine/session-chronology/session-chronology.ts";
 import { registerAllTools, toolResultRetention } from "./tools/registry.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -41,7 +44,17 @@ export default function extension(pi: ExtensionAPI): void {
     // 结算器（Pass A）投影：渲染产物不作为对话流消息进结算上下文，但最后一轮渲染正文
     // 作为物理连续性锚注入 pre-response slot，防止跨轮物理状态断裂。
     const workingSet = projectSettlementWorkingSet(event.messages, toolResultRetention);
-    const lastRenderedProse = findLatestNarrativeProse(workingSet);
+    const chronology = projectSessionChronology(
+      { kind: "session-branch", entries: ctx.sessionManager.getBranch() },
+      { kind: "settlement" },
+    );
+    dumpChronologyAnomalies("settlement-continuity", chronology.anomalies);
+    if (chronology.kind === "blocked") {
+      throw new Error(
+        `Session Chronology blocked settlement continuity: ${chronology.anomalies.map((entry) => entry.kind).join(", ")}`,
+      );
+    }
+    const lastRenderedProse = chronology.value.latestNarrativeProse;
     const settlementMessages = workingSet
       .filter((message) => !(isRecord(message) && message["customType"] === PROSE_CUSTOM_TYPE))
       // 在此过滤 message_end 上线前已写入历史的结算器误写正文：只整形

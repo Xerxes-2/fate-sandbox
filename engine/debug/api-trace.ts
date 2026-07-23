@@ -96,6 +96,21 @@ export function dumpCompaction(summary: string, meta: Record<string, unknown>): 
   }
 }
 
+export function dumpChronologyAnomalies(consumer: string, anomalies: readonly unknown[]): void {
+  if (!isApiTraceEnabled() || anomalies.length === 0) {
+    return;
+  }
+  try {
+    mkdirSync(DEBUG_DIR, { recursive: true });
+    writeFileSync(
+      join(DEBUG_DIR, "session-chronology.json"),
+      `${JSON.stringify({ capturedAt: new Date().toISOString(), consumer, anomalies }, null, 2)}\n`,
+    );
+  } catch (error) {
+    console.error("failed to write Session Chronology trace:", error);
+  }
+}
+
 function writeTrace(
   name: string,
   title: string,

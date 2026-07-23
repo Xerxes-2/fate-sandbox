@@ -20,6 +20,12 @@
 
 import type { Api, Message, Model, ThinkingLevel } from "@earendil-works/pi-ai";
 
+import type {
+  AwaitingNarrativeTurn,
+  DeliveredNarrativeTurn,
+  RenderChronologyView,
+} from "../engine/session-chronology/session-chronology.ts";
+
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -28,13 +34,8 @@ import { lintFinalProse } from "../engine/audit/lint-rules.ts";
 import { parseSessionJsonl, reconstructActivePath } from "../engine/audit/session-audit.ts";
 import { buildRendererSystemPrompt } from "../engine/prompt-assembly/injection.ts";
 import { loadProseDigests } from "../engine/render/prose-digest-store.ts";
-import {
-  buildRendererMessages,
-  findPendingDirectionPacket,
-  PROSE_CUSTOM_TYPE,
-  type RendererMessage,
-  rendererModeForMessages,
-} from "../engine/render/render-turn.ts";
+import { buildRendererMessages, type RendererMessage } from "../engine/render/render-turn.ts";
+import { projectSessionChronology } from "../engine/session-chronology/session-chronology.ts";
 
 const PROJECT_ROOT = join(import.meta.dirname, "..");
 const DEFAULT_MODELS = [
@@ -94,10 +95,6 @@ function parseThinkingLevel(raw: string): ThinkingLevel {
   return level;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function expectValue(argv: string[], index: number, flag: string): string {
   const value = argv[index];
   if (value === undefined) throw new Error(`render-bench: ${flag} requires a value`);
@@ -133,10 +130,10 @@ function entryToMessage(entry: {
   details?: unknown;
 }): unknown {
   if (entry.type === "message" && entry.message !== undefined) return entry.message;
-  if (entry.type === "custom_message" && entry.customType === PROSE_CUSTOM_TYPE) {
+  if (entry.type === "custom_message") {
     return {
       role: "custom",
-      customType: PROSE_CUSTOM_TYPE,
+      customType: entry.customType,
       content: entry.content,
       details: entry.details,
     };
@@ -152,37 +149,55 @@ function collectBenchTurns(sessionPath: string, wanted: number): BenchTurn[] {
     if (message !== undefined) messages.push(message);
   }
 
-  const proseIndices: number[] = [];
-  messages.forEach((message, index) => {
-    if (!isRecord(message) || message["customType"] !== PROSE_CUSTOM_TYPE) {
-      return;
-    }
-    const details = message["details"];
-    if (!isRecord(details) || details["kind"] !== "direct-reply") {
-      proseIndices.push(index);
-    }
-  });
-
-  const digests = loadProseDigests(join(PROJECT_ROOT, "runtime", "prose-digests.json"));
-  const turns: BenchTurn[] = [];
-  for (const [ordinal, proseIndex] of proseIndices.entries()) {
-    if (ordinal < proseIndices.length - wanted) continue;
-    const prefix = messages.slice(0, proseIndex);
-    const pending = findPendingDirectionPacket(prefix);
-    if (pending === undefined || !pending.packet.needsRender) continue;
-    const proseMessage = messages[proseIndex];
-    const baseline = isRecord(proseMessage) ? proseMessage["content"] : undefined;
-    turns.push({
-      turn: ordinal + 1,
-      baseline: typeof baseline === "string" ? baseline : "",
-      systemPrompt: buildRendererSystemPrompt(rendererModeForMessages(prefix)),
-      messages: buildRendererMessages(prefix, pending.packet, digests),
-    });
+  const chronology = projectSessionChronology({ kind: "messages", messages }, { kind: "render" });
+  if (chronology.kind !== "ready") {
+    throw new Error(
+      `render-bench: Session Chronology blocked (${chronology.anomalies.map((entry) => entry.kind).join(", ")})`,
+    );
   }
+  const allTurns = chronology.value.turns;
+  const selectedTurns = allTurns.slice(-wanted);
+  const firstOrdinal = allTurns.length - selectedTurns.length;
+  const digests = loadProseDigests(join(PROJECT_ROOT, "runtime", "prose-digests.json"));
+  const turns = selectedTurns.map((turn, index) => {
+    const ordinal = firstOrdinal + index;
+    const replay = replayChronology(allTurns, ordinal);
+    return {
+      turn: ordinal + 1,
+      baseline: turn.prose,
+      systemPrompt: buildRendererSystemPrompt(replay.mode),
+      messages: buildRendererMessages(replay, turn.packet, digests),
+    };
+  });
   if (turns.length === 0) {
     throw new Error("render-bench: no renderable turns found in session active path");
   }
   return turns;
+}
+
+function replayChronology(
+  turns: readonly DeliveredNarrativeTurn[],
+  currentIndex: number,
+): RenderChronologyView {
+  const current = turns[currentIndex];
+  if (current === undefined) {
+    throw new Error(`render-bench: missing narrative turn ${currentIndex + 1}`);
+  }
+  const previous = turns.slice(0, currentIndex);
+  const awaiting: AwaitingNarrativeTurn = {
+    kind: "narrative",
+    status: "awaiting-delivery",
+    toolCallId: current.toolCallId,
+    playerInput: current.playerInput,
+    packet: current.packet,
+  };
+  const latestNarrativeProse = previous.at(-1)?.prose;
+  return {
+    mode: previous.length === 0 ? "opening" : "continuation",
+    turns: previous,
+    awaitingDelivery: awaiting,
+    ...(latestNarrativeProse === undefined ? {} : { latestNarrativeProse }),
+  };
 }
 
 // ---------- 渲染 ----------

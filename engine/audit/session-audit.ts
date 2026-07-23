@@ -11,6 +11,7 @@
 
 import type { LintFinding, ProseLengthContext } from "./lint-rules.ts";
 
+import { projectSessionChronology } from "../session-chronology/session-chronology.ts";
 import {
   collectUnrevealedSecretStrings,
   findSecretLeaks,
@@ -30,6 +31,7 @@ interface RawEntry {
   data?: unknown;
   /** custom_message entry 的正文（双 pass 渲染轮的 fsn-prose 走这里） */
   content?: unknown;
+  details?: unknown;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,6 +59,7 @@ export function parseSessionJsonl(content: string): RawEntry[] {
       customType: typeof parsed["customType"] === "string" ? parsed["customType"] : undefined,
       data: parsed["data"],
       content: parsed["content"],
+      details: parsed["details"],
     });
   }
   return entries;
@@ -154,11 +157,49 @@ function extractToolCalls(content: unknown): PendingToolCall[] {
   return calls;
 }
 
+/**
+ * 把审计路径投影成 canonical Session Chronology，取已交付正文的
+ * toolCallId → prose 关联。投影被阻断时返回空关联（不猜测），
+ * 审计仍可继续统计工具调用，只是不再把可疑正文计入渲染轮。
+ */
+function chronologyProseById(path: readonly RawEntry[]): ReadonlyMap<string, string> {
+  const messages: unknown[] = [];
+  for (const entry of path) {
+    if (entry.type === "message" && entry.message !== undefined) {
+      messages.push(entry.message);
+    } else if (entry.type === "custom_message") {
+      messages.push({
+        role: "custom",
+        customType: entry.customType,
+        content: entry.content,
+        details: entry.details,
+      });
+    }
+  }
+  const projection = projectSessionChronology(
+    { kind: "messages", messages },
+    {
+      kind: "settlement",
+    },
+  );
+  if (projection.kind !== "ready") {
+    return new Map();
+  }
+  const proseById = new Map<string, string>();
+  for (const turn of projection.value.turns) {
+    if (turn.kind === "narrative" && turn.status === "delivered") {
+      proseById.set(turn.toolCallId, turn.prose);
+    }
+  }
+  return proseById;
+}
+
 export function groupTurns(path: readonly RawEntry[]): AuditTurn[] {
   const turns: AuditTurn[] = [];
   let current: AuditTurn | undefined;
   let latestSecrets: string[] = [];
   const pendingResults = new Map<string, AuditToolCall>();
+  const proseById = chronologyProseById(path);
 
   for (const entry of path) {
     if (entry.type === "custom" && entry.customType === "fsn-state" && isRecord(entry.data)) {
@@ -167,15 +208,8 @@ export function groupTurns(path: readonly RawEntry[]): AuditTurn[] {
       if (current !== undefined) current.unrevealedSecrets = latestSecrets;
       continue;
     }
-    // 双 pass 渲染轮的最终正文：fsn-prose custom message 覆盖 assistant text
+    // 双 pass 渲染轮的最终正文由 Session Chronology 按 toolCallId 归属（见 proseById）。
     if (entry.type === "custom_message" && entry.customType === "fsn-prose") {
-      if (current !== undefined) {
-        const prose = blockText(entry.content);
-        if (prose.trim().length > 0) {
-          current.fullText = current.fullText.length > 0 ? `${current.fullText}\n${prose}` : prose;
-          current.finalProse = prose;
-        }
-      }
       continue;
     }
     if (entry.type !== "message" || entry.message === undefined) continue;
@@ -206,6 +240,14 @@ export function groupTurns(path: readonly RawEntry[]): AuditTurn[] {
         const record: AuditToolCall = { name: call.name, args: call.args, accepted: false };
         current.toolCalls.push(record);
         pendingResults.set(call.id, record);
+        const chronologyProse = proseById.get(call.id);
+        if (chronologyProse !== undefined && chronologyProse.trim().length > 0) {
+          current.fullText =
+            current.fullText.length > 0
+              ? `${current.fullText}\n${chronologyProse}`
+              : chronologyProse;
+          current.finalProse = chronologyProse;
+        }
       }
       continue;
     }

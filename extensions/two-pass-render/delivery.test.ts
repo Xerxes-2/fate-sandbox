@@ -8,14 +8,9 @@ import { SessionManager } from "@earendil-works/pi-coding-agent";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  PROSE_CUSTOM_TYPE,
-  rendererModeForMessages,
-  SUBMIT_DIRECTION_PACKET_TOOL,
-} from "../../engine/render/render-turn.ts";
+import { SUBMIT_DIRECTION_PACKET_TOOL } from "../../engine/session-chronology/session-chronology.ts";
 import { deliverSettledProse, registerTwoPassRenderLifecycle } from "./index.ts";
 import { createProseDelivery, createSettledProseDelivery } from "./prose-delivery.ts";
-import { sessionEntriesToRendererMessages } from "./reroll.ts";
 
 const RENDER_PACKET: DirectionPacket = {
   needsRender: true,
@@ -128,18 +123,6 @@ void test("settled rendered prose forwards suggested actions and clears its prev
   assert.equal(clearCount, 1);
 });
 
-void test("renderer history uses the active session branch after settlement projection removes prose", () => {
-  const sessionManager = SessionManager.inMemory();
-  sessionManager.appendCustomMessageEntry(PROSE_CUSTOM_TYPE, "上一轮已经渲染的正文。", true, {
-    kind: "rendered",
-  });
-
-  const messages = sessionEntriesToRendererMessages(sessionManager.getBranch());
-
-  assert.equal(rendererModeForMessages(messages), "continuation");
-  assert.equal(messages.length, 1);
-});
-
 void test("two-pass lifecycle appends a packet once on agent_settled and cleans widgets", async () => {
   let agentEnd: Parameters<TwoPassRenderLifecycleApi["onAgentEnd"]>[0] | undefined;
   let agentSettled: Parameters<TwoPassRenderLifecycleApi["onAgentSettled"]>[0] | undefined;
@@ -208,6 +191,14 @@ void test("two-pass lifecycle appends a packet once on agent_settled and cleans 
     throw new Error("expected direct-reply assistant message");
   }
   sessionManager.appendMessage(eventMessage);
+  sessionManager.appendMessage({
+    role: "toolResult",
+    toolCallId: "direct-reply-call",
+    toolName: SUBMIT_DIRECTION_PACKET_TOOL,
+    content: [{ type: "text", text: "accepted" }],
+    isError: false,
+    timestamp: 0,
+  });
 
   await agentEnd(event, ctx);
   await agentEnd(event, ctx);

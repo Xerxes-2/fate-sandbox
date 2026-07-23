@@ -6,7 +6,15 @@ import type {
   MessageRenderer,
 } from "@earendil-works/pi-coding-agent";
 
-import type { RenderDirectionPacket, SuggestedAction } from "../../engine/render/packet-schema.ts";
+import type {
+  DirectionPacket,
+  RenderDirectionPacket,
+  SuggestedAction,
+} from "../../engine/render/packet-schema.ts";
+import type {
+  RenderChronologyView,
+  SessionBranchEntry,
+} from "../../engine/session-chronology/session-chronology.ts";
 import type { SettledProseDelivery } from "./prose-delivery.ts";
 
 // pi-ai 0.80 把全局 stream()/streamSimple() 移到临时 compat 入口；
@@ -19,25 +27,25 @@ import { collectUnrevealedSecretStrings } from "../../engine/audit/lint-rules.ts
 import { formatNpcRenderCards } from "../../engine/core/actor/actor-impression.ts";
 import { syncStateFromSessionManager } from "../../engine/core/state/session-hydration.ts";
 import { getState } from "../../engine/core/state/state-store.ts";
-import { dumpPassB } from "../../engine/debug/api-trace.ts";
+import { dumpChronologyAnomalies, dumpPassB } from "../../engine/debug/api-trace.ts";
 import { buildRendererSystemPrompt } from "../../engine/prompt-assembly/injection.ts";
 import { loadProseDigests, saveProseDigest } from "../../engine/render/prose-digest-store.ts";
 import {
   buildLintRetryMessages,
   buildRendererMessages,
-  findPendingDirectionPacket,
   lintRenderedProse,
-  type PendingDirectionPacket,
-  rendererModeForMessages,
-  PROSE_CUSTOM_TYPE,
   redactSecrets,
   type RendererMessage,
 } from "../../engine/render/render-turn.ts";
 import { stripLeakedSettlementProse } from "../../engine/render/settlement-prose-firewall.ts";
 import { stripThinkingResidue, THINKING_PREFILL_TEXT } from "../../engine/render/strip-thinking.ts";
+import {
+  projectSessionChronology,
+  PROSE_CUSTOM_TYPE,
+} from "../../engine/session-chronology/session-chronology.ts";
 import { setChoiceWidget } from "../player-choices/index.ts";
 import { createProseDelivery, createSettledProseDelivery } from "./prose-delivery.ts";
-import { registerRerollCommand, sessionEntriesToRendererMessages } from "./reroll.ts";
+import { registerRerollCommand } from "./reroll.ts";
 
 const RENDERER_MAX_TOKENS = 8192;
 const DEFAULT_RENDER_LINT_RETRIES = 3;
@@ -75,10 +83,10 @@ export interface TwoPassRenderLifecycleApi extends ProseMessageSink {
 export default function twoPassRenderExtension(pi: ExtensionAPI): void {
   pi.registerMessageRenderer(PROSE_CUSTOM_TYPE, renderProseMessage);
   registerRerollCommand(pi, {
-    render: (ctx, messages, packet, variantKey) => {
+    render: (ctx, chronology, packet, variantKey) => {
       syncStateFromSessionManager(ctx.sessionManager);
       const unrevealedSecrets = collectUnrevealedSecretStrings(getState().secrets);
-      return renderProse(ctx, messages, packet, unrevealedSecrets, { variantKey });
+      return renderProse(ctx, chronology, packet, unrevealedSecrets, { variantKey });
     },
     afterSend: (ctx, pending, prose) => {
       if (pending.packet.needsRender) {
@@ -111,9 +119,13 @@ export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): 
   api.onAgentEnd(async (_event, ctx) => {
     // agent_end.messages 已经过 Pass A 的 Settlement Working Set 投影，其中正文被有意删除。
     // Pass B 必须从当前 session branch 读取自己的历史，否则每轮都会被误判为 opening。
-    const renderMessages = sessionEntriesToRendererMessages(ctx.sessionManager.getBranch());
-    const pending = readPendingPacket(renderMessages, ctx);
-    if (pending === undefined || renderedToolCallIds.has(pending.toolCallId)) {
+    const chronology = readRenderChronology(ctx.sessionManager.getBranch(), ctx);
+    const pending = chronology?.awaitingDelivery;
+    if (
+      chronology === undefined ||
+      pending === undefined ||
+      renderedToolCallIds.has(pending.toolCallId)
+    ) {
       return;
     }
     renderedToolCallIds.add(pending.toolCallId);
@@ -124,7 +136,7 @@ export function registerTwoPassRenderLifecycle(api: TwoPassRenderLifecycleApi): 
     }
     syncStateFromSessionManager(ctx.sessionManager);
     const unrevealedSecrets = collectUnrevealedSecretStrings(getState().secrets);
-    const prose = await renderProse(ctx, renderMessages, packet, unrevealedSecrets);
+    const prose = await renderProse(ctx, chronology, packet, unrevealedSecrets);
     if (prose === undefined) {
       proseDelivery.queue(createProseDelivery(packet, pending.toolCallId));
       return;
@@ -164,6 +176,11 @@ interface RenderedProse {
   lintRuleIds: string[];
 }
 
+interface PendingDirectionPacket {
+  packet: DirectionPacket;
+  toolCallId: string;
+}
+
 function rendererNameEntries(state: ReturnType<typeof getState>): Array<{
   actorId: string;
   internalName: string;
@@ -184,7 +201,7 @@ interface RenderProseOptions {
 
 async function renderProse(
   ctx: ExtensionContext,
-  loopMessages: ReadonlyArray<unknown>,
+  chronology: RenderChronologyView,
   packet: RenderDirectionPacket,
   unrevealedSecrets: readonly string[],
   options: RenderProseOptions = {},
@@ -204,10 +221,10 @@ async function renderProse(
     return undefined;
   }
 
-  const systemPrompt = buildRendererSystemPrompt(rendererModeForMessages(loopMessages));
+  const systemPrompt = buildRendererSystemPrompt(chronology.mode);
   const state = getState();
   const baseMessages = buildRendererMessages(
-    loopMessages,
+    chronology,
     packet,
     loadProseDigests(),
     rendererNameEntries(state),
@@ -660,17 +677,24 @@ function setWorking(ctx: ExtensionContext, message: string | undefined): void {
   }
 }
 
-function readPendingPacket(
-  messages: ReadonlyArray<unknown>,
+function readRenderChronology(
+  entries: ReadonlyArray<SessionBranchEntry>,
   ctx: ExtensionContext,
-): PendingDirectionPacket | undefined {
-  try {
-    return findPendingDirectionPacket(messages);
-  } catch (error) {
-    // packet 已过工具层验证，这里失败属于异常路径：通知并放弃渲染。
-    notify(ctx, `two-pass render: invalid packet (${formatError(error)})`, "error");
-    return undefined;
+): RenderChronologyView | undefined {
+  const projection = projectSessionChronology(
+    { kind: "session-branch", entries },
+    { kind: "render" },
+  );
+  dumpChronologyAnomalies("two-pass-render", projection.anomalies);
+  if (projection.kind === "ready") {
+    return projection.value;
   }
+  notify(
+    ctx,
+    `two-pass render: Session Chronology blocked (${projection.anomalies.map((entry) => entry.kind).join(", ")})`,
+    "error",
+  );
+  return undefined;
 }
 
 function sendProse(pi: ProseMessageSink, text: string, details: Record<string, unknown>): void {

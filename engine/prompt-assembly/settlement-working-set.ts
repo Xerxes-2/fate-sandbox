@@ -1,7 +1,9 @@
 import type { ToolResultRetention } from "../../tools/runtime/tool-definition.ts";
 
 import { isRecord } from "../core/utils/typebox-validation.ts";
+import { dumpChronologyAnomalies } from "../debug/api-trace.ts";
 import { buildSettlementWorkingSetCapsules } from "../render/settlement-compaction.ts";
+import { projectSessionChronology } from "../session-chronology/session-chronology.ts";
 import {
   formatCompletedSkillInvocation,
   parseSkillInvocation,
@@ -41,7 +43,17 @@ export function projectSettlementWorkingSet<TMessage>(
   const successfulPriorCalls = collectSuccessfulToolCalls(messages).filter(
     (call) => call.messageIndex < latestUserIndex,
   );
-  const capsules = buildSettlementWorkingSetCapsules(messages.slice(0, latestUserIndex));
+  const chronology = projectSessionChronology(
+    { kind: "messages", messages: messages.slice(0, latestUserIndex) },
+    { kind: "settlement" },
+  );
+  dumpChronologyAnomalies("settlement-working-set", chronology.anomalies);
+  if (chronology.kind === "blocked") {
+    throw new Error(
+      `Session Chronology blocked Settlement Working Set: ${chronology.anomalies.map((entry) => entry.kind).join(", ")}`,
+    );
+  }
+  const capsules = buildSettlementWorkingSetCapsules(chronology.value.turns);
   const projected: TMessage[] = [];
 
   messages.forEach((message, index) => {
